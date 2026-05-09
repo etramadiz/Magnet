@@ -258,38 +258,9 @@
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
-  
+
   <script src="db.js"></script>
   <script src="dashboard.js"></script>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBfgU__EN29eRiNB61bMGEPuuE5fbO43tA",
-      authDomain: "magnet-9defc.firebaseapp.com",
-      databaseURL: "https://magnet-9defc-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "magnet-9defc",
-      storageBucket: "magnet-9defc.firebasestorage.app",
-      messagingSenderId: "449932305849",
-      appId: "1:449932305849:web:e073f823b48550bb390268"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // Kita timpa fungsi handleLogout dari dashboard.js dengan versi Firebase
-    window.handleLogout = async function() {
-      try {
-        await signOut(auth); // 1. Keluar dari server Firebase
-        MagnetDB.logout();   // 2. Hapus memori browser
-        window.location.href = 'index.html'; // 3. Pindah halaman
-      } catch (error) {
-        console.error("Error logout:", error);
-        alert("Gagal keluar dari akun.");
-      }
-    };
-  </script>
+  
 </body>
 </html>

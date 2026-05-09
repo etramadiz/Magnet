@@ -13,7 +13,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -392,8 +392,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // CEK STATUS LOGIN MENGGUNAKAN FIREBASE AUTH
   auth.onAuthStateChanged((user) => {
+    
+    // --- TRIK JALUR BELAKANG: CEK APAKAH ADA MINTA LOGOUT ---
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('logout') === 'true') {
+      // Perintahkan Firebase untuk sign out!
+      signOut(auth).then(() => {
+        // Bersihkan tulisan "?logout=true" di atas URL browser biar rapi
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+      return; // STOP! Langsung berhenti di sini, jangan jalankan auto-login
+    }
+    // --------------------------------------------------------
+
     if (user) {
-      // --- TAMBAHAN BARU: SINKRONISASI KE DB.JS ---
+      // --- SINKRONISASI KE DB.JS ---
       const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
       if (!users.find(u => u.id === user.uid)) {
         users.push({
@@ -406,9 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('magnet_users', JSON.stringify(users));
       }
       localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
-      // --------------------------------------------
 
-      // Tampilkan animasi halaman sebentar agar tidak mengagetkan
+      // Tampilkan animasi halaman sebentar
       const landing = document.getElementById('page-landing');
       if (landing) landing.classList.add('active');
       transitionBackground('page-landing');

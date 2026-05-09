@@ -335,7 +335,7 @@ document.addEventListener('click', (e) => {
 ═══════════════════════════ */
 function handleLogout() {
   MagnetDB.logout();
-  window.location.href = 'index.html';
+  window.location.href = 'index.html?logout=true';
 }
 
 
