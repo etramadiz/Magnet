@@ -154,6 +154,29 @@ function transitionBackground(pageId) {
 /* ── 4. FORM HANDLERS ── */
 let isRegisteringFirebase = false; // Penanda agar tidak auto-login
 
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!email) { showToast('Masukkan email atau nomor telepon.', 'error'); shakeInput('login-email'); return; }
+  if (!password) { showToast('Masukkan kata sandi.', 'error'); shakeInput('login-password'); return; }
+
+  showToast('Memproses masuk…', 'success');
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+
+    showToast('Berhasil masuk! Mengalihkan…', 'success');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
+  } catch (error) {
+    showToast('Login gagal: Periksa email dan sandi', 'error');
+    shakeInput('login-email'); shakeInput('login-password');
+  }
+}
+
 async function handleRegister() {
   const name     = document.getElementById('reg-name').value.trim();
   const email    = document.getElementById('reg-email').value.trim();
