@@ -2,6 +2,8 @@
    MAGNET – LAMAR.JS
 ════════════════════════════════════════════════════════════ */
 
+import { getJobById } from './job-service.js';
+
 let currentJob = null;
 const docs = { cv: null, surat: null, porto: null };
 
@@ -25,7 +27,6 @@ function handleUpload(type, input) {
 
   docs[type] = { name: file.name, size: file.size, type: file.type };
 
-  // Update UI
   const area     = document.getElementById(type === 'cv' ? 'cvArea' : type === 'surat' ? 'suratArea' : 'portoArea');
   const status   = document.getElementById(type + 'Status');
   const nameEl   = document.getElementById(type + 'Name');
@@ -55,7 +56,6 @@ function removeFile(type) {
   updateChecklist();
 }
 
-/* CV dari profil tersimpan */
 function useSavedCV() {
   const profile = MagnetDB.getProfile();
   if (!profile?.cv) return;
@@ -71,24 +71,18 @@ function useSavedCV() {
   showToast('CV dari profil digunakan ✓');
 }
 
-/* ════════════════════
-   CHAR COUNT
-════════════════════ */
 function updateCharCount() {
   const val = document.getElementById('catatanInput')?.value || '';
   const el  = document.getElementById('charCount');
   if (el) el.textContent = val.length;
 }
 
-/* ════════════════════
-   CHECKLIST / VALIDATION
-════════════════════ */
 function updateChecklist() {
-  const list   = document.getElementById('lmChecklist');
-  const btn    = document.getElementById('submitBtn');
+  const list = document.getElementById('lmChecklist');
+  const btn  = document.getElementById('submitBtn');
   if (!list || !btn) return;
 
-  const hasCv  = !!docs.cv;
+  const hasCv = !!docs.cv;
   const checkEl = document.getElementById('checkCV');
 
   if (hasCv) {
@@ -102,9 +96,6 @@ function updateChecklist() {
   btn.disabled = !hasCv;
 }
 
-/* ════════════════════
-   SUBMIT
-════════════════════ */
 function submitLamaran() {
   if (!docs.cv) {
     showToast('Upload CV terlebih dahulu (wajib)');
@@ -134,7 +125,6 @@ function submitLamaran() {
   if (!result.ok) {
     showToast(result.message);
     if (result.message.includes('sudah')) {
-      // Sudah pernah melamar → langsung ke status
       setTimeout(() => window.location.href = 'lamaran.html', 1500);
     }
     return;
@@ -144,8 +134,6 @@ function submitLamaran() {
   document.getElementById('pageStep1').style.display  = 'none';
   document.getElementById('pageSuccess').style.display = 'block';
   document.getElementById('successCompany').textContent = currentJob.company;
-
-  // Update step indicator
   document.getElementById('step1').classList.add('done');
   document.getElementById('step2').classList.add('done');
   document.getElementById('step3').classList.add('active', 'done');
@@ -156,7 +144,7 @@ function submitLamaran() {
 /* ════════════════════
    INIT
 ════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   MagnetDB.requireAuth('index.html');
   restoreSidebarState();
 
@@ -166,9 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (av) av.textContent = user.name.charAt(0).toUpperCase();
   }
 
-  // Baca job id dari URL
-  const id  = parseInt(new URLSearchParams(window.location.search).get('id'));
-  const job = MAGNET_JOBS.find(j => j.id === id);
+  // Baca job id dari URL (sekarang string)
+  const id = new URLSearchParams(window.location.search).get('id');
+  const job = await getJobById(id);
 
   if (!job) {
     showToast('Lowongan tidak ditemukan');
@@ -196,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Tampilkan tip CV dari profil jika ada
   const profile = MagnetDB.getProfile();
   if (profile?.cv) {
     document.getElementById('cvTip').style.display = 'flex';
@@ -204,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateChecklist();
 
-  // Drag & drop untuk semua area upload
+  // Drag & drop event
   ['cvArea', 'suratArea', 'portoArea'].forEach(areaId => {
     const area     = document.getElementById(areaId);
     const typeMap  = { cvArea: 'cv', suratArea: 'surat', portoArea: 'porto' };

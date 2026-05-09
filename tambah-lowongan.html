@@ -2,30 +2,37 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>MagNet - Tambah Lowongan (Perusahaan)</title>
+  <title>Magnet – Tambah Lowongan</title>
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-  <div class="main-content">
-    <h2>Buat Lowongan Baru</h2>
-    
-    <div class="form-card">
-      <input type="text" id="inputTitle" placeholder="Judul Posisi (misal: UI/UX Intern)" class="input-field">
-      <input type="text" id="inputLocation" placeholder="Lokasi (misal: Jakarta Selatan)" class="input-field">
-      <input type="text" id="inputSalary" placeholder="Gaji (misal: Rp 3.000.000 / bulan)" class="input-field">
-      
-      <select id="inputCategory" class="input-field">
-        <option value="it">Teknologi & IT</option>
-        <option value="desain">Desain & Kreatif</option>
-        <option value="bisnis">Bisnis & Manajemen</option>
-      </select>
+  <main class="main-content">
+    <header class="top-header">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" ...></svg></button>
+      <div class="header-brand"><span class="header-brand-name">Tambah Lowongan</span></div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="history.back()">← Kembali</button>
+      </div>
+    </header>
 
-      <textarea id="inputDescription" placeholder="Deskripsi pekerjaan..." class="input-field" rows="4"></textarea>
-      
-      <button id="btnSimpanLowongan" class="btn btn-primary">Publikasikan Lowongan</button>
+    <div class="page-body">
+      <form id="formLowongan" style="display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto">
+        <input type="text" id="title" placeholder="Judul Lowongan" required>
+        <input type="text" id="location" placeholder="Lokasi">
+        <select id="category">
+          <option value="it">Teknologi</option>
+          <option value="bisnis">Bisnis</option>
+          <option value="desain">Desain</option>
+          <!-- tambahkan pilihan lain -->
+        </select>
+        <textarea id="description" placeholder="Deskripsi pekerjaan" rows="5" required></textarea>
+        <input type="text" id="salary" placeholder="Gaji (contoh: Rp 2.000.000 – Rp 3.000.000)">
+        <input type="text" id="duration" placeholder="Durasi (3-6)">
+        <input type="text" id="deadline" placeholder="Deadline (contoh: 30 Juni 2026)">
+        <button type="submit" class="btn btn-primary">Publikasikan Lowongan</button>
+      </form>
     </div>
-  </div>
-
+  </main>
   <script type="module" src="tambah-lowongan.js"></script>
 </body>
 </html>

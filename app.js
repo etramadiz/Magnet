@@ -10,28 +10,7 @@
    6. Google Auth Stub
    7. Init
 ════════════════════════════════════════════════════════════ */
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBfgU__EN29eRiNB61bMGEPuuE5fbO43tA",
-  authDomain: "magnet-9defc.firebaseapp.com",
-  databaseURL: "https://magnet-9defc-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "magnet-9defc",
-  storageBucket: "magnet-9defc.firebasestorage.app",
-  messagingSenderId: "449932305849",
-  appId: "1:449932305849:web:e073f823b48550bb390268",
-  measurementId: "G-YX9627KG64"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const analytics = getAnalytics(firebaseApp);
-const auth = getAuth(firebaseApp);
-const db = getDatabase(firebaseApp);
-const googleProvider = new GoogleAuthProvider();
+import { auth, googleProvider, db } from './firebase-config.js';
 
 /* ── 1. STATE ── */
 const state = {

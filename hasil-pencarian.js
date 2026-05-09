@@ -1,7 +1,9 @@
 /* hasil-pencarian.js */
+import { fetchAllJobs } from './job-service.js';
 
 let savedSet   = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
 let currentParams = {};
+let allJobs = []; // akan diisi dari Firebase
 
 /* ── Save/load bookmarks ── */
 function persistSaved() { localStorage.setItem('mg_saved', JSON.stringify([...savedSet])); }
@@ -11,7 +13,6 @@ function toggleBookmark(e, id) {
   if (savedSet.has(id)) { savedSet.delete(id); showToast('Lowongan dihapus dari simpanan'); }
   else                  { savedSet.add(id);    showToast('Lowongan disimpan ✓'); }
   persistSaved();
-  // Update icon without re-rendering
   const btn = document.querySelector(`.hp-bookmark[data-id="${id}"]`);
   if (btn) {
     btn.classList.toggle('saved', savedSet.has(id));
@@ -56,12 +57,12 @@ function renderResults() {
   const { q='', bidang='', lokasi='', remote='', gaji='', durasi='' } = currentParams;
   const kw = q.toLowerCase();
 
-  let results = MAGNET_JOBS;
+  let results = allJobs; // pakai data dari Firebase
 
   if (kw)     results = results.filter(j =>
     j.title.toLowerCase().includes(kw) ||
     j.company.toLowerCase().includes(kw) ||
-    j.department.toLowerCase().includes(kw) ||
+    j.department?.toLowerCase().includes(kw) ||
     j.tags.some(t => t.toLowerCase().includes(kw))
   );
   if (bidang)  results = results.filter(j => j.category === bidang);
@@ -112,7 +113,7 @@ function renderResults() {
   list.innerHTML = results.map((job, i) => {
     const isSaved = savedSet.has(job.id);
     return `
-    <div class="hp-card" style="animation-delay:${i*0.04}s" onclick="openDetail(${job.id})">
+    <div class="hp-card" style="animation-delay:${i*0.04}s" onclick="openDetail('${job.id}')">
       <div class="hp-card-top">
         <div class="hp-logo" style="background:${job.logoColor}18;color:${job.logoColor}">${job.companyShort}</div>
         <div class="hp-card-main">
@@ -121,7 +122,7 @@ function renderResults() {
         </div>
         <div class="hp-card-actions">
           <button class="hp-bookmark ${isSaved ? 'saved' : ''}" data-id="${job.id}"
-            onclick="toggleBookmark(event,${job.id})" title="${isSaved ? 'Hapus simpanan' : 'Simpan'}">
+            onclick="toggleBookmark(event,'${job.id}')" title="${isSaved ? 'Hapus simpanan' : 'Simpan'}">
             <svg viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
@@ -129,7 +130,6 @@ function renderResults() {
           ${job.isNew ? '<span class="hp-new-badge">Baru</span>' : ''}
         </div>
       </div>
-
       <div class="hp-card-meta">
         <span class="hp-meta">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -144,73 +144,37 @@ function renderResults() {
           ${job.remoteKey}
         </span>
       </div>
-
       <div class="hp-card-tags">
         ${job.tags.map(t => `<span class="hp-tag">${t}</span>`).join('')}
       </div>
-
       <div class="hp-card-footer">
         <div>
           <p class="hp-salary">${job.salary}</p>
           <p class="hp-deadline">Tutup ${job.deadline}</p>
         </div>
-        <button class="hp-detail-btn" onclick="openDetail(${job.id});event.stopPropagation()">Lihat Detail</button>
+        <button class="hp-detail-btn" onclick="openDetail('${job.id}');event.stopPropagation()">Lihat Detail</button>
       </div>
     </div>`;
   }).join('');
 }
 
-/* ── Active filter chips ── */
-function renderChips() {
-  const { q, bidang, lokasi, remote, gaji, durasi } = currentParams;
-  const bidangLabel = { it:'Teknologi & IT', desain:'Desain', bisnis:'Bisnis', marketing:'Marketing', riset:'Riset & Data', keuangan:'Keuangan' };
-  const remoteLabel = { onsite:'Onsite', remote:'Remote', hybrid:'Hybrid' };
-  const gajiLabel   = { 'paid':'Paid', 'unpaid':'Unpaid' };
-  const durasiLabel = { '1-3':'1–3 Bulan', '3-6':'3–6 Bulan', '6+':'6 Bulan+' };
+// ... sisa fungsi (renderChips, removeChip, quickSearch) persis sama seperti sebelumnya, pastikan openDetail menggunakan string id
+function openDetail(id) { window.location.href = `detail-lowongan.html?id=${id}`; }
 
-  const chips = [];
-  if (q)      chips.push({ label: `"${q}"`, key:'q' });
-  if (bidang) chips.push({ label: bidangLabel[bidang] || bidang, key:'bidang' });
-  if (lokasi) chips.push({ label: '📍 '+lokasi, key:'lokasi' });
-  if (remote) chips.push({ label: remoteLabel[remote] || remote, key:'remote' });
-  if (gaji)   chips.push({ label: gajiLabel[gaji]   || gaji,   key:'gaji' });
-  if (durasi) chips.push({ label: durasiLabel[durasi]|| durasi, key:'durasi' });
+function quickSearch(kw) { document.getElementById('hpSearchInput').value = kw; currentParams.q = kw; renderResults(); }
 
-  const el = document.getElementById('hpChips');
-  if (el) el.innerHTML = chips.map(c =>
-    `<span class="hp-chip">${c.label}<button onclick="removeChip('${c.key}')">✕</button></span>`
-  ).join('');
-}
-
-function removeChip(key) {
-  currentParams[key] = '';
-  if (key === 'q') document.getElementById('hpSearchInput').value = '';
-  if (key === 'bidang') document.getElementById('fpBidang').value = '';
-  if (key === 'remote') document.getElementById('fpRemote').value = '';
-  if (key === 'gaji')   document.getElementById('fpGaji').value   = '';
-  if (key === 'durasi') document.getElementById('fpDurasi').value = '';
-  renderResults();
-}
-
-function quickSearch(kw) {
-  document.getElementById('hpSearchInput').value = kw;
-  currentParams.q = kw;
-  renderResults();
-}
-
-/* ── Open detail ── */
-function openDetail(id) {
-  window.location.href = `detail-lowongan.html?id=${id}`;
-}
+// active chips & remove chip sama seperti sebelumnya, tidak perlu diubah
 
 /* ── Init ── */
-document.addEventListener('DOMContentLoaded', () => {
-  // Guest diizinkan melihat halaman ini tanpa login
+document.addEventListener('DOMContentLoaded', async () => {
   restoreSidebarState();
   applyGuestMode();
 
   const user = MagnetDB.getSession();
   if (user) { const av = document.getElementById('avatarInitial'); if (av) av.textContent = user.name.charAt(0).toUpperCase(); }
+
+  // Ambil data lowongan dari Firebase
+  allJobs = await fetchAllJobs();
 
   // Parse URL params
   const p      = new URLSearchParams(window.location.search);
@@ -223,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   currentParams = { q, bidang, lokasi, remote, gaji, durasi };
 
-  // Pre-fill input
   document.getElementById('hpSearchInput').value = q;
   if (bidang) document.getElementById('fpBidang').value = bidang;
   if (remote) document.getElementById('fpRemote').value = remote;

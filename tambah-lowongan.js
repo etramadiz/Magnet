@@ -1,61 +1,51 @@
-// 1. Import fungsi Firebase
+import { db } from './firebase-config.js';
 import { ref, push, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-// 2. Import koneksi database dari app.js
-import { db } from "./app.js"; 
 
-document.addEventListener('DOMContentLoaded', () => {
-  const btnSimpan = document.getElementById('btnSimpanLowongan');
-  
-  btnSimpan.addEventListener('click', async () => {
-    // 3. Tangkap nilai dari form HTML
-    const title = document.getElementById('inputTitle').value;
-    const location = document.getElementById('inputLocation').value;
-    const salary = document.getElementById('inputSalary').value;
-    const category = document.getElementById('inputCategory').value;
-    const description = document.getElementById('inputDescription').value;
+// Cek login & role perusahaan
+const session = JSON.parse(localStorage.getItem('magnet_session'));
+if (!session) window.location.href = 'index.html';
+const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+const currentUser = users.find(u => u.id === session.userId);
+if (!currentUser || currentUser.type !== 'perusahaan') {
+  alert('Hanya perusahaan yang bisa menambah lowongan');
+  window.location.href = 'dashboard.html';
+}
 
-    // (Opsional) Ambil nama perusahaan dari session login jika sudah ada
-    // const userSession = JSON.parse(localStorage.getItem('magnet_session'));
-    const companyName = "PT Tech Inovasi"; // Sementara hardcode untuk tes
-    const companyShort = "TI";
+document.getElementById('formLowongan').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
 
-    // 4. Validasi sederhana
-    if (!title || !description) {
-      alert("Judul dan Deskripsi wajib diisi!");
-      return;
-    }
+  const jobData = {
+    title: document.getElementById('title').value,
+    location: document.getElementById('location').value,
+    category: document.getElementById('category').value,
+    description: document.getElementById('description').value,
+    salary: document.getElementById('salary').value,
+    durasi: document.getElementById('duration').value,
+    deadline: document.getElementById('deadline').value,
+    // Data perusahaan dari profil
+    company: currentUser.profile?.namaPerusahaan || currentUser.name,
+    companyShort: currentUser.profile?.inisial || currentUser.name.substring(0,2).toUpperCase(),
+    logoColor: currentUser.profile?.warna || '#1D3BD1',
+    isNew: true,
+    postedAt: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}),
+    tags: [],
+    requirements: [],
+    skills: [],
+    benefits: []
+  };
 
-    try {
-      // 5. Tentukan lokasi folder di Firebase ("jobs")
-      const jobsRef = ref(db, 'jobs');
-      
-      // 6. Buat "kamar" kosong dengan ID unik baru
-      const lowonganBaruRef = push(jobsRef);
-
-      // 7. Simpan data ke dalam ID unik tersebut
-      // Format KEY harus sama persis dengan yang ada di jobs.json mahasiswa!
-      await set(lowonganBaruRef, {
-        title: title,
-        company: companyName,
-        companyShort: companyShort,
-        location: location,
-        salary: salary,
-        category: category,
-        description: description,
-        isNew: true, // Otomatis masuk tab "Baru untukmu"
-        postedAt: "Baru saja",
-        // Kamu bisa tambahkan array requirements, skills, dll nanti
-      });
-
-      alert("Berhasil! Lowongan sudah tayang di aplikasi mahasiswa.");
-      
-      // Kosongkan form setelah sukses
-      document.getElementById('inputTitle').value = '';
-      document.getElementById('inputDescription').value = '';
-
-    } catch (error) {
-      console.error("Gagal menyimpan lowongan: ", error);
-      alert("Terjadi kesalahan sistem.");
-    }
-  });
+  try {
+    const jobsRef = ref(db, 'jobs');
+    const newJobRef = push(jobsRef);
+    await set(newJobRef, jobData);
+    alert('Lowongan berhasil dipublikasikan!');
+    window.location.href = 'dashboard.html';
+  } catch (error) {
+    alert('Gagal: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = 'Publikasikan Lowongan';
+  }
 });

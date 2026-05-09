@@ -1,4 +1,5 @@
 /* detail-lowongan.js */
+import { getJobById } from './job-service.js';
 
 let currentJob  = null;
 let savedSet    = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
@@ -30,7 +31,6 @@ function updateBookmarkBtn() {
 function lamarSekarang() {
   if (!currentJob) return;
 
-  // Guest belum login → arahkan ke halaman login
   if (!MagnetDB.getSession()) {
     showToast('Masuk terlebih dahulu untuk melamar lowongan');
     setTimeout(() => window.location.href = 'index.html', 1500);
@@ -202,7 +202,7 @@ function renderDetail(job) {
 }
 
 /* ── Init ── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Guest diizinkan melihat detail lowongan tanpa login
   restoreSidebarState();
   applyGuestMode();
@@ -210,8 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const user = MagnetDB.getSession();
   if (user) { const av = document.getElementById('avatarInitial'); if (av) av.textContent = user.name.charAt(0).toUpperCase(); }
 
-  const id  = parseInt(new URLSearchParams(window.location.search).get('id'));
-  const job = MAGNET_JOBS.find(j => j.id === id);
+  const id  = new URLSearchParams(window.location.search).get('id'); // id sudah string
+  const job = await getJobById(id);
 
   if (!job) {
     document.getElementById('dlScroll').innerHTML = `
@@ -220,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p style="font-size:0.85rem">Lowongan ini mungkin sudah tidak tersedia.</p>
         <a href="lowongan.html" style="display:inline-block;margin-top:16px;color:var(--blue-primary);font-weight:600;text-decoration:none">← Kembali cari lowongan</a>
       </div>`;
+    if (document.getElementById('dlCtaBar')) document.getElementById('dlCtaBar').style.display = 'none';
     return;
   }
 
