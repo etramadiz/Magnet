@@ -11,6 +11,27 @@
    7. Init
 ════════════════════════════════════════════════════════════ */
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBfgU__EN29eRiNB61bMGEPuuE5fbO43tA",
+  authDomain: "magnet-9defc.firebaseapp.com",
+  databaseURL: "https://magnet-9defc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "magnet-9defc",
+  storageBucket: "magnet-9defc.firebasestorage.app",
+  messagingSenderId: "449932305849",
+  appId: "1:449932305849:web:e073f823b48550bb390268",
+  measurementId: "G-YX9627KG64"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const analytics = getAnalytics(firebaseApp);
+const auth = getAuth(firebaseApp);
+const db = getDatabase(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
 
 /* ── 1. STATE ── */
 const state = {
@@ -132,7 +153,7 @@ function transitionBackground(pageId) {
 
 /* ── 4. FORM HANDLERS ── */
 
-function handleLogin() {
+  async function handleLogin() { // Jangan lupa ada kata 'async' di sini
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value.trim();
 
@@ -147,22 +168,29 @@ function handleLogin() {
     return;
   }
 
-  const result = MagnetDB.login(email, password);
+  showToast('Memproses masuk…', 'success');
 
-  if (!result.ok) {
-    showToast(result.message, 'error');
+  try {
+    // FIREBASE LOGIN
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // SIMPAN SESSION LOKAL (Biar fitur di db.js seperti lamaran tetap jalan)
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+
+    showToast('Berhasil masuk! Mengalihkan…', 'success');
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 900);
+
+  } catch (error) {
+    showToast('Login gagal: ' + error.message, 'error');
     shakeInput('login-email');
     shakeInput('login-password');
-    return;
   }
-
-  showToast('Berhasil masuk! Mengalihkan…', 'success');
-  setTimeout(() => {
-    window.location.href = 'dashboard.html';
-  }, 900);
 }
 
-function handleRegister() {
+async function handleRegister() { // Jangan lupa ada kata 'async' di sini
   const name     = document.getElementById('reg-name').value.trim();
   const email    = document.getElementById('reg-email').value.trim();
   const phone    = document.getElementById('reg-phone').value.trim();
@@ -194,39 +222,75 @@ function handleRegister() {
     return;
   }
 
-  // Save to localStorage DB
-  const result = MagnetDB.register({
-    name,
-    email,
-    phone,
-    password,
-    type: state.registerType,
-  });
+  showToast('Memproses pendaftaran...', 'success');
 
-  if (!result.ok) {
-    showToast(result.message, 'error');
-    shakeInput('reg-email');
-    return;
-  }
+  try {
+    // FIREBASE REGISTER AUTH
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-  showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
-  console.log('[Magnet] Registered:', result.user);
+    // FIREBASE SIMPAN DATA KE REALTIME DATABASE
+    await set(ref(db, 'users/' + user.uid), {
+      namaLengkap: name,
+      email: email,
+      nomorTelepon: phone,
+      tipeAkun: state.registerType || 'mahasiswa', 
+      waktuDaftar: new Date().toISOString()
+    });
 
-  // Redirect to login page after short delay
-  setTimeout(() => {
-    navigateTo('page-login');
-    // Pre-fill email for convenience
+    // SIMPAN SESSION LOKAL (Biar fitur di db.js seperti lamaran tetap jalan)
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+
+    showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
+    console.log('[Magnet] Registered in Firebase:', user.uid);
+
+    // Redirect to login page after short delay (UI bawaanmu)
     setTimeout(() => {
-      const loginEmail = document.getElementById('login-email');
-      if (loginEmail) loginEmail.value = email;
-    }, 500);
-  }, 1200);
+      navigateTo('page-login');
+      // Pre-fill email for convenience
+      setTimeout(() => {
+        const loginEmail = document.getElementById('login-email');
+        if (loginEmail) loginEmail.value = email;
+      }, 500);
+    }, 1200);
+
+  } catch (error) {
+    showToast('Gagal mendaftar: ' + error.message, 'error');
+    shakeInput('reg-email');
+  }
 }
 
-function googleAuth() {
-  // TODO: Replace with real OAuth flow
+async function googleAuth() { // Jangan lupa ada kata 'async' di sini
   showToast('Menghubungkan ke Google…');
-  console.log('[Magnet] Google OAuth initiated');
+  
+  try {
+    // POPUP LOGIN GOOGLE FIREBASE
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    
+    // SIMPAN PROFIL KE REALTIME DATABASE
+    await set(ref(db, 'users/' + user.uid), {
+      namaLengkap: user.displayName,
+      email: user.email,
+      tipeAkun: 'mahasiswa', // Default pendaftar Google
+      waktuLoginTerakhir: new Date().toISOString()
+    });
+
+    // SIMPAN SESSION LOKAL (Biar fitur di db.js seperti lamaran tetap jalan)
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+
+    console.log('[Magnet] Login Google Berhasil:', user.uid);
+    showToast(`Berhasil masuk! Selamat datang, ${user.displayName}!`, 'success');
+
+    // Arahkan ke dashboard
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 900);
+
+  } catch (error) {
+    console.error(error);
+    showToast('Gagal terhubung ke Google.', 'error');
+  }
 }
 
 
@@ -314,21 +378,6 @@ function setupEnterKey() {
 
 /* ── 8. INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
-  // If already logged in, show brief message then redirect to dashboard
-  const existingSession = MagnetDB.getSession();
-  if (existingSession) {
-    // Show the landing page briefly so redirect is visible, not jarring
-    const landing = document.getElementById('page-landing');
-    if (landing) landing.classList.add('active');
-    transitionBackground('page-landing');
-
-    showToast(`Halo kembali lagi, ${existingSession.name}! Mengalihkan ke dashboard…`, 'success', 2000);
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 1500);
-    return; // stop further init
-  }
-
   // Set initial background
   transitionBackground('page-landing');
 
@@ -340,6 +389,24 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEnterKey();
 
   console.log('[Magnet] App initialized ✓');
+
+  // CEK STATUS LOGIN MENGGUNAKAN FIREBASE AUTH
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      // Jika user terdeteksi sudah login di Firebase
+      // Tampilkan animasi halaman sebentar agar tidak mengagetkan
+      const landing = document.getElementById('page-landing');
+      if (landing) landing.classList.add('active');
+      transitionBackground('page-landing');
+
+      const namaSapaan = user.displayName ? user.displayName : 'Sobat MagNet';
+      showToast(`Halo kembali lagi, ${namaSapaan}! Mengalihkan ke dashboard…`, 'success', 2000);
+      
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1500);
+    }
+  });
 });
 
 /* ── Toggle password visibility ── */
@@ -360,3 +427,9 @@ function togglePassword(inputId, btn) {
     btn.title = 'Tampilkan kata sandi';
   }
 }
+
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.googleAuth = googleAuth;
+window.navigateTo = navigateTo;    
+window.togglePassword = togglePassword;
