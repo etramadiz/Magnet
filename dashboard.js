@@ -227,18 +227,7 @@ function restoreSidebarState() {
   }
 }
 
-// dashboard.js (di dalam DOMContentLoaded)
-const user = MagnetDB.getSession();
-if (user) {
-    setGreeting(user.name);
-    startGreetingClock();
 
-    // Tampilkan menu Tambah Lowongan jika perusahaan
-    if (user.type === 'perusahaan') {
-        const tambahMenu = document.getElementById('nav-tambah-lowongan');
-        if (tambahMenu) tambahMenu.style.display = 'flex';
-    }
-}
 
 /* Close sidebar on Escape */
 document.addEventListener('keydown', (e) => {
@@ -423,6 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (user) {
     setGreeting(user.name || 'Pengguna');
     startGreetingClock();
+  
+      if (user.type === 'perusahaan') {
+        const tambahMenu = document.getElementById('nav-tambah-lowongan');
+        if (tambahMenu) tambahMenu.style.display = 'flex';
+    }
   }
 
   // ── Badge: Status Lamaran (hitung dari localStorage) ──

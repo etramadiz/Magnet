@@ -6,7 +6,7 @@ MagnetDB.requireAuth('index.html');
 const session = MagnetDB.getSession();
 if (!session || session.type !== 'perusahaan') {
   showToast('Hanya akun perusahaan yang bisa menambah lowongan');
-  window.location.href = 'dashboard.html';
+  window.location.href = 'index.html';
   throw new Error('Unauthorized');
 }
 

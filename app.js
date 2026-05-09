@@ -10,7 +10,24 @@
    6. Google Auth Stub
    7. Init
 ════════════════════════════════════════════════════════════ */
+
 import { auth, googleProvider, db } from './firebase-config.js';
+
+// 🔥 TAMBAHKAN IMPOR FUNGSI AUTH & DATABASE
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+import {
+  ref,
+  set,
+  get,
+  child,
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
 
 /* ── 1. STATE ── */
 const state = {
@@ -146,10 +163,42 @@ async function handleLogin() {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
+    // Ambil tipeAkun dari Firebase
+    const dbRef = ref(db, 'users/' + user.uid);
+    const snapshot = await get(dbRef);
+    const fbData = snapshot.exists() ? snapshot.val() : {};
+    const tipeAkun = fbData.tipeAkun || 'mahasiswa';
+
+    // Simpan session lokal
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
 
+    // Sinkronkan ke magnet_users
+    let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    let localUser = users.find(u => u.id === user.uid);
+    if (!localUser) {
+      localUser = {
+        id: user.uid,
+        name: fbData.namaLengkap || user.email,
+        email: user.email,
+        type: tipeAkun,
+        profile: null
+      };
+      users.push(localUser);
+    } else {
+      localUser.type = tipeAkun; // update type
+    }
+    localStorage.setItem('magnet_users', JSON.stringify(users));
+
     showToast('Berhasil masuk! Mengalihkan…', 'success');
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
+
+    // Redirect sesuai tipe
+    setTimeout(() => {
+      if (tipeAkun === 'perusahaan') {
+        window.location.href = 'tambah-lowongan.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    }, 900);
   } catch (error) {
     showToast('Login gagal: Periksa email dan sandi', 'error');
     shakeInput('login-email'); shakeInput('login-password');
@@ -171,30 +220,37 @@ async function handleRegister() {
 
   showToast('Memproses pendaftaran...', 'success');
 
-  try {
-    isRegisteringFirebase = true; // Nyalakan rem auto-login
+try {
+    isRegisteringFirebase = true;
 
-    // FIREBASE REGISTER AUTH
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // FIREBASE SIMPAN DATA KE REALTIME DATABASE
+    // SIMPAN DATA PENDAFTARAN KE FIREBASE DENGAN TIPE YANG DIPILIH
     await set(ref(db, 'users/' + user.uid), {
       namaLengkap: name,
       email: email,
       nomorTelepon: phone,
-      tipeAkun: state.registerType || 'mahasiswa', 
+      tipeAkun: state.registerType || 'mahasiswa',  // <-- PASTIKAN INI
       waktuDaftar: new Date().toISOString()
     });
 
-    // LOGOUT INSTAN DARI FIREBASE UNTUK MENCEGAH AUTO-LOGIN
+    // Simpan ke magnet_users LOCAL
+    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    users.push({
+      id: user.uid,
+      name: name,
+      email: email,
+      phone: phone,
+      type: state.registerType || 'mahasiswa',  // <-- PASTIKAN INI
+      profile: null,
+    });
+    localStorage.setItem('magnet_users', JSON.stringify(users));
+
     await signOut(auth);
-    isRegisteringFirebase = false; // Matikan rem
+    isRegisteringFirebase = false;
 
     showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
-    console.log('[Magnet] Registered in Firebase:', user.uid);
-
-    // KEMBALI KE FLOW ASLIMU: Redirect ke halaman login
     setTimeout(() => {
       navigateTo('page-login');
       setTimeout(() => {
@@ -202,41 +258,63 @@ async function handleRegister() {
         if (loginEmail) loginEmail.value = email;
       }, 500);
     }, 1200);
-
-  } catch (error) {
+} catch (error) {
     isRegisteringFirebase = false; // Pastikan rem mati kalau error
     showToast('Gagal mendaftar: ' + error.message, 'error');
     shakeInput('reg-email');
   }
 }
 
-async function googleAuth() { // Jangan lupa ada kata 'async' di sini
+async function googleAuth() {
   showToast('Menghubungkan ke Google…');
   
   try {
-    // POPUP LOGIN GOOGLE FIREBASE
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
-    
-    // SIMPAN PROFIL KE REALTIME DATABASE
-    await set(ref(db, 'users/' + user.uid), {
-      namaLengkap: user.displayName,
+
+    // Cek apakah data sudah ada di Firebase
+    const dbRef = ref(db, 'users/' + user.uid);
+    const snapshot = await get(dbRef);
+    const existing = snapshot.exists() ? snapshot.val() : {};
+
+    const tipeAkun = existing.tipeAkun || 'mahasiswa';
+
+    // Simpan/update data ke Firebase
+    await set(dbRef, {
+      namaLengkap: user.displayName || existing.namaLengkap || '',
       email: user.email,
-      tipeAkun: 'mahasiswa', // Default pendaftar Google
+      tipeAkun: tipeAkun,
       waktuLoginTerakhir: new Date().toISOString()
     });
 
-    // SIMPAN SESSION LOKAL (Biar fitur di db.js seperti lamaran tetap jalan)
+    // Sinkronkan ke localStorage
+    let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    let localUser = users.find(u => u.id === user.uid);
+    if (!localUser) {
+      localUser = {
+        id: user.uid,
+        name: user.displayName || user.email,
+        email: user.email,
+        type: tipeAkun,
+        profile: null
+      };
+      users.push(localUser);
+    } else {
+      localUser.type = tipeAkun; // update jika berubah
+    }
+    localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
 
-    console.log('[Magnet] Login Google Berhasil:', user.uid);
-    showToast(`Berhasil masuk! Selamat datang, ${user.displayName}!`, 'success');
+    showToast(`Berhasil masuk! Selamat datang, ${localUser.name}!`, 'success');
 
-    // Arahkan ke dashboard
+    // Redirect sesuai tipe
     setTimeout(() => {
-      window.location.href = 'dashboard.html';
+      if (tipeAkun === 'perusahaan') {
+        window.location.href = 'tambah-lowongan.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
     }, 900);
-
   } catch (error) {
     console.error(error);
     showToast('Gagal terhubung ke Google.', 'error');
@@ -341,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('[Magnet] App initialized ✓');
 
 // CEK STATUS LOGIN MENGGUNAKAN FIREBASE AUTH
-  auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged(async(user) => {
     
     // Trik Logout
     const urlParams = new URLSearchParams(window.location.search);
@@ -352,32 +430,37 @@ document.addEventListener('DOMContentLoaded', () => {
       return; 
     }
 
-    // Cek user, TAPI abaikan kalau sedang dalam proses Register
-    if (user && !isRegisteringFirebase) {
-      
-      const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-      if (!users.find(u => u.id === user.uid)) {
+       // Di dalam auth.onAuthStateChanged((user) => { ...
+if (user && !isRegisteringFirebase) {
+    const dbRef = ref(db, 'users/' + user.uid);
+    const snapshot = await get(dbRef);  // ⚠️ ubah callback jadi async!
+    const fbData = snapshot.exists() ? snapshot.val() : {};
+    const tipeAkun = fbData.tipeAkun || 'mahasiswa';
+
+    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    if (!users.find(u => u.id === user.uid)) {
         users.push({
-          id: user.uid,
-          name: user.displayName || 'Sobat MagNet',
-          email: user.email,
-          type: 'mahasiswa', 
-          profile: null
+            id: user.uid,
+            name: fbData.namaLengkap || user.displayName || 'Sobat MagNet',
+            email: user.email,
+            type: tipeAkun,
+            profile: null
         });
         localStorage.setItem('magnet_users', JSON.stringify(users));
-      }
-      localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
-
-      // KODE YANG BIKIN NUMPUK (landing.classList.add('active')) SUDAH DIHAPUS
-      // Biarkan sistem transisi bawaanmu yang bekerja dengan rapi
-
-      const namaSapaan = user.displayName ? user.displayName : 'Sobat MagNet';
-      showToast(`Halo kembali lagi, ${namaSapaan}! Mengalihkan ke dashboard…`, 'success', 2000);
-      
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 1500);
     }
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+
+    const namaSapaan = fbData.namaLengkap || user.displayName || 'Sobat MagNet';
+    showToast(`Halo kembali lagi, ${namaSapaan}!`, 'success', 2000);
+    
+    setTimeout(() => {
+        if (tipeAkun === 'perusahaan') {
+            window.location.href = 'tambah-lowongan.html';
+        } else {
+            window.location.href = 'dashboard.html';
+        }
+    }, 1500);
+}
   });
 });
 
