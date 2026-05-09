@@ -390,10 +390,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('[Magnet] App initialized ✓');
 
-  // CEK STATUS LOGIN MENGGUNAKAN FIREBASE AUTH
+// CEK STATUS LOGIN MENGGUNAKAN FIREBASE AUTH
   auth.onAuthStateChanged((user) => {
     if (user) {
-      // Jika user terdeteksi sudah login di Firebase
+      // --- TAMBAHAN BARU: SINKRONISASI KE DB.JS ---
+      const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+      if (!users.find(u => u.id === user.uid)) {
+        users.push({
+          id: user.uid,
+          name: user.displayName || 'Sobat MagNet',
+          email: user.email,
+          type: 'mahasiswa', 
+          profile: null
+        });
+        localStorage.setItem('magnet_users', JSON.stringify(users));
+      }
+      localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+      // --------------------------------------------
+
       // Tampilkan animasi halaman sebentar agar tidak mengagetkan
       const landing = document.getElementById('page-landing');
       if (landing) landing.classList.add('active');
