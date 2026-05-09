@@ -2,37 +2,150 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Magnet – Tambah Lowongan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.png" alt="Magnet" class="sidebar-logo-img" onerror="this.style.display='none'">
+      <span class="sidebar-logo-text">Magnet</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">...</span><span class="nav-label">Beranda</span></a>
+      <a href="lowongan.html" class="nav-item"><span class="nav-icon">...</span><span class="nav-label">Cari Lowongan</span></a>
+      <a href="lamaran.html" class="nav-item" id="nav-lamaran"><span class="nav-icon">...</span><span class="nav-label">Status Lamaran</span></a>
+      <a href="tambah-lowongan.html" class="nav-item active"><span class="nav-icon">...</span><span class="nav-label">Tambah Lowongan</span></a>
+      <a href="profil.html" class="nav-item"><span class="nav-icon">...</span><span class="nav-label">Profil Saya</span></a>
+    </nav>
+    <button class="sidebar-logout" onclick="handleLogout()">...</button>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
   <main class="main-content">
     <header class="top-header">
-      <button class="hamburger-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" ...></svg></button>
+      <button class="hamburger-btn" onclick="toggleSidebar()">...</button>
       <div class="header-brand"><span class="header-brand-name">Tambah Lowongan</span></div>
-      <div class="header-actions">
-        <button class="icon-btn" onclick="history.back()">← Kembali</button>
-      </div>
+      <div class="header-actions"><div class="avatar-btn" onclick="window.location.href='profil.html'"><span id="avatarInitial">P</span></div></div>
     </header>
 
     <div class="page-body">
-      <form id="formLowongan" style="display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto">
-        <input type="text" id="title" placeholder="Judul Lowongan" required>
-        <input type="text" id="location" placeholder="Lokasi">
-        <select id="category">
-          <option value="it">Teknologi</option>
-          <option value="bisnis">Bisnis</option>
-          <option value="desain">Desain</option>
-          <!-- tambahkan pilihan lain -->
-        </select>
-        <textarea id="description" placeholder="Deskripsi pekerjaan" rows="5" required></textarea>
-        <input type="text" id="salary" placeholder="Gaji (contoh: Rp 2.000.000 – Rp 3.000.000)">
-        <input type="text" id="duration" placeholder="Durasi (3-6)">
-        <input type="text" id="deadline" placeholder="Deadline (contoh: 30 Juni 2026)">
-        <button type="submit" class="btn btn-primary">Publikasikan Lowongan</button>
+      <form id="formLowongan" style="max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px;">
+        
+        <div class="input-group">
+          <label class="input-label">Judul Lowongan *</label>
+          <input type="text" id="title" class="input-field" required placeholder="Contoh: Frontend Developer Intern">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Departemen / Divisi *</label>
+          <input type="text" id="department" class="input-field" required placeholder="Contoh: Engineering, Marketing">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Lokasi *</label>
+          <input type="text" id="location" class="input-field" required placeholder="Contoh: Jakarta Selatan">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Mode Kerja *</label>
+          <select id="remoteKey" class="input-field" required>
+            <option value="onsite">Onsite</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="remote">Remote</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Tipe Pekerjaan *</label>
+          <select id="tipeKey" class="input-field" required>
+            <option value="magang">Magang</option>
+            <option value="parttime">Part-time</option>
+            <option value="fulltime">Full-time</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Kategori *</label>
+          <select id="category" class="input-field" required>
+            <option value="it">Teknologi & IT</option>
+            <option value="desain">Desain & Kreatif</option>
+            <option value="bisnis">Bisnis & Manajemen</option>
+            <option value="keuangan">Keuangan</option>
+            <option value="marketing">Marketing</option>
+            <option value="riset">Riset & Data</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Gaji / Uang Saku *</label>
+          <input type="text" id="salary" class="input-field" required placeholder="Contoh: Rp 3.000.000 – Rp 5.000.000 / bulan">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Gaji Minimal (juta) *</label>
+          <input type="number" id="salaryMin" class="input-field" required placeholder="Contoh: 3">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Gaji Maksimal (juta) *</label>
+          <input type="number" id="salaryMax" class="input-field" required placeholder="Contoh: 5">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Durasi Magang *</label>
+          <select id="durasi" class="input-field" required>
+            <option value="1-3">1 – 3 Bulan</option>
+            <option value="3-6">3 – 6 Bulan</option>
+            <option value="6+">6 Bulan+</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Batas Akhir Pendaftaran *</label>
+          <input type="text" id="deadline" class="input-field" required placeholder="Contoh: 30 Juni 2026">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Kuota *</label>
+          <input type="number" id="quota" class="input-field" required placeholder="Contoh: 3" min="1">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Deskripsi Pekerjaan *</label>
+          <textarea id="description" class="input-field" rows="6" required placeholder="Deskripsikan tugas dan tanggung jawab..."></textarea>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Persyaratan (pisahkan dengan koma)</label>
+          <textarea id="requirements" class="input-field" rows="3" placeholder="Contoh: Mahasiswa aktif semester 5, IPK minimal 3.0..."></textarea>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Skills yang Dibutuhkan (pisahkan dengan koma)</label>
+          <input type="text" id="skills" class="input-field" placeholder="Contoh: React, JavaScript, Git">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Benefit / Fasilitas (pisahkan dengan koma)</label>
+          <input type="text" id="benefits" class="input-field" placeholder="Contoh: Uang saku, Sertifikat, Mentoring">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="btnSimpan" style="margin-top:10px;">
+          Publikasikan Lowongan
+        </button>
       </form>
     </div>
   </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="db.js"></script>
+  <script src="dashboard.js"></script>
   <script type="module" src="tambah-lowongan.js"></script>
 </body>
 </html>
