@@ -2,10 +2,84 @@
    MAGNET – DASHBOARD.JS
 ════════════════════════════════════════════════════════════ */
 
-import { db } from "./app.js";
-import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
-let JOBS = [];
+/* ── Sample job data ── */
+const JOBS = [
+  {
+    id: 1,
+    title: 'Jr Quality Assurance (Automation)',
+    company: 'PT Adi Data Informatika',
+    companyShort: 'AD',
+    logo: null,
+    logoColor: '#E53935',
+    type: 'Full time',
+    location: 'Jakarta',
+    salary: 'Rp 5.000.000 – Rp 6.500.000 / bulan',
+    tags: ['Placed in BUMN Institution', 'Career development', 'Competitive salary'],
+    postedAt: '1 hari lalu',
+    isNew: true,
+    category: 'it',
+  },
+  {
+    id: 2,
+    title: 'QA or Tester (Onsite at Yogya)',
+    company: 'PT. Amalura Multisarana',
+    companyShort: 'AM',
+    logo: null,
+    logoColor: '#1565C0',
+    type: 'Full time',
+    location: 'Yogyakarta',
+    salary: 'Rp 4.000.000 – Rp 5.500.000 / bulan',
+    tags: ['Remote friendly', 'Training provided'],
+    postedAt: '2 hari lalu',
+    isNew: true,
+    category: 'it',
+  },
+  {
+    id: 3,
+    title: 'UI/UX Designer Intern',
+    company: 'Tokopedia',
+    companyShort: 'TK',
+    logo: null,
+    logoColor: '#4CAF50',
+    type: 'Magang',
+    location: 'Jakarta',
+    salary: 'Rp 2.500.000 – Rp 3.500.000 / bulan',
+    tags: ['Figma', 'Design System', 'Hybrid'],
+    postedAt: '3 hari lalu',
+    isNew: false,
+    category: 'desain',
+  },
+  {
+    id: 4,
+    title: 'Business Analyst Intern',
+    company: 'Gojek',
+    companyShort: 'GJ',
+    logo: null,
+    logoColor: '#00BCD4',
+    type: 'Magang',
+    location: 'Jakarta (Remote)',
+    salary: 'Rp 2.000.000 – Rp 3.000.000 / bulan',
+    tags: ['Excel', 'PowerBI', 'Presentasi'],
+    postedAt: '4 hari lalu',
+    isNew: false,
+    category: 'bisnis',
+  },
+  {
+    id: 5,
+    title: 'Frontend Developer (React)',
+    company: 'Bukalapak',
+    companyShort: 'BL',
+    logo: null,
+    logoColor: '#FF5722',
+    type: 'Magang / Part-time',
+    location: 'Bandung',
+    salary: 'Rp 3.000.000 – Rp 4.500.000 / bulan',
+    tags: ['React', 'TypeScript', 'Remote OK'],
+    postedAt: '5 hari lalu',
+    isNew: false,
+    category: 'it',
+  },
+];
 
 let savedJobs = new Set();
 let activeFilter = 'all';
@@ -261,7 +335,7 @@ document.addEventListener('click', (e) => {
 ═══════════════════════════ */
 function handleLogout() {
   MagnetDB.logout();
-  window.location.href = 'index.html';
+  window.location.href = 'index.html?logout=true';
 }
 
 
@@ -323,71 +397,53 @@ function startGreetingClock() {
 }
 
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Terapkan state UI standar
-  restoreSidebarState();
-  applyGuestMode();
+/* ═══════════════════════════
+   INIT
+═══════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Halaman dengan window.GUEST_ALLOWED = true boleh diakses tanpa login
+  if (!window.GUEST_ALLOWED) {
+    MagnetDB.requireAuth('index.html');
+  }
 
-  // 2. Logika Sapaan & Profil Pengguna
   const user = MagnetDB.getSession();
-  const greetingName  = document.getElementById('greetingName');
-  const greetingLabel = document.getElementById('greetingLabel');
-  const avatarInit    = document.getElementById('avatarInitial');
-  const notifDot      = document.getElementById('notifDot');
-
   if (user) {
-    if (greetingName)  greetingName.textContent  = user.name.split(' ')[0];
-    if (greetingLabel) {
-      const hour = new Date().getHours();
-      if (hour < 11) greetingLabel.textContent = 'Selamat pagi,';
-      else if (hour < 15) greetingLabel.textContent = 'Selamat siang,';
-      else if (hour < 19) greetingLabel.textContent = 'Selamat sore,';
-      else greetingLabel.textContent = 'Selamat malam,';
-    }
-    if (avatarInit) avatarInit.textContent = user.name.charAt(0).toUpperCase();
-    
-    const unreadNotifs = JSON.parse(localStorage.getItem('mg_notif_read') || '[]');
-    if (notifDot) notifDot.style.display = unreadNotifs.length < 5 ? 'block' : 'none';
-    
-    // Update badge jumlah lamaran di sidebar
-    const apps = MagnetDB.getUserApplications();
-    const badge = document.getElementById('nav-lamaran-badge');
-    if (badge && apps.length > 0) {
-      badge.textContent = apps.length;
-      badge.style.display = 'inline-block';
+    setGreeting(user.name || 'Pengguna');
+    startGreetingClock();
+  }
+
+  // ── Badge: Status Lamaran (hitung dari localStorage) ──
+  const apps       = MagnetDB.getUserApplications();
+  const lamaranBadge = document.getElementById('nav-lamaran-badge');
+  if (lamaranBadge) {
+    if (apps.length > 0) {
+      lamaranBadge.textContent   = apps.length;
+      lamaranBadge.style.display = 'inline-flex';
+    } else {
+      lamaranBadge.style.display = 'none';
     }
   }
 
-  // 3. AMBIL DATA LOWONGAN DARI FIREBASE
-  try {
-    const jobsRef = ref(db, 'jobs');
-    const snapshot = await get(jobsRef);
-    
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      
-      // Mengisi variabel JOBS global dengan data dari Firebase
-      JOBS = Object.keys(data).map(key => ({
-        id: key, 
-        ...data[key]
-      }));
-      
-      // Render data pertama kali (tampilkan semua)
-      renderJobs('all'); 
-      
-      // Update angka pada chip "Baru untukmu" jika ada
-      const newCount = JOBS.filter(j => j.isNew).length;
-      const countBadge = document.getElementById('newJobsCount');
-      if (countBadge && newCount > 0) {
-        countBadge.textContent = newCount;
-        countBadge.style.display = 'inline-block';
-      }
+  // ── Badge: "Baru untukmu" (hitung job dengan isNew: true) ──
+  const newCount = typeof JOBS !== 'undefined'
+    ? JOBS.filter(j => j.isNew).length
+    : 0;
+  const newBadge = document.getElementById('newJobsCount');
+  if (newBadge) {
+    if (newCount > 0) {
+      newBadge.textContent   = newCount;
+      newBadge.style.display = 'inline-flex';
     } else {
-      document.getElementById('jobsList').innerHTML = '<p style="text-align:center; color:var(--text-light); padding: 20px;">Belum ada rekomendasi lowongan.</p>';
+      newBadge.style.display = 'none';
     }
-  } catch (error) {
-    console.error("Gagal mengambil data dari Firebase:", error);
-    document.getElementById('jobsList').innerHTML = '<p style="text-align:center; color:var(--red); padding: 20px;">Gagal memuat lowongan. Periksa koneksi internet.</p>';
+  }
+
+  // Restore sidebar collapsed state (desktop)
+  restoreSidebarState();
+
+  // Only render job cards on dashboard page
+  if (document.getElementById('jobsList')) {
+    renderJobs();
   }
 });
 

@@ -30,7 +30,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const analytics = getAnalytics(firebaseApp);
 const auth = getAuth(firebaseApp);
-export const db = getDatabase(firebaseApp);
+const db = getDatabase(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
 /* ── 1. STATE ── */
