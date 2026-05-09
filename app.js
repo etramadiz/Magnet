@@ -152,79 +152,26 @@ function transitionBackground(pageId) {
 
 
 /* ── 4. FORM HANDLERS ── */
+let isRegisteringFirebase = false; // Penanda agar tidak auto-login
 
-  async function handleLogin() { // Jangan lupa ada kata 'async' di sini
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value.trim();
-
-  if (!email) {
-    showToast('Masukkan email atau nomor telepon.', 'error');
-    shakeInput('login-email');
-    return;
-  }
-  if (!password) {
-    showToast('Masukkan kata sandi.', 'error');
-    shakeInput('login-password');
-    return;
-  }
-
-  showToast('Memproses masuk…', 'success');
-
-  try {
-    // FIREBASE LOGIN
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    // SIMPAN SESSION LOKAL (Biar fitur di db.js seperti lamaran tetap jalan)
-    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
-
-    showToast('Berhasil masuk! Mengalihkan…', 'success');
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 900);
-
-  } catch (error) {
-    showToast('Login gagal: ' + error.message, 'error');
-    shakeInput('login-email');
-    shakeInput('login-password');
-  }
-}
-
-async function handleRegister() { // Jangan lupa ada kata 'async' di sini
+async function handleRegister() {
   const name     = document.getElementById('reg-name').value.trim();
   const email    = document.getElementById('reg-email').value.trim();
   const phone    = document.getElementById('reg-phone').value.trim();
   const password = document.getElementById('reg-password').value.trim();
 
-  if (!name) {
-    showToast('Masukkan nama lengkap.', 'error');
-    shakeInput('reg-name');
-    return;
-  }
-  if (!email) {
-    showToast('Masukkan email.', 'error');
-    shakeInput('reg-email');
-    return;
-  }
-  if (!validateEmail(email)) {
-    showToast('Format email tidak valid.', 'error');
-    shakeInput('reg-email');
-    return;
-  }
-  if (!phone) {
-    showToast('Masukkan nomor telepon.', 'error');
-    shakeInput('reg-phone');
-    return;
-  }
-  if (!password || password.length < 6) {
-    showToast('Kata sandi minimal 6 karakter.', 'error');
-    shakeInput('reg-password');
-    return;
-  }
+  // ... (validasi form biarkan sama persis seperti sebelumnya) ...
+  if (!name) { showToast('Masukkan nama lengkap.', 'error'); shakeInput('reg-name'); return; }
+  if (!email) { showToast('Masukkan email.', 'error'); shakeInput('reg-email'); return; }
+  if (!validateEmail(email)) { showToast('Format email tidak valid.', 'error'); shakeInput('reg-email'); return; }
+  if (!phone) { showToast('Masukkan nomor telepon.', 'error'); shakeInput('reg-phone'); return; }
+  if (!password || password.length < 6) { showToast('Kata sandi minimal 6 karakter.', 'error'); shakeInput('reg-password'); return; }
 
   showToast('Memproses pendaftaran...', 'success');
 
   try {
+    isRegisteringFirebase = true; // Nyalakan rem auto-login
+
     // FIREBASE REGISTER AUTH
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -238,16 +185,16 @@ async function handleRegister() { // Jangan lupa ada kata 'async' di sini
       waktuDaftar: new Date().toISOString()
     });
 
-    // SIMPAN SESSION LOKAL (Biar fitur di db.js seperti lamaran tetap jalan)
-    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+    // LOGOUT INSTAN DARI FIREBASE UNTUK MENCEGAH AUTO-LOGIN
+    await signOut(auth);
+    isRegisteringFirebase = false; // Matikan rem
 
     showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
     console.log('[Magnet] Registered in Firebase:', user.uid);
 
-    // Redirect to login page after short delay (UI bawaanmu)
+    // KEMBALI KE FLOW ASLIMU: Redirect ke halaman login
     setTimeout(() => {
       navigateTo('page-login');
-      // Pre-fill email for convenience
       setTimeout(() => {
         const loginEmail = document.getElementById('login-email');
         if (loginEmail) loginEmail.value = email;
@@ -255,6 +202,7 @@ async function handleRegister() { // Jangan lupa ada kata 'async' di sini
     }, 1200);
 
   } catch (error) {
+    isRegisteringFirebase = false; // Pastikan rem mati kalau error
     showToast('Gagal mendaftar: ' + error.message, 'error');
     shakeInput('reg-email');
   }
@@ -393,20 +341,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // CEK STATUS LOGIN MENGGUNAKAN FIREBASE AUTH
   auth.onAuthStateChanged((user) => {
     
-    // --- TRIK JALUR BELAKANG: CEK APAKAH ADA MINTA LOGOUT ---
+    // Trik Logout
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('logout') === 'true') {
-      // Perintahkan Firebase untuk sign out!
       signOut(auth).then(() => {
-        // Bersihkan tulisan "?logout=true" di atas URL browser biar rapi
         window.history.replaceState({}, document.title, window.location.pathname);
       });
-      return; // STOP! Langsung berhenti di sini, jangan jalankan auto-login
+      return; 
     }
-    // --------------------------------------------------------
 
-    if (user) {
-      // --- SINKRONISASI KE DB.JS ---
+    // Cek user, TAPI abaikan kalau sedang dalam proses Register
+    if (user && !isRegisteringFirebase) {
+      
       const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
       if (!users.find(u => u.id === user.uid)) {
         users.push({
@@ -420,10 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
 
-      // Tampilkan animasi halaman sebentar
-      const landing = document.getElementById('page-landing');
-      if (landing) landing.classList.add('active');
-      transitionBackground('page-landing');
+      // KODE YANG BIKIN NUMPUK (landing.classList.add('active')) SUDAH DIHAPUS
+      // Biarkan sistem transisi bawaanmu yang bekerja dengan rapi
 
       const namaSapaan = user.displayName ? user.displayName : 'Sobat MagNet';
       showToast(`Halo kembali lagi, ${namaSapaan}! Mengalihkan ke dashboard…`, 'success', 2000);
