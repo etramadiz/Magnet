@@ -1,0 +1,136 @@
+/* ═══════════════════════════════════════════════════════════
+   MAGNET – LOWONGAN.CSS
+════════════════════════════════════════════════════════════ */
+
+.lw-body { gap: 20px; }
+
+/* ── Search Panel ── */
+.lw-search-panel {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.lw-search-title { margin-bottom: 20px; }
+.lw-search-title h2 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
+.lw-search-title p  { font-size: 0.83rem; color: var(--text-light); }
+
+.lw-field-group { margin-bottom: 14px; }
+.lw-field-group-label {
+  font-size: 0.75rem; font-weight: 700; color: var(--text-mid);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+}
+
+.lw-field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.lw-search-field {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-app); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 0 14px; height: 48px;
+  transition: border-color var(--transition), background var(--transition);
+}
+.lw-search-field:focus-within { border-color: var(--blue-primary); background: var(--white); }
+
+.lw-field-icon { width: 17px; height: 17px; color: var(--text-light); flex-shrink: 0; }
+
+.lw-input {
+  flex: 1; border: none; background: transparent;
+  font-family: var(--font-body); font-size: 0.9rem;
+  color: var(--text-dark); outline: none; min-width: 0;
+}
+.lw-input::placeholder { color: var(--text-light); }
+.lw-select { cursor: pointer; }
+
+.lw-clear-field {
+  background: none; border: none; color: var(--text-light);
+  cursor: pointer; font-size: 0.8rem; padding: 2px 4px;
+  transition: color var(--transition);
+}
+.lw-clear-field:hover { color: var(--text-dark); }
+
+/* ── Filter selects (native <select>) ── */
+.lw-filter-selects {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.lw-filter-select-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 50px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  transition: background var(--transition);
+}
+.lw-filter-select-row:last-child { border-bottom: none; }
+.lw-filter-select-row:hover { background: var(--bg-app); }
+.lw-filter-select-row:focus-within { background: #F5F3FF; }
+
+.lw-filter-select-icon { color: var(--text-mid); flex-shrink: 0; display: flex; align-items: center; }
+
+.lw-filter-native {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-dark);
+  outline: none;
+  cursor: pointer;
+  /* Hide native arrow — we use our own */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 8px;
+}
+.lw-filter-native:focus { color: var(--blue-primary); }
+
+/* Custom dropdown arrow */
+.lw-select-arrow { color: var(--text-light); flex-shrink: 0; pointer-events: none; }
+.lw-filter-select-row:focus-within .lw-select-arrow { color: var(--blue-primary); }
+
+/* ── CARI Button ── */
+.lw-seek-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 15px;
+  background: linear-gradient(135deg, #E91E8C, #C2185B);
+  color: #fff; border: none; border-radius: 12px;
+  font-family: var(--font-display); font-size: 1rem; font-weight: 800;
+  letter-spacing: 0.08em; cursor: pointer; touch-action: manipulation;
+  transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+  box-shadow: 0 4px 20px rgba(233,30,140,0.35);
+}
+.lw-seek-btn:hover  { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(233,30,140,0.45); }
+.lw-seek-btn:active { transform: scale(0.98); }
+
+/* ── Last Search ── */
+.lw-last-search { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.lw-last-label {
+  font-size: 0.75rem; font-weight: 700; color: var(--text-light);
+  margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.lw-last-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px;
+  background: var(--bg-app); border: 1.5px solid var(--border);
+  cursor: pointer; font-size: 0.88rem; color: var(--text-mid);
+  transition: all var(--transition);
+}
+.lw-last-item:hover { border-color: var(--blue-primary); color: var(--blue-primary); background: #EEF2FF; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .lw-field-2col { grid-template-columns: 1fr; }
+  .lw-search-panel { padding: 16px; }
+}

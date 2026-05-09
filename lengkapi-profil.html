@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Lengkapi Profil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="lengkapi-profil.css" />
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.png" alt="Magnet" class="sidebar-logo-img" onerror="this.style.display='none'" />
+      <span class="sidebar-logo-text">Magnet</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span class="nav-label">Beranda</span>
+      </a>
+      <a href="lowongan.html" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+        <span class="nav-label">Cari Lowongan</span>
+      </a>
+      <a href="lamaran.html" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <span class="nav-label">Status Lamaran</span>
+        <span class="nav-badge">2</span>
+      </a>
+      <a href="profil.html" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <span class="nav-label">Profil Saya</span>
+      </a>
+    </nav>
+    <button class="sidebar-logout" onclick="handleLogout()">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+      <span class="nav-label">Keluar</span>
+    </button>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <main class="main-content">
+    <header class="top-header">
+      <button class="hamburger-btn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="header-brand"><span class="header-brand-name">Lengkapi Profil</span></div>
+      <div class="header-actions">
+        <button class="lp-edit-toggle" id="editToggleBtn" onclick="toggleEditMode()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span id="editToggleLabel">Edit</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- BANNER -->
+      <div class="lp-banner" id="lpBanner">
+        <div class="lp-banner-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="lp-banner-text">
+          <p class="lp-banner-title">Profil belum lengkap</p>
+          <p class="lp-banner-sub">Lengkapi data diri untuk mendapatkan rekomendasi lowongan yang lebih tepat.</p>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="lp-progress-wrap">
+        <div class="lp-progress-labels">
+          <span>Kelengkapan Profil</span>
+          <span class="lp-progress-pct" id="progressPct">0%</span>
+        </div>
+        <div class="lp-progress-track"><div class="lp-progress-fill" id="progressFill"></div></div>
+        <p class="lp-progress-hint" id="progressHint">Isi semua data untuk mendapatkan rekomendasi terbaik</p>
+      </div>
+
+      <!-- FORM -->
+      <form class="lp-form" id="lpForm" onsubmit="return false;">
+
+        <!-- FOTO PROFIL -->
+        <div class="lp-section">
+          <div class="lp-section-head">
+            <div class="lp-section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>Foto Profil</h3>
+          </div>
+          <div class="lp-photo-wrap">
+            <!-- Preview lingkaran -->
+            <div class="lp-photo-preview" id="photoPreview">
+              <img id="photoImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" />
+              <span class="lp-photo-initial" id="photoInitial">?</span>
+            </div>
+            <!-- Upload area -->
+            <div class="lp-photo-actions">
+              <p class="lp-photo-hint">Format JPG, PNG, atau WEBP. Ukuran maks. 2MB.</p>
+              <div class="lp-photo-btns">
+                <button type="button" class="lp-photo-upload-btn" onclick="document.getElementById('photoFileInput').click()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload Foto
+                </button>
+                <button type="button" class="lp-photo-remove-btn" id="photoRemoveBtn" onclick="removePhoto()" style="display:none">Hapus</button>
+              </div>
+              <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handlePhotoUpload(this)" />
+            </div>
+          </div>
+        </div>
+
+        <!-- DATA DIRI -->
+        <div class="lp-section" id="sect-datadiri">
+          <div class="lp-section-head">
+            <div class="lp-section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>Data Diri</h3>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Nama Lengkap <span class="req">*</span></label>
+            <input type="text" class="lp-input" id="f-nama" placeholder="Masukkan nama lengkap" />
+          </div>
+          <div class="lp-field-row">
+            <div class="lp-field">
+              <label class="lp-label">Universitas <span class="req">*</span></label>
+              <input type="text" class="lp-input" id="f-universitas" placeholder="Contoh: Universitas Indonesia" />
+            </div>
+            <div class="lp-field">
+              <label class="lp-label">Jurusan <span class="req">*</span></label>
+              <input type="text" class="lp-input" id="f-jurusan" placeholder="Contoh: Teknik Informatika" />
+            </div>
+          </div>
+          <div class="lp-field-row">
+            <div class="lp-field">
+              <label class="lp-label">Semester <span class="req">*</span></label>
+              <select class="lp-input lp-select" id="f-semester">
+                <option value="">Pilih Semester</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+                <option value="7">Semester 7</option>
+                <option value="8">Semester 8</option>
+                <option value="9">Semester 9+</option>
+              </select>
+            </div>
+            <div class="lp-field">
+              <label class="lp-label">IPK (opsional)</label>
+              <input type="number" class="lp-input" id="f-ipk" placeholder="Contoh: 3.75" min="0" max="4" step="0.01" />
+            </div>
+          </div>
+        </div>
+
+        <!-- SKILL -->
+        <div class="lp-section" id="sect-skill">
+          <div class="lp-section-head">
+            <div class="lp-section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>Skill &amp; Kemampuan</h3>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Skill Teknis</label>
+            <p class="lp-field-hint">Ketik skill lalu tekan Enter atau klik +</p>
+            <div class="tag-input-wrap" id="skillWrap">
+              <div class="tag-list" id="skillTags"></div>
+              <div class="tag-input-row">
+                <input type="text" class="tag-input" id="skillInput" placeholder="Contoh: Python, Figma, Excel…" />
+                <button type="button" class="tag-add-btn" onclick="addTag('skill')">+</button>
+              </div>
+            </div>
+            <div class="tag-suggestions">
+              <span class="tag-suggest-label">Saran:</span>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','Python')">Python</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','JavaScript')">JavaScript</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','Figma')">Figma</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','Excel')">Excel</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','SQL')">SQL</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','React')">React</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('skill','Canva')">Canva</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MINAT -->
+        <div class="lp-section">
+          <div class="lp-section-head">
+            <div class="lp-section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <h3>Bidang Minat</h3>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Bidang yang diminati</label>
+            <p class="lp-field-hint">Pilih bidang yang ingin kamu tekuni dalam magang</p>
+            <div class="tag-input-wrap" id="minatWrap">
+              <div class="tag-list" id="minatTags"></div>
+              <div class="tag-input-row">
+                <input type="text" class="tag-input" id="minatInput" placeholder="Contoh: UI/UX Design, Data Science…" />
+                <button type="button" class="tag-add-btn" onclick="addTag('minat')">+</button>
+              </div>
+            </div>
+            <div class="tag-suggestions">
+              <span class="tag-suggest-label">Saran:</span>
+              <button type="button" class="tag-pill" onclick="addSuggestion('minat','UI/UX Design')">UI/UX Design</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('minat','Data Science')">Data Science</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('minat','Software Engineering')">Software Engineering</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('minat','Marketing')">Marketing</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('minat','Business Analyst')">Business Analyst</button>
+              <button type="button" class="tag-pill" onclick="addSuggestion('minat','Finance')">Finance</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PENGALAMAN & PENDIDIKAN -->
+        <div class="lp-section" id="sect-pengalaman">
+          <div class="lp-section-head">
+            <div class="lp-section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <h3>Pengalaman &amp; Pendidikan</h3>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Pendidikan Terakhir</label>
+            <input type="text" class="lp-input" id="f-pendidikan" placeholder="Contoh: S1 Teknik Informatika - Universitas Indonesia" />
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Pengalaman Organisasi / Kepanitiaan</label>
+            <p class="lp-field-hint">Tulis pengalaman yang relevan</p>
+            <textarea class="lp-input" id="f-pengalaman" rows="3" placeholder="Contoh: Ketua BEM Fakultas 2024, Panitia Seminar Teknologi 2023…" style="resize:vertical;line-height:1.5"></textarea>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Pencapaian / Prestasi (opsional)</label>
+            <input type="text" class="lp-input" id="f-prestasi" placeholder="Contoh: Juara 2 Hackathon UI 2024" />
+          </div>
+        </div>
+
+        <!-- CV -->
+        <div class="lp-section" id="sect-cv">
+          <div class="lp-section-head">
+            <div class="lp-section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <h3>Curriculum Vitae (CV)</h3>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Upload CV</label>
+            <p class="lp-field-hint">Format PDF, maksimal 5MB. Akan ditampilkan ke recruiter.</p>
+            <div class="cv-upload-area" id="cvUploadArea" onclick="document.getElementById('cvFileInput').click()">
+              <input type="file" id="cvFileInput" accept=".pdf" style="display:none" onchange="handleCVUpload(this)" />
+              <div class="cv-upload-placeholder" id="cvPlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p class="cv-upload-title">Klik untuk upload CV</p>
+                <p class="cv-upload-sub">atau seret file PDF ke sini</p>
+              </div>
+            </div>
+            <div class="cv-status" id="cvStatus" style="display:none">
+              <div class="cv-status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="cv-status-info">
+                <p class="cv-status-name" id="cvFileName">—</p>
+                <p class="cv-status-meta" id="cvFileMeta">—</p>
+              </div>
+              <div class="cv-status-actions">
+                <span class="cv-status-badge">✓ Tersimpan</span>
+                <button type="button" class="cv-change-btn" onclick="document.getElementById('cvFileInput').click()">Ganti</button>
+                <button type="button" class="cv-remove-btn" onclick="removeCV()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIMPAN -->
+        <div class="lp-actions">
+          <button type="button" class="lp-btn-save" onclick="saveProfile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Simpan Profil
+          </button>
+          <a href="dashboard.html" class="lp-btn-skip">Lewati dulu</a>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="db.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="lengkapi-profil.js"></script>
+</body>
+</html>

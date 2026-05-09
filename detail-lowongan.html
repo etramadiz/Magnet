@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Detail Lowongan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="detail-lowongan.css" />
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.png" alt="Magnet" class="sidebar-logo-img" onerror="this.style.display='none'" />
+      <span class="sidebar-logo-text">Magnet</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Beranda</span></a>
+      <a href="lowongan.html" class="nav-item active"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><span class="nav-label">Cari Lowongan</span></a>
+      <a href="lamaran.html" class="nav-item" id="nav-lamaran"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="nav-label">Status Lamaran</span><span class="nav-badge">2</span></a>
+      <a href="profil.html" class="nav-item" id="nav-profil"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profil Saya</span></a>
+    </nav>
+    <button class="sidebar-logout" onclick="handleLogout()"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="nav-label">Keluar</span></button>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <main class="main-content dl-layout">
+    <header class="top-header">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="header-brand"><span class="header-brand-name">Detail Lowongan</span></div>
+      <div class="header-actions"><div class="avatar-btn" onclick="window.location.href='profil.html'" style="cursor:pointer"><span id="avatarInitial">M</span></div></div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- TOP BAR with back -->
+      <div class="dl-topbar">
+        <button class="dl-back-btn" onclick="history.back()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <p class="dl-topbar-title" id="dlTopTitle">Memuat…</p>
+        <button class="dl-share-btn" onclick="shareJob()" title="Bagikan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+      </div>
+
+      <!-- SCROLLABLE CONTENT -->
+      <div class="dl-scroll" id="dlScroll">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- FIXED CTA -->
+      <div class="dl-cta-bar" id="dlCtaBar" style="display:none">
+        <div class="dl-cta-deadline">
+          <p class="dl-cta-deadline-label">Batas pendaftaran</p>
+          <p class="dl-cta-deadline-date" id="dlDeadline">—</p>
+        </div>
+        <button class="dl-lamar-btn" id="lamarBtn" onclick="lamarSekarang()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+          Lamar Sekarang
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script>window.GUEST_ALLOWED = true;</script>
+  <script src="db.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="jobs-data.js"></script>
+  <script src="detail-lowongan.js"></script>
+</body>
+</html>

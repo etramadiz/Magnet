@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Tulis Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.png" alt="Magnet" class="sidebar-logo-img" onerror="this.style.display='none'" />
+      <span class="sidebar-logo-text">Magnet</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Beranda</span></a>
+      <a href="lowongan.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><span class="nav-label">Cari Lowongan</span></a>
+      <a href="lamaran.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="nav-label">Status Lamaran</span></a>
+      <a href="profil.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profil Saya</span></a>
+    </nav>
+    <button class="sidebar-logout" onclick="handleLogout()"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="nav-label">Keluar</span></button>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <main class="main-content">
+    <header class="top-header">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="header-brand"><span class="header-brand-name">Tulis Review</span></div>
+      <div class="header-actions">
+        <button class="rv-back-btn" onclick="history.back()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><polyline points="15 18 9 12 15 6"/></svg>
+          Kembali
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- COMPANY INFO CARD -->
+      <div class="rv-company-card" id="rvCompanyCard">
+        <div class="rv-company-logo" id="rvLogo">?</div>
+        <div>
+          <p class="rv-company-name" id="rvCompanyName">—</p>
+          <p class="rv-company-sub">Review Pengalaman Magang</p>
+        </div>
+      </div>
+
+      <!-- FORM CARD -->
+      <div class="rv-form-card">
+
+        <!-- TITLE -->
+        <div class="rv-form-hero">
+          <div class="rv-form-hero-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div>
+            <h2 class="rv-form-title">Bagikan Pengalaman Magangmu</h2>
+            <p class="rv-form-sub">Review kamu akan membantu mahasiswa lain memilih tempat magang yang tepat</p>
+          </div>
+        </div>
+
+        <!-- STAR RATING -->
+        <div class="rv-section">
+          <label class="rv-label">Rating Keseluruhan <span class="rv-req">*</span></label>
+          <div class="rv-star-wrap">
+            <div class="rv-stars" id="rvStars">
+              <button class="rv-star-btn" data-val="1" onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="unhoverRating()">★</button>
+              <button class="rv-star-btn" data-val="2" onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="unhoverRating()">★</button>
+              <button class="rv-star-btn" data-val="3" onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="unhoverRating()">★</button>
+              <button class="rv-star-btn" data-val="4" onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="unhoverRating()">★</button>
+              <button class="rv-star-btn" data-val="5" onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="unhoverRating()">★</button>
+            </div>
+            <span class="rv-rating-label" id="rvRatingLabel">Belum dipilih</span>
+          </div>
+        </div>
+
+        <!-- POSISI -->
+        <div class="rv-section">
+          <label class="rv-label">Posisi / Bidang Magang <span class="rv-req">*</span></label>
+          <input type="text" class="rv-input" id="rvRole" placeholder="Contoh: UI/UX Designer Intern, Data Analyst Intern…" />
+        </div>
+
+        <!-- JUDUL REVIEW -->
+        <div class="rv-section">
+          <label class="rv-label">Judul Review <span class="rv-req">*</span></label>
+          <input type="text" class="rv-input" id="rvTitle" placeholder="Rangkum pengalamanmu dalam satu kalimat" maxlength="80" oninput="countChars('rvTitle','rvTitleCount',80)" />
+          <p class="rv-char-count"><span id="rvTitleCount">0</span>/80</p>
+        </div>
+
+        <!-- REVIEW UTAMA -->
+        <div class="rv-section">
+          <label class="rv-label">Ceritakan Pengalamanmu <span class="rv-req">*</span></label>
+          <p class="rv-hint">Bagikan pengalaman magang secara jujur — apa yang kamu pelajari, suasana kerja, dsb.</p>
+          <textarea class="rv-textarea" id="rvText" rows="5" maxlength="1000"
+            placeholder="Selama magang di sini, saya…" oninput="countChars('rvText','rvTextCount',1000)"></textarea>
+          <p class="rv-char-count"><span id="rvTextCount">0</span>/1000</p>
+        </div>
+
+        <!-- PROS -->
+        <div class="rv-section">
+          <label class="rv-label rv-label-pros">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+            Kelebihan (Opsional)
+          </label>
+          <input type="text" class="rv-input rv-input-pros" id="rvPros"
+            placeholder="Apa yang kamu suka? Contoh: Mentor supportif, WFH fleksibel…" maxlength="200" />
+        </div>
+
+        <!-- CONS -->
+        <div class="rv-section">
+          <label class="rv-label rv-label-cons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Kekurangan (Opsional)
+          </label>
+          <input type="text" class="rv-input rv-input-cons" id="rvCons"
+            placeholder="Apa yang bisa diperbaiki? Contoh: Onboarding kurang jelas…" maxlength="200" />
+        </div>
+
+        <!-- DISCLAIMER -->
+        <div class="rv-disclaimer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;color:var(--text-light)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p>Review kamu bersifat anonim untuk perusahaan dan ditampilkan hanya dengan inisial nama. Harap tulis secara jujur dan bertanggung jawab.</p>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="rv-actions">
+          <button class="rv-submit-btn" id="rvSubmitBtn" onclick="submitReview()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            Kirim Review
+          </button>
+          <button class="rv-cancel-btn" onclick="history.back()">Batal</button>
+        </div>
+
+      </div><!-- /form-card -->
+
+      <!-- SUCCESS STATE -->
+      <div class="rv-success" id="rvSuccess" style="display:none">
+        <div class="rv-success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="36" height="36"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3>Review Terkirim!</h3>
+        <p>Terima kasih sudah berbagi pengalamanmu. Review kamu akan membantu ratusan mahasiswa lain memilih tempat magang.</p>
+        <a id="rvSuccessBack" href="#" class="rv-success-cta">← Kembali ke Profil Perusahaan</a>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="db.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="companies-data.js"></script>
+  <script src="review.js"></script>
+</body>
+</html>
