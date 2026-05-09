@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>MagNet - Tambah Lowongan (Perusahaan)</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="main-content">
+    <h2>Buat Lowongan Baru</h2>
+    
+    <div class="form-card">
+      <input type="text" id="inputTitle" placeholder="Judul Posisi (misal: UI/UX Intern)" class="input-field">
+      <input type="text" id="inputLocation" placeholder="Lokasi (misal: Jakarta Selatan)" class="input-field">
+      <input type="text" id="inputSalary" placeholder="Gaji (misal: Rp 3.000.000 / bulan)" class="input-field">
+      
+      <select id="inputCategory" class="input-field">
+        <option value="it">Teknologi & IT</option>
+        <option value="desain">Desain & Kreatif</option>
+        <option value="bisnis">Bisnis & Manajemen</option>
+      </select>
+
+      <textarea id="inputDescription" placeholder="Deskripsi pekerjaan..." class="input-field" rows="4"></textarea>
+      
+      <button id="btnSimpanLowongan" class="btn btn-primary">Publikasikan Lowongan</button>
+    </div>
+  </div>
+
+  <script type="module" src="tambah-lowongan.js"></script>
+</body>
+</html>

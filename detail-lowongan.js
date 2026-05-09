@@ -1,5 +1,30 @@
 /* detail-lowongan.js */
 
+import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+import { db } from "./app.js";
+
+document.addEventListener('DOMContentLoaded', async () => {
+  restoreSidebarState();
+  applyGuestMode();
+
+  const id = new URLSearchParams(window.location.search).get('id');
+  
+  // Ambil data spesifik berdasarkan ID dari Firebase
+  const jobRef = ref(db, `jobs/${id}`);
+  try {
+    const snapshot = await get(jobRef);
+    if (snapshot.exists()) {
+      const job = snapshot.val();
+      renderDetail(job);
+    } else {
+      // Tampilkan pesan jika lowongan tidak ditemukan
+      document.getElementById('dlScroll').innerHTML = `<p>Lowongan tidak ditemukan.</p>`;
+    }
+  } catch (error) {
+    console.error("Gagal mengambil detail:", error);
+  }
+});
+
 let currentJob  = null;
 let savedSet    = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
 let appliedSet  = new Set(JSON.parse(localStorage.getItem('mg_applied') || '[]'));
