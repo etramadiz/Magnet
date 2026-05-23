@@ -8,10 +8,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-// Fungsi showToast (salin dari auth.js jika perlu)
+// Fungsi toast sederhana (fallback jika tidak ada toast global)
 function showToast(msg, type = 'info') {
   let toast = document.getElementById('auth-toast');
-  if (!toast) return;
+  if (!toast) {
+    // Coba cari toast dari dashboard
+    toast = document.getElementById('toast');
+  }
+  if (!toast) {
+    alert(msg);
+    return;
+  }
   toast.textContent = msg;
   toast.className = 'toast show';
   if (type === 'error') toast.classList.add('error');
@@ -19,12 +26,14 @@ function showToast(msg, type = 'info') {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
+// Ekspor ulang auth agar bisa diimpor di file lain
+export { auth, db, googleProvider };
+
 // Fungsi login untuk mahasiswa atau perusahaan
 export async function firebaseLogin(email, password, expectedRole) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    // Ambil data dari Realtime Database
     const snapshot = await get(ref(db, 'users/' + user.uid));
     const userData = snapshot.exists() ? snapshot.val() : {};
     const role = userData.tipeAkun || 'mahasiswa';
@@ -35,12 +44,12 @@ export async function firebaseLogin(email, password, expectedRole) {
       return false;
     }
 
-    // Simpan ke localStorage (agar dibaca halaman lain)
     const localUser = {
       id: user.uid,
       name: userData.namaLengkap || user.email,
       email: user.email,
       type: role,
+      profile: userData.profile || {}
     };
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === user.uid);
@@ -49,7 +58,7 @@ export async function firebaseLogin(email, password, expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
 
-    // Sinkronkan profil dari Firebase ke localStorage
+    // Sinkronkan profil dari Firebase
     await syncProfileFromFirebase(user.uid);
 
     showToast(`Halo, ${localUser.name}!`, 'success');
@@ -60,14 +69,13 @@ export async function firebaseLogin(email, password, expectedRole) {
   }
 }
 
-// Fungsi register (untuk mahasiswa dan perusahaan)
+// Fungsi register (mahasiswa/perusahaan)
 export async function firebaseRegister(data, role) {
   const { name, email, phone, password, universitas, semester, jurusan, ipk } = data;
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Data untuk Realtime Database
     const userData = {
       namaLengkap: name,
       email: email,
@@ -80,7 +88,7 @@ export async function firebaseRegister(data, role) {
         jurusan: jurusan || '',
         ipk: ipk || '',
         skills: [],
-        minat: [],
+        minats: [],
         pendidikan: '',
         pengalaman: '',
         prestasi: '',
@@ -91,7 +99,6 @@ export async function firebaseRegister(data, role) {
 
     await set(ref(db, 'users/' + user.uid), userData);
     
-    // Jika perusahaan, simpan data awal ke companies/
     if (role === 'perusahaan') {
       await set(ref(db, `companies/${user.uid}`), {
         nama: name,
@@ -111,7 +118,6 @@ export async function firebaseRegister(data, role) {
     });
     localStorage.setItem('magnet_users', JSON.stringify(users));
 
-    // Logout agar harus login ulang (opsional, bisa juga langsung login)
     await signOut(auth);
     showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
     return { success: true, uid: user.uid };
@@ -121,7 +127,7 @@ export async function firebaseRegister(data, role) {
   }
 }
 
-// Fungsi login dengan Google
+// Login dengan Google
 export async function firebaseGoogleLogin(expectedRole) {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -136,7 +142,6 @@ export async function firebaseGoogleLogin(expectedRole) {
         return false;
       }
     } else {
-      // Pengguna baru: simpan dengan role yang dipilih
       await set(ref(db, 'users/' + user.uid), {
         namaLengkap: user.displayName || '',
         email: user.email,
@@ -144,7 +149,6 @@ export async function firebaseGoogleLogin(expectedRole) {
         createdAt: new Date().toISOString()
       });
     }
-    // Simpan ke localStorage
     const localUser = { id: user.uid, name: user.displayName || user.email, email: user.email, type: role };
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     if (!users.find(u => u.id === user.uid)) users.push(localUser);
@@ -158,17 +162,15 @@ export async function firebaseGoogleLogin(expectedRole) {
   }
 }
 
-// Fungsi untuk mengecek session saat halaman auth dimuat
+// Cek session redirect
 export function checkSessionAndRedirect() {
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       const snapshot = await get(ref(db, 'users/' + user.uid));
       const role = snapshot.exists() ? snapshot.val().tipeAkun : 'mahasiswa';
-      // Simpan ke localStorage jika belum
       if (!localStorage.getItem('magnet_session')) {
         localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
       }
-      // Redirect ke dashboard sesuai role
       const currentPath = window.location.pathname;
       if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
         if (role === 'perusahaan') window.location.href = '../Page_Perusahaan/dashboard.html';
@@ -178,14 +180,13 @@ export function checkSessionAndRedirect() {
   });
 }
 
-// Ambil profil dari Firebase dan simpan ke localStorage
+// Sinkron profil dari Firebase ke localStorage
 export async function syncProfileFromFirebase(uid) {
   try {
     const snapshot = await get(ref(db, 'users/' + uid));
     if (snapshot.exists()) {
       const userData = snapshot.val();
       const profile = userData.profile || {};
-      // Update localStorage
       const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
       const idx = users.findIndex(u => u.id === uid);
       if (idx !== -1) {
@@ -212,7 +213,7 @@ export async function saveProfileToFirebase(uid, profileData) {
   }
 }
 
-// Update data perusahaan (merge)
+// Update data perusahaan (opsional)
 export async function updateCompanyProfile(uid, data) {
   await set(ref(db, `companies/${uid}`), data, { merge: true });
 }
