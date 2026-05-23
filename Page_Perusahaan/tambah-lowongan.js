@@ -1,10 +1,15 @@
-// tambah-lowongan.js - FINAL
+// tambah-lowongan.js - FINAL dengan edit & update
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { saveJob, getCompanyProfile } from './firebase-company.js';
+import { saveJob, updateJob, getJobById, getCompanyProfile } from './firebase-company.js';
 
 let companyId = null;
 let companyName = '';
+let editingJobId = null; // ID lowongan yang sedang diedit (null jika tambah baru)
+
+// Ambil parameter URL
+const urlParams = new URLSearchParams(window.location.search);
+const jobIdParam = urlParams.get('id');
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -12,10 +17,41 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   companyId = user.uid;
-  // Ambil nama perusahaan dari profil Firebase
   const profile = await getCompanyProfile(companyId);
   companyName = profile?.nama || user.displayName || 'Perusahaan';
-  console.log("Company loaded:", companyName, "ID:", companyId);
+  
+  // Jika mode edit, ambil data lowongan dan isi form
+  if (jobIdParam) {
+    editingJobId = jobIdParam;
+    document.getElementById('formTitle').textContent = 'Edit Lowongan';
+    const job = await getJobById(jobIdParam);
+    if (job) {
+      // Isi form dengan data yang ada
+      document.getElementById('namaLowongan').value = job.title || '';
+      document.getElementById('namaPerusahaan').value = job.companyName || companyName;
+      document.getElementById('kategori').value = job.category || '';
+      document.getElementById('lokasi').value = job.location || '';
+      document.getElementById('durasi').value = job.duration || '';
+      document.getElementById('batasDaftar').value = job.deadline || '';
+      document.getElementById('modeKerja').value = job.workMode || '';
+      document.getElementById('statusPekerjaan').value = job.type || '';
+      document.getElementById('gajiMin').value = job.salaryMin || '';
+      document.getElementById('gajiMax').value = job.salaryMax || '';
+      document.getElementById('deskripsi').value = job.description || '';
+      document.getElementById('persyaratan').value = (job.requirements || []).join('\n');
+      document.getElementById('benefit').value = (job.benefits || []).join('\n');
+      
+      // Isi skill chips
+      if (job.skills && job.skills.length) {
+        skills.length = 0;
+        skills.push(...job.skills);
+        renderChips();
+      }
+    } else {
+      alert('Data lowongan tidak ditemukan, akan membuat baru.');
+      editingJobId = null;
+    }
+  }
 });
 
 const skills = [];
@@ -59,7 +95,6 @@ async function saveForm(mode) {
   if (!title) { alert('Nama lowongan harus diisi.'); return; }
   if (!companyId) { alert('Sesi tidak valid, silakan login ulang.'); return; }
 
-  // Ambil data dari form
   const jobData = {
     title: title,
     companyName: companyName,
@@ -79,23 +114,17 @@ async function saveForm(mode) {
     status: mode === 'publish' ? 'Buka' : 'Draft'
   };
 
-  console.log("Data sebelum dikirim:", {
-    title, 
-    description: jobData.description, 
-    requirements: jobData.requirements, 
-    skills: jobData.skills, 
-    benefits: jobData.benefits
-  });
-
-  // Hapus field yang nilainya kosong/null/undefined
-  //Object.keys(jobData).forEach(key => {
-    //if (jobData[key] === undefined || jobData[key] === null || jobData[key] === '') {
-      //delete jobData[key];
-    //}
-  //});
+  // Jangan hapus field kosong, biarkan tetap ada
 
   try {
-    const result = await saveJob(jobData, companyId);
+    let result;
+    if (editingJobId) {
+      // Update existing job
+      result = await updateJob(editingJobId, jobData);
+    } else {
+      // Create new job
+      result = await saveJob(jobData, companyId);
+    }
     if (result.ok) {
       alert(mode === 'publish' ? `Lowongan "${title}" berhasil dipublikasikan!` : `Lowongan "${title}" disimpan sebagai draft.`);
       window.location.href = 'dashboard.html';
@@ -106,13 +135,6 @@ async function saveForm(mode) {
     console.error(err);
     alert('Terjadi kesalahan: ' + err.message);
   }
-}
-
-// Cek mode edit (jika ada parameter id)
-const params = new URLSearchParams(window.location.search);
-if (params.get('id')) {
-  document.getElementById('formTitle').textContent = 'Edit Lowongan';
-  // TODO: load existing job data from Firebase
 }
 
 renderChips();
