@@ -59,23 +59,53 @@ export async function firebaseLogin(email, password, expectedRole) {
 
 // Fungsi register mahasiswa/perusahaan
 export async function firebaseRegister(data, role) {
-  const { name, email, phone, password } = data;
+  const { name, email, phone, password, universitas, semester, jurusan, ipk } = data;
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    // Simpan ke Realtime Database
-    await set(ref(db, 'users/' + user.uid), {
+
+    // Data untuk Realtime Database
+    const userData = {
       namaLengkap: name,
       email: email,
       nomorTelepon: phone || '',
       tipeAkun: role,
-      createdAt: new Date().toISOString()
-    });
-    // Simpan ke localStorage (opsional)
-    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-    users.push({ id: user.uid, name, email, type: role });
+      createdAt: new Date().toISOString(),
+      profile: {          // ← data tambahan untuk profil
+        universitas: universitas || '',
+        semester: semester || '',
+        jurusan: jurusan || '',
+        ipk: ipk || ''
+      }
+    };
+
+    await set(ref(db, 'users/' + user.uid), userData);
+
+    // Simpan ke localStorage untuk keperluan MagnetDB
+    const localProfile = {
+      universitas: universitas || '',
+      semester: semester || '',
+      jurusan: jurusan || '',
+      ipk: ipk || ''
+    };
+
+    let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    const existingIdx = users.findIndex(u => u.id === user.uid);
+    if (existingIdx !== -1) {
+      users[existingIdx].profile = localProfile;
+    } else {
+      users.push({
+        id: user.uid,
+        name: name,
+        email: email,
+        type: role,
+        profile: localProfile
+      });
+    }
     localStorage.setItem('magnet_users', JSON.stringify(users));
-    await signOut(auth); // logout otomatis, user harus login setelah daftar
+
+    // Jangan langsung login, biarkan user logout agar harus login ulang
+    await signOut(auth);
     showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
     return true;
   } catch (err) {

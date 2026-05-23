@@ -96,20 +96,29 @@
   checkSessionAndRedirect();
 
   window.handleRegister = async () => {
-    const name = document.getElementById('regNama').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    const password = document.getElementById('regPassword').value.trim();
+  const name = document.getElementById('regNama').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const universitas = document.getElementById('regUniversitas').value.trim();
+  const semester = document.getElementById('regSemester').value;
+  const jurusan = document.getElementById('regJurusan').value.trim();
+  const ipk = document.getElementById('regIpk')?.value.trim() || ''; // jika ada field IPK
+  const password = document.getElementById('regPassword').value.trim();
 
-    if (!name || !email || !phone || !password) {
-      alert('Semua field harus diisi');
-      return;
-    }
-    const success = await firebaseRegister({ name, email, phone, password }, 'mahasiswa');
-    if (success) {
-      setTimeout(() => window.location.href = 'login-mahasiswa.html', 1500);
-    }
-  };
+  if (!name || !email || !phone || !universitas || !semester || !jurusan || !password) {
+    alert('Semua field wajib harus diisi');
+    return;
+  }
+
+  const success = await firebaseRegister({ 
+    name, email, phone, password, 
+    universitas, semester, jurusan, ipk 
+  }, 'mahasiswa');
+
+  if (success) {
+    setTimeout(() => window.location.href = 'login-mahasiswa.html', 1500);
+  }
+};
 </script>
 </body>
 </html>
