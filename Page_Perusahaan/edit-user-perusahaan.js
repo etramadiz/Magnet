@@ -1,27 +1,50 @@
-// edit-user-perusahaan.js
+// edit-user-perusahaan.js (versi Firebase)
 
-document.addEventListener('DOMContentLoaded', () => {
-  MagnetDB.requirePerusahaanAuth();
-  
-  // SOLUSI MASALAH 3: Ambil data real dari session saat ini (bukan dummy HTML)
-  const user = MagnetDB.getSession();
-  if (user) {
-    if (user.name) document.getElementById('editNama').value = user.name;
-    if (user.industry) document.getElementById('editIndustri').value = user.industry;
-    if (user.size) document.getElementById('editUkuran').value = user.size;
-    if (user.location) document.getElementById('editLokasi').value = user.location;
-    if (user.website) document.getElementById('editWebsite').value = user.website;
-    if (user.address) document.getElementById('editAlamat').value = user.address;
-    if (user.founded) document.getElementById('editTahun').value = user.founded;
-    if (user.description) document.getElementById('editDeskripsi').value = user.description;
-    if (user.culture) document.getElementById('editBudaya').value = user.culture;
-    if (user.benefits) document.getElementById('editBenefit').value = user.benefits;
+import { auth } from '../Page_Login_Register/firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getCompanyProfile, updateCompanyProfile } from './firebase-company.js';
+
+let uid = null;
+let currentLogoBase64 = null;
+
+async function loadData() {
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = '../Page_Login_Register/login-perusahaan.html';
+      return;
+    }
+    uid = user.uid;
+    const data = await getCompanyProfile(uid);
     
-    // Perbarui inisial huruf kotak logo sesuai nama perusahaan asli
-    const preview = document.getElementById('logoPreview');
-    if (preview && user.name) preview.textContent = user.name.charAt(0).toUpperCase();
-  }
-});
+    if (data) {
+      document.getElementById('editNama').value = data.nama || '';
+      document.getElementById('editIndustri').value = data.industri || 'Teknologi Informasi';
+      document.getElementById('editUkuran').value = data.ukuran || '50–100 karyawan';
+      document.getElementById('editLokasi').value = data.lokasi || '';
+      document.getElementById('editWebsite').value = data.website || '';
+      document.getElementById('editAlamat').value = data.alamat || '';
+      document.getElementById('editTahun').value = data.tahun || '';
+      document.getElementById('editDeskripsi').value = data.deskripsi || '';
+      document.getElementById('editBudaya').value = data.budaya || '';
+      document.getElementById('editBenefit').value = data.benefit || '';
+      if (data.logo) {
+        const preview = document.getElementById('logoPreview');
+        preview.innerHTML = `<img src="${data.logo}" alt="Logo" />`;
+        currentLogoBase64 = data.logo;
+      } else {
+        // Tampilkan inisial nama perusahaan
+        const preview = document.getElementById('logoPreview');
+        preview.textContent = (data.nama || user.displayName || '?').charAt(0).toUpperCase();
+      }
+    } else {
+      // Belum ada data profil, isi dengan nama dari user auth
+      const userName = user.displayName || 'Perusahaan';
+      document.getElementById('editNama').value = userName;
+      const preview = document.getElementById('logoPreview');
+      preview.textContent = userName.charAt(0).toUpperCase();
+    }
+  });
+}
 
 function previewLogo(event) {
   const file = event.target.files[0];
@@ -30,50 +53,54 @@ function previewLogo(event) {
   reader.onload = e => {
     const preview = document.getElementById('logoPreview');
     preview.innerHTML = `<img src="${e.target.result}" alt="Logo" />`;
+    currentLogoBase64 = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function saveProfile() {
+async function saveProfile() {
   const nama = document.getElementById('editNama').value.trim();
   if (!nama) { alert('Nama perusahaan harus diisi.'); return; }
 
-  const user = MagnetDB.getSession();
-  if (!user) return;
-
-  // SOLUSI MASALAH 2: Ambil seluruh data dari form input
-  const dataPerubahan = {
-    name: nama,
-    industry: document.getElementById('editIndustri').value,
-    size: document.getElementById('editUkuran').value,
-    location: document.getElementById('editLokasi').value.trim(),
-    website: document.getElementById('editWebsite').value.trim(),
-    address: document.getElementById('editAlamat').value.trim(),
-    founded: document.getElementById('editTahun').value.trim(),
-    description: document.getElementById('editDeskripsi').value.trim(),
-    culture: document.getElementById('editBudaya').value.trim(),
-    benefits: document.getElementById('editBenefit').value.trim()
+  const dataToSave = {
+    nama: nama,
+    industri: document.getElementById('editIndustri').value,
+    ukuran: document.getElementById('editUkuran').value,
+    lokasi: document.getElementById('editLokasi').value,
+    website: document.getElementById('editWebsite').value,
+    alamat: document.getElementById('editAlamat').value,
+    tahun: document.getElementById('editTahun').value,
+    deskripsi: document.getElementById('editDeskripsi').value,
+    budaya: document.getElementById('editBudaya').value,
+    benefit: document.getElementById('editBenefit').value,
+    updatedAt: new Date().toISOString()
   };
+  if (currentLogoBase64) {
+    dataToSave.logo = currentLogoBase64;
+  }
 
-  // Simpan data perubahan ke dalam database utama (magnet_users)
-  MagnetDB.updateUser(user.id, dataPerubahan);
+  try {
+    await updateCompanyProfile(uid, dataToSave);
+    
+    // Feedback visual
+    const btn = document.querySelector('.form-actions .btn-primary');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg> Tersimpan!';
+    btn.style.background = '#2E7D32';
+    btn.style.borderColor = '#2E7D32';
 
-  // TRIK AMAN: Perbarui objek session aktif agar perubahan langsung mencerminkan di UI tanpa relogin
-  const updatedSession = { ...user, ...dataPerubahan };
-  localStorage.setItem('magnet_session', JSON.stringify(updatedSession));
-
-  // Berikan feedback visual sukses pada tombol
-  const btn = document.querySelector('.form-actions .btn-primary');
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg> Tersimpan!';
-  btn.style.background = '#2E7D32';
-  btn.style.borderColor = '#2E7D32';
-
-  // Alihkan kembali ke halaman ringkasan profil utama
-  setTimeout(() => {
-    btn.innerHTML = orig;
-    btn.style.background = '';
-    btn.style.borderColor = '';
-    window.location.href = 'user-perusahaan.html';
-  }, 1200);
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      window.location.href = 'user-perusahaan.html';
+    }, 1200);
+  } catch (err) {
+    alert('Gagal menyimpan: ' + err.message);
+  }
 }
+
+document.addEventListener('DOMContentLoaded', loadData);
+
+window.previewLogo = previewLogo;
+window.saveProfile = saveProfile;
