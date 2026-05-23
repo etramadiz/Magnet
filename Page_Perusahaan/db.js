@@ -10,9 +10,10 @@ const MagnetDB = (() => {
   const APPS_KEY    = 'magnet_applications';
   const REVIEWS_KEY = 'magnet_reviews';
 
-  const LOGIN_URL = '../../Page_Login_Register/index.html';
-  const MHS_DASH  = '../../Page_Login_Register/index.html';
-  const PRU_DASH  = 'dashboard.html';
+// UBAH 3 BARIS INI MENJADI SEPERTI INI:
+  const LOGIN_URL = '../Page_Login_Register/index.html';
+  const MHS_DASH  = '../Page_Mahasiswa/dashboard.html';
+  const PRU_DASH  = '../Page_Perusahaan/dashboard.html';
 
   function register({ name, email, phone, password, type }) {
     // Tentukan masuk ke penyimpanan mana
