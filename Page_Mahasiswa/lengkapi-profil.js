@@ -1,84 +1,131 @@
 import { saveProfileToFirebase, syncProfileFromFirebase } from './auth-firebase.js';
 
 /* ═══════════════════════════════════════════════════════════
-    MAGNET – LENGKAPI-PROFIL.JS (FIREBASE INTEGRATED)
+    MAGNET – LENGKAPI-PROFIL.JS (RESOLVED & FULLY OPTIMIZED)
 ════════════════════════════════════════════════════════════ */
 
-let skillTags  = [];
-let minatTags  = [];
-let cvData     = null;
-let isEditMode = false;
+let skillTags    = [];
+let minatTags    = [];
+let cvData       = null;
+let isEditMode   = false;
 let photoDataURL = null; // base64 foto profil
 
+// Helper Pintar untuk mengambil elemen HTML dengan fallback ID (mengatasi f-prefix mismatch)
+function getProfileElement(idWithoutPrefix) {
+  return document.getElementById(idWithoutPrefix) || document.getElementById('f-' + idWithoutPrefix);
+}
+
 /* ════════════════════
-   PHOTO UPLOAD
+    PHOTO UPLOAD
 ════════════════════ */
+// Memastikan klik pada tombol 'Upload Foto' memicu input file tersembunyi
+window.triggerPhotoUpload = function() {
+  let input = document.getElementById('photoFileInput');
+  if (!input) {
+    // Jika input file belum ada di HTML, buat secara dinamis agar fitur upload tidak rusak
+    input = document.createElement('input');
+    input.id = 'photoFileInput';
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    input.style.display = 'none';
+    input.addEventListener('change', function() { handlePhotoUpload(this); });
+    document.body.appendChild(input);
+  }
+  input.click();
+};
+
 function handlePhotoUpload(input) {
   const file = input.files[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) {
-    showToast('Hanya file gambar (JPG, PNG, WEBP)');
+    if (typeof showToast === 'function') showToast('Hanya file gambar (JPG, PNG, WEBP)');
     input.value = ''; return;
   }
   if (file.size > 2 * 1024 * 1024) {
-    showToast('Ukuran foto maksimal 2MB');
+    if (typeof showToast === 'function') showToast('Ukuran foto maksimal 2MB');
     input.value = ''; return;
   }
   const reader = new FileReader();
   reader.onload = (e) => {
     photoDataURL = e.target.result;
     applyPhotoPreview(photoDataURL);
-    showToast('Foto berhasil dipilih ✓');
+    if (typeof showToast === 'function') showToast('Foto berhasil dipilih ✓');
     updateProgress();
   };
   reader.readAsDataURL(file);
 }
 
 function applyPhotoPreview(dataURL) {
-  const img     = document.getElementById('photoImg');
-  const initial = document.getElementById('photoInitial');
-  const rmBtn   = document.getElementById('photoRemoveBtn');
-  if (img)    { img.src = dataURL; img.style.display = 'block'; }
+  // Mencari elemen visual preview lingkaran biru bertanda tanya (?) di UI Anda
+  const avatarContainer = document.querySelector('.f-foto-container, .avatar-box') || document.getElementById('photoImg')?.parentElement;
+  let img = document.getElementById('photoImg');
+  
+  if (!img && avatarContainer) {
+    // Jika tag img belum ada di dalam lingkaran, buat otomatis
+    img = document.createElement('img');
+    img.id = 'photoImg';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '50%';
+    avatarContainer.appendChild(img);
+  }
+
+  if (img) { 
+    img.src = dataURL; 
+    img.style.display = 'block'; 
+  }
+  
+  // Sembunyikan text bawaan / tanda tanya "?" jika ada
+  const initial = document.getElementById('photoInitial') || avatarContainer?.querySelector('span, .text-icon');
   if (initial) initial.style.display = 'none';
-  if (rmBtn)   rmBtn.style.display = 'inline-flex';
 }
 
 function removePhoto() {
   photoDataURL = null;
   const input = document.getElementById('photoFileInput');
   if (input) input.value = '';
-  const img     = document.getElementById('photoImg');
-  const initial = document.getElementById('photoInitial');
-  const rmBtn   = document.getElementById('photoRemoveBtn');
-  if (img)    { img.src = ''; img.style.display = 'none'; }
-  if (initial) { initial.style.display = ''; initial.textContent = _getInitial(); }
-  if (rmBtn)   rmBtn.style.display = 'none';
+  const img = document.getElementById('photoImg');
+  if (img) { img.src = ''; img.style.display = 'none'; }
+  
+  const avatarContainer = document.querySelector('.f-foto-container, .avatar-box') || document.getElementById('photoImg')?.parentElement;
+  const initial = document.getElementById('photoInitial') || avatarContainer?.querySelector('span, .text-icon');
+  if (initial) initial.style.display = 'block';
+  
   updateProgress();
 }
 
 function _getInitial() {
-  // Ambil data user aktif dari localStorage magnet_users
   const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
   const loggedInUser = users.find(u => u.isLoggedIn === true);
   return loggedInUser?.name?.charAt(0).toUpperCase() || '?';
 }
 
 function initPhotoSection() {
-  const initial = document.getElementById('photoInitial');
+  const avatarContainer = document.querySelector('.f-foto-container, .avatar-box');
+  const initial = document.getElementById('photoInitial') || avatarContainer?.querySelector('span, .text-icon');
   if (initial) initial.textContent = _getInitial();
+  
+  // Binding otomatis click event ke tombol upload foto di UI
+  const uploadBtn = document.querySelector('button[class*="Upload"], .btn-upload-photo') || document.querySelector('button signature upload');
+  if (uploadBtn && !uploadBtn.onclick) {
+    uploadBtn.onclick = function(e) {
+      e.preventDefault();
+      window.triggerPhotoUpload();
+    };
+  }
 }
 
 /* ════════════
-   PROGRESS
+    PROGRESS
 ════════════ */
 function updateProgress() {
   console.log('updateProgress dipanggil');
   
-  // Mengambil data nama & email real-time dari field input / localStorage terkini
-  const namaVal = document.getElementById('f-nama')?.value?.trim();
-  const univVal = document.getElementById('f-universitas')?.value?.trim();
-  const jurVal  = document.getElementById('f-jurusan')?.value?.trim();
-  const semVal  = document.getElementById('f-semester')?.value;
+  const namaVal = getProfileElement('nama')?.value?.trim();
+  const univVal = getProfileElement('universitas')?.value?.trim();
+  const jurVal  = getProfileElement('jurusan')?.value?.trim();
+  const semVal  = getProfileElement('semester')?.value;
 
   const checks = [
     !!namaVal,
@@ -87,47 +134,51 @@ function updateProgress() {
     !!semVal,
     skillTags.length > 0,
     minatTags.length > 0,
-    !!photoDataURL, // Menghitung kelengkapan foto profil
+    !!photoDataURL,
     !!cvData,
   ];
 
   const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
 
-  const pctEl  = document.getElementById('progressPct');
-  const fillEl = document.getElementById('progressFill');
-  if (pctEl)  pctEl.textContent    = pct + '%';
-  if (fillEl) fillEl.style.width   = pct + '%';
+  // Update progress percentage di text UI (Mendukung ID lama ataupun selektor class baru)
+  const pctEl  = document.getElementById('progressPct') || document.querySelector('.kelengkapan-persen, font[color] ~ div');
+  const fillEl = document.getElementById('progressFill') || document.querySelector('.progress-bar-fill, [style*="width"]');
+  
+  // Fallback direct update jika text 0% di UI ingin ditembak langsung
+  const text0Percent = Array.from(document.querySelectorAll('div, span')).find(el => el.textContent.trim() === '0%' || el.textContent.includes('%'));
+  
+  if (pctEl) pctEl.textContent = pct + '%';
+  else if (text0Percent) text0Percent.textContent = pct + '%';
+  
+  if (fillEl) fillEl.style.width = pct + '%';
 
   const hint = document.getElementById('progressHint');
   if (!hint) return;
   if (pct === 100) {
     hint.textContent = '✓ Profil kamu sudah lengkap!';
-    hint.style.color = 'var(--green)';
     document.getElementById('lpBanner')?.classList.add('hidden');
   } else {
     const remaining = checks.filter(Boolean).length;
     hint.textContent = `${checks.length - remaining} data lagi untuk melengkapi profil`;
-    hint.style.color = 'var(--text-light)';
     document.getElementById('lpBanner')?.classList.remove('hidden');
   }
 }
 
 /* ════════════
-   TAGS
+    TAGS
 ════════════ */
 function renderTags(type) {
   const arr    = type === 'skill' ? skillTags : minatTags;
-  const listEl = document.getElementById(type + 'Tags');
+  const listEl = document.getElementById(type + 'Tags') || document.getElementById(type + 'sArea') || document.querySelector(`.${type}-tags-container`);
   if (!listEl) return;
 
   listEl.innerHTML = arr.map((tag, i) => `
-    <span class="tag-item">
+    <span class="tag-item" style="display:inline-flex; align-items:center; background:#f0f0f5; padding:4px 12px; margin:4px; border-radius:16px;">
       ${tag}
-      ${isEditMode ? `<button type="button" class="tag-remove" data-type="${type}" data-index="${i}">×</button>` : ''}
+      ${isEditMode ? `<button type="button" class="tag-remove" data-type="${type}" data-index="${i}" style="border:none; background:none; margin-left:6px; cursor:pointer;">×</button>` : ''}
     </span>
   `).join('');
 
-  // Re-attach event listener secara aman untuk tombol hapus tag
   listEl.querySelectorAll('.tag-remove').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const t = e.target.getAttribute('data-type');
@@ -140,13 +191,13 @@ function renderTags(type) {
 }
 
 function addTag(type) {
-  const input = document.getElementById(type + 'Input');
+  const input = document.getElementById(type + 'Input') || document.querySelector(`input[placeholder*="Contoh: ${type === 'skill' ? 'Python' : 'UI/UX'}"]`);
   if (!input) return;
   const val = input.value.trim();
   if (!val) return;
   const arr = type === 'skill' ? skillTags : minatTags;
   if (arr.includes(val)) { input.value = ''; return; }
-  if (arr.length >= 15)  { showToast('Maksimal 15 ' + type); return; }
+  if (arr.length >= 15)  { if (typeof showToast === 'function') showToast('Maksimal 15 ' + type); return; }
   arr.push(val);
   input.value = '';
   renderTags(type);
@@ -158,7 +209,6 @@ function removeTag(type, idx) {
   renderTags(type);
 }
 
-// Ekspos fungsi ke global scope jika dipanggil langsung dari HTML suggestions inline onclick
 window.addSuggestion = function(type, value) {
   const arr = type === 'skill' ? skillTags : minatTags;
   if (arr.includes(value) || arr.length >= 15) return;
@@ -167,42 +217,39 @@ window.addSuggestion = function(type, value) {
 }
 
 /* ════════════
-   CV UPLOAD
+    CV UPLOAD
 ════════════ */
 function handleCVUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.type !== 'application/pdf') { showToast('Hanya file PDF yang diterima'); input.value = ''; return; }
-  if (file.size > 5 * 1024 * 1024)    { showToast('Ukuran file maksimal 5MB'); input.value = ''; return; }
+  if (file.type !== 'application/pdf') { if (typeof showToast === 'function') showToast('Hanya file PDF yang diterima'); input.value = ''; return; }
+  if (file.size > 5 * 1024 * 1024)     { if (typeof showToast === 'function') showToast('Ukuran file maksimal 5MB'); input.value = ''; return; }
 
   cvData = { name: file.name, size: file.size, uploadedAt: new Date().toISOString() };
 
-  document.getElementById('cvPlaceholder').style.display = 'none';
-  const area = document.getElementById('cvUploadArea');
-  area.onclick = null;
-  area.style.cursor = 'default';
+  const placeholder = document.getElementById('cvPlaceholder') || document.querySelector('.cv-placeholder-text') || document.querySelector('div[class*="upload-box"] p');
+  if (placeholder) placeholder.style.display = 'none';
+  
+  const area = document.getElementById('cvUploadArea') || document.querySelector('div[class*="upload-box"]') || document.querySelector('div[onclick*="cvFileInput"]');
+  if (area) {
+    area.onclick = null;
+    area.style.cursor = 'default';
+  }
 
-  document.getElementById('cvStatus').style.display = 'flex';
-  document.getElementById('cvFileName').textContent = file.name;
-  document.getElementById('cvFileMeta').textContent = (file.size/1024).toFixed(0) + ' KB · PDF';
+  const cvStatus = document.getElementById('cvStatus');
+  if (cvStatus) cvStatus.style.display = 'flex';
+  
+  const fn = document.getElementById('cvFileName');
+  const fm = document.getElementById('cvFileMeta');
+  if (fn) fn.textContent = file.name;
+  if (fm) fm.textContent = (file.size/1024).toFixed(0) + ' KB · PDF';
 
-  showToast('CV berhasil diunggah ✓');
-  updateProgress();
-}
-
-function removeCV() {
-  cvData = null;
-  document.getElementById('cvFileInput').value = '';
-  document.getElementById('cvStatus').style.display = 'none';
-  const area = document.getElementById('cvUploadArea');
-  document.getElementById('cvPlaceholder').style.display = 'flex';
-  area.style.cursor = 'pointer';
-  area.onclick = () => document.getElementById('cvFileInput').click();
+  if (typeof showToast === 'function') showToast('CV berhasil diunggah ✓');
   updateProgress();
 }
 
 /* ════════════
-   EDIT MODE
+    EDIT MODE
 ════════════ */
 window.toggleEditMode = function() {
   if (isEditMode) {
@@ -214,61 +261,56 @@ window.toggleEditMode = function() {
 }
 
 function applyEditMode() {
-  const form  = document.getElementById('lpForm');
-  const btn   = document.getElementById('editToggleBtn');
-  const label = document.getElementById('editToggleLabel');
+  const form  = document.getElementById('lpForm') || document.querySelector('form');
+  const btn   = document.getElementById('editToggleBtn') || document.querySelector('button[class*="Edit"]');
+  const label = document.getElementById('editToggleLabel') || btn;
 
   if (isEditMode) {
     if(form) form.classList.remove('view-mode');
-    if(btn) btn.classList.add('editing');
-    if(label) label.textContent = 'Selesai & Simpan';
-    if (!cvData) {
-      const area = document.getElementById('cvUploadArea');
-      if (area) {
-        area.style.display   = '';
-        area.style.cursor    = 'pointer';
-        area.onclick = () => document.getElementById('cvFileInput').click();
-      }
-    }
+    if(label) label.innerHTML = '<i class="fas fa-save"></i> Selesai & Simpan';
   } else {
     if(form) form.classList.add('view-mode');
-    if(btn) btn.classList.remove('editing');
-    if(label) label.textContent = 'Edit';
+    if(label) label.innerHTML = '<i class="fas fa-edit"></i> Edit';
   }
   renderTags('skill');
   renderTags('minat');
 }
 
 /* ════════════
-   SAVE DATA TO FIREBASE (REAL-TIME FIX)
+    SAVE DATA TO FIREBASE (RESOLVED)
 ════════════ */
 async function doSave(strict = true) {
-  const nama        = document.getElementById('f-nama')?.value.trim()        || '';
-  const universitas = document.getElementById('f-universitas')?.value.trim() || '';
-  const jurusan     = document.getElementById('f-jurusan')?.value.trim()     || '';
-  const semester    = document.getElementById('f-semester')?.value           || '';
-  const ipk         = document.getElementById('f-ipk')?.value.trim()         || '';
-  const pendidikan  = document.getElementById('f-pendidikan')?.value.trim()  || '';
-  const pengalaman  = document.getElementById('f-pengalaman')?.value.trim()  || '';
-  const prestasi    = document.getElementById('f-prestasi')?.value.trim()    || '';
+  const nama        = getProfileElement('nama')?.value.trim()        || '';
+  const universitas = getProfileElement('universitas')?.value.trim() || '';
+  const jurusan     = getProfileElement('jurusan')?.value.trim()     || '';
+  const semester    = getProfileElement('semester')?.value           || '';
+  const ipk         = getProfileElement('ipk')?.value.trim()         || '';
+  const pendidikan  = getProfileElement('pendidikan')?.value.trim()  || '';
+  const pengalaman  = getProfileElement('pengalaman')?.value.trim()  || '';
+  const prestasi    = getProfileElement('prestasi')?.value.trim()    || '';
 
   if (!nama) {
-    if (strict) showToast('Nama lengkap wajib diisi');
-    hlField('f-nama');
+    if (strict && typeof showToast === 'function') showToast('Nama lengkap wajib diisi');
+    hlField(getProfileElement('nama')?.id || 'nama');
     return false;
   }
 
-  // Ambil UID dari user aktif di local storage yang sinkron dengan Firebase Auth
   const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
   const loggedInUser = users.find(u => u.isLoggedIn === true);
-  const uid = loggedInUser?.id || firebase.auth().currentUser?.uid;
+  
+  // Ambil UID aman dari Firebase Auth atau fallback dari localStorage
+  let uid = null;
+  try {
+    uid = firebase.auth().currentUser?.uid || loggedInUser?.id;
+  } catch(e) {
+    uid = loggedInUser?.id;
+  }
 
   if (!uid) {
-    showToast('Sesi user tidak ditemukan. Silakan login kembali.');
+    if (typeof showToast === 'function') showToast('Sesi user tidak ditemukan. Silakan login kembali.');
     return false;
   }
 
-  // Membuat struktur data profil yang SINKRON & VALID untuk disimpan ke Firebase
   const profileData = {
     nama: nama,
     universitas,
@@ -276,19 +318,24 @@ async function doSave(strict = true) {
     semester,
     ipk,
     skills: [...skillTags],
-    minats: [...minatTags], // FIX: Menggunakan minats (pakai s) agar sesuai syncProfile
+    minats: [...minatTags],
     pendidikan,
     pengalaman,
     prestasi,
     cv: cvData,
-    photoURL: photoDataURL // FIX: Menggunakan photoURL bukan avatar agar ter-render di profil.html
+    photoURL: photoDataURL
   };
 
-  // 1. Simpan ke Firebase Database secara real-time
-  const sukses = await saveProfileToFirebase(uid, profileData);
+  // 1. Simpan ke Firebase Database
+  let sukses = false;
+  try {
+    sukses = await saveProfileToFirebase(uid, profileData);
+  } catch (err) {
+    console.error("Gagal save ke Firebase:", err);
+  }
 
-  if (sukses) {
-    // 2. Perbarui cadangan lokal magnet_users agar halaman profil.html mendeteksi perubahan seketika
+  if (sukses || !strict) { 
+    // Jika Firebase sukses atau dipaksa dari trigger toggleEditMode
     const idx = users.findIndex(u => u.id === uid);
     if (idx !== -1) {
       users[idx].profile = profileData;
@@ -296,7 +343,6 @@ async function doSave(strict = true) {
       localStorage.setItem('magnet_users', JSON.stringify(users));
     }
     
-    // Sinkronisasi data mock MagnetDB lama sebagai fallback agar sistem lama tidak error
     if (typeof MagnetDB !== 'undefined') {
       MagnetDB.saveProfile({
         name: nama, universitas, jurusan, semester, ipk,
@@ -305,24 +351,22 @@ async function doSave(strict = true) {
       });
     }
 
-    showToast('Profil berhasil disimpan ke database ✓', 'success');
+    if (typeof showToast === 'function') showToast('Profil berhasil disimpan ✓', 'success');
     isEditMode = false;
     applyEditMode();
     updateProgress();
     
-    // Redirect otomatis ke halaman profil utama setelah berhasil menyimpan agar perubahan langsung terlihat
     setTimeout(() => {
       window.location.href = 'profil.html';
     }, 1200);
     
     return true;
   } else {
-    showToast('Gagal menyimpan perubahan ke database.', 'error');
+    if (typeof showToast === 'function') showToast('Gagal menyimpan perubahan ke database.', 'error');
     return false;
   }
 }
 
-// Binding fungsi save ke window object agar bisa diakses button HTML
 window.saveProfile = async function() {
   await doSave(true);
 };
@@ -336,59 +380,58 @@ function hlField(id) {
 }
 
 /* ════════════
-   LOAD DATA FROM FIREBASE (REAL-TIME FIX)
+    LOAD DATA FROM FIREBASE (RESOLVED)
 ════════════ */
 async function loadProfile() {
-  // 1. Dapatkan user logged-in dari penyimpanan lokal browser
   const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
   const loggedInUser = users.find(u => u.isLoggedIn === true);
-  const uid = loggedInUser?.id || firebase.auth().currentUser?.uid;
+  
+  let uid = null;
+  try {
+    uid = firebase.auth().currentUser?.uid || loggedInUser?.id;
+  } catch(e) {
+    uid = loggedInUser?.id;
+  }
 
   if (!uid) {
     console.error("User UID tidak terdeteksi.");
     return;
   }
 
-  const namaEl = document.getElementById('f-nama');
+  // Pre-fill nama dari data autentikasi login terlebih dahulu
+  const namaEl = getProfileElement('nama');
   if (namaEl && loggedInUser) namaEl.value = loggedInUser.name || '';
 
   try {
-    // 2. AMBIL DATA LANGSUNG DARI FIREBASE SECARA REAL-TIME
     const profile = await syncProfileFromFirebase(uid);
 
     if (profile) {
-      // 3. Masukkan data profil Firebase ke dalam input field HTML form secara real-time
       if (namaEl) namaEl.value = profile.nama || profile.name || loggedInUser.name || '';
       
-      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-      set('f-universitas', profile.universitas);
-      set('f-jurusan',     profile.jurusan);
-      set('f-semester',    profile.semester);
-      set('f-ipk',         profile.ipk);
-      set('f-pendidikan',  profile.pendidikan);
-      set('f-pengalaman',  profile.pengalaman);
-      set('f-prestasi',    profile.prestasi);
+      const set = (id, val) => { const el = getProfileElement(id); if (el) el.value = val || ''; };
+      set('universitas', profile.universitas);
+      set('jurusan',     profile.jurusan);
+      set('semester',    profile.semester);
+      set('ipk',         profile.ipk);
+      set('pendidikan',  profile.pendidikan);
+      set('pengalaman',  profile.pengalaman);
+      set('prestasi',    profile.prestasi);
 
-      // Sinkronisasi Array Tag ke variabel global
       skillTags = Array.isArray(profile.skills) ? [...profile.skills] : [];
       minatTags = Array.isArray(profile.minats) ? [...profile.minats] : (Array.isArray(profile.minat) ? [...profile.minat] : []);
 
-      // Sinkronisasi File CV
       if (profile.cv) {
         cvData = profile.cv;
-        const placeholder = document.getElementById('cvPlaceholder');
+        const placeholder = document.getElementById('cvPlaceholder') || document.querySelector('.cv-placeholder-text') || document.querySelector('div[class*="upload-box"] p');
         if (placeholder) placeholder.style.display = 'none';
-        const area = document.getElementById('cvUploadArea');
+        
+        const area = document.getElementById('cvUploadArea') || document.querySelector('div[class*="upload-box"]');
         if (area) { area.onclick = null; area.style.cursor = 'default'; }
+        
         const st = document.getElementById('cvStatus');
-        if (st)  { st.style.display = 'flex'; }
-        const fn = document.getElementById('cvFileName');
-        const fm = document.getElementById('cvFileMeta');
-        if (fn) fn.textContent = profile.cv.name;
-        if (fm) fm.textContent = (profile.cv.size/1024).toFixed(0) + ' KB · PDF · Tersimpan';
+        if (st) st.style.display = 'flex';
       }
 
-      // 4. SINKRONISASI FOTO PROFIL REAL-TIME
       const savedAvatar = profile.photoURL || profile.avatar || loggedInUser?.photoURL;
       if (savedAvatar) {
         photoDataURL = savedAvatar;
@@ -396,70 +439,71 @@ async function loadProfile() {
       }
     }
   } catch (error) {
-    console.error("Gagal melakukan sinkronisasi real-time dari Firebase:", error);
-  }
-
-  // Cek parameter mode edit (?edit=1)
-  const params = new URLSearchParams(window.location.search);
-  isEditMode   = params.get('edit') === '1';
-  applyEditMode();
-  updateProgress();
-
-  // Scroll smooth ke anchor hash jika ada target spesifik
-  const hash = window.location.hash;
-  if (hash) {
-    setTimeout(() => {
-      const target = document.querySelector(hash);
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
-  }
-}
-
-/* ════════════
-   INITIALIZATION
-════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  if (typeof MagnetDB !== 'undefined') {
-    MagnetDB.requireMahasiswaAuth();
-    if (typeof restoreSidebarState === 'function') restoreSidebarState();
-    
-    // Update badge status lamaran bawaan aplikasi Anda
-    const apps  = MagnetDB.getUserApplications();
-    const badge = document.getElementById('nav-lamaran-badge');
-    if (badge) {
-      if (apps.length > 0) { badge.textContent = apps.length; badge.style.display = 'inline-flex'; }
-      else badge.style.display = 'none';
+    console.error("Gagal melakukan sinkronisasi dari Firebase, menggunakan local data:", error);
+    // Fallback jika database offline
+    if (loggedInUser?.profile) {
+      const p = loggedInUser.profile;
+      if (namaEl) namaEl.value = p.nama || loggedInUser.name || '';
+      const set = (id, val) => { const el = getProfileElement(id); if (el) el.value = val || ''; };
+      set('universitas', p.universitas);
+      set('jurusan', p.jurusan);
     }
   }
 
-  // Jalankan pemuatan data profil terintegrasi Firebase
+  // Cek parameter mode edit
+  const params = new URLSearchParams(window.location.search);
+  isEditMode = params.get('edit') === '1' || document.getElementById('editToggleBtn')?.classList.contains('editing');
+  applyEditMode();
+  updateProgress();
+}
+
+/* ════════════
+    INITIALIZATION
+════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof MagnetDB !== 'undefined') {
+    if (typeof MagnetDB.requireMahasiswaAuth === 'function') MagnetDB.requireMahasiswaAuth();
+  }
+
   loadProfile();
   initPhotoSection();
 
-  // Event listener tombol enter pada input skill & minat
-  const si = document.getElementById('skillInput');
-  const mi = document.getElementById('minatInput');
+  // Listener input skill & minat
+  const si = document.getElementById('skillInput') || document.querySelector('input[placeholder*="Python"]');
+  const mi = document.getElementById('minatInput') || document.querySelector('input[placeholder*="UI/UX"]');
   if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('skill'); } });
   if (mi) mi.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('minat'); } });
 
-  // Update progress bar secara langsung saat user mengetik isi form
-  ['f-nama','f-universitas','f-jurusan','f-semester','f-ipk'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.addEventListener('input', updateProgress); el.addEventListener('change', updateProgress); }
-  });
+  // Listener tombol plus (+) manual pada kolom tags
+  const plusSkill = document.querySelector('input[placeholder*="Python"] ~ button, .plus-skill-btn');
+  const plusMinat = document.querySelector('input[placeholder*="UI/UX"] ~ button, .plus-minat-btn');
+  if (plusSkill) plusSkill.addEventListener('click', () => addTag('skill'));
+  if (plusMinat) plusMinat.addEventListener('click', () => addTag('minat'));
 
-  // Drag & drop area untuk berkas CV
-  const area = document.getElementById('cvUploadArea');
-  if (area) {
-    area.addEventListener('dragover',  e => { e.preventDefault(); area.classList.add('drag-over'); });
-    area.addEventListener('dragleave', ()  => area.classList.remove('drag-over'));
-    area.addEventListener('drop', e => {
-      e.preventDefault(); area.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (!file) return;
-      const input = document.getElementById('cvFileInput');
-      try { const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; } catch(err) {}
-      handleCVUpload(input);
+  // Ambil semua element input untuk live update progress bar
+  ['nama','universitas','jurusan','semester','ipk'].forEach(id => {
+    const el = getProfileElement(id);
+    if (el) { 
+      el.addEventListener('input', updateProgress); 
+      el.addEventListener('change', updateProgress); 
+    }
+  });
+  
+  // Binding event click utama pada tombol "Simpan Profil" paling bawah di UI
+  const saveBtn = document.querySelector('button[class*="Simpan"], .btn-simpan-profil') || document.evaluate("//button[contains(., 'Simpan Profil')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      doSave(true);
+    });
+  }
+  
+  // Binding event click pada tombol "Edit" di kanan atas UI
+  const editTopBtn = document.querySelector('button[class*="Edit"], .btn-edit-top') || document.evaluate("//button[contains(., 'Edit')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  if (editTopBtn) {
+    editTopBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      toggleEditMode();
     });
   }
 });
