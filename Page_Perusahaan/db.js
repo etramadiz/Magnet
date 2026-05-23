@@ -2,63 +2,102 @@
    MAGNET APP – DB.JS
 ════════════════════════════════════════════════════════════ */
 const MagnetDB = (() => {
-  const USERS_KEY   = 'magnet_users';
+  // DATABASE SEKARANG DIPISAH TOTAL
+  const MHS_KEY     = 'magnet_mahasiswa';
+  const PRU_KEY     = 'magnet_perusahaan';
+  
   const SESSION_KEY = 'magnet_session';
   const APPS_KEY    = 'magnet_applications';
   const REVIEWS_KEY = 'magnet_reviews';
 
-  const LOGIN_URL = '../../Page_Login_Register/index.html';
-  const MHS_DASH  = '../../Page_Login_Register/index.html';
-  const PRU_DASH  = 'dashboard.html';
-
-  function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }
-  function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+// UBAH 3 BARIS INI MENJADI SEPERTI INI:
+  const LOGIN_URL = '../Page_Login_Register/index.html';
+  const MHS_DASH  = '../Page_Mahasiswa/dashboard.html';
+  const PRU_DASH  = '../Page_Perusahaan/dashboard.html';
 
   function register({ name, email, phone, password, type }) {
-    const users = getUsers();
+    // Tentukan masuk ke penyimpanan mana
+    const KEY = type === 'perusahaan' ? PRU_KEY : MHS_KEY;
+    const users = JSON.parse(localStorage.getItem(KEY) || '[]');
+    
     if (users.find(u => u.email === email)) return { ok:false, message:'Email sudah terdaftar.' };
+    
     const user = { id:Date.now().toString(), name, email, phone:phone||'', password, type,
                    createdAt:new Date().toISOString(), avatar:null, profile:null };
-    users.push(user); saveUsers(users);
+    users.push(user); 
+    localStorage.setItem(KEY, JSON.stringify(users));
     return { ok:true, user };
   }
 
   function login(email, password) {
-    const user = getUsers().find(u => u.email===email && u.password===password);
+    // 1. Cari di penyimpanan perusahaan dulu
+    let pruUsers = JSON.parse(localStorage.getItem(PRU_KEY) || '[]');
+    let user = pruUsers.find(u => u.email===email && u.password===password);
+    
+    // 2. Jika tidak ketemu, cari di penyimpanan mahasiswa
+    if (!user) {
+      let mhsUsers = JSON.parse(localStorage.getItem(MHS_KEY) || '[]');
+      user = mhsUsers.find(u => u.email===email && u.password===password);
+    }
+
     if (!user) return { ok:false, message:'Email atau kata sandi salah.' };
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ userId:user.id }));
+    
+    // Simpan sesi beserta tipe untuk identifikasi
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ userId:user.id, type:user.type }));
     return { ok:true, user };
   }
 
   function getSession() {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    try { const { userId } = JSON.parse(raw); return getUsers().find(u => u.id===userId) || null; }
+    try { 
+      const { userId, type } = JSON.parse(raw); 
+      const KEY = type === 'perusahaan' ? PRU_KEY : MHS_KEY;
+      const users = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return users.find(u => u.id===userId) || null; 
+    }
     catch(e) { return null; }
   }
 
   function logout() { localStorage.removeItem(SESSION_KEY); }
 
   function updateUser(userId, data) {
-    const users = getUsers();
-    const idx = users.findIndex(u => u.id === userId);
-    if (idx === -1) return { ok:false, message:'User tidak ditemukan.' };
-    Object.assign(users[idx], data);
-    saveUsers(users);
-    return { ok:true, user:users[idx] };
+    // Coba update data di tabel perusahaan
+    let pruUsers = JSON.parse(localStorage.getItem(PRU_KEY) || '[]');
+    let idx = pruUsers.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      Object.assign(pruUsers[idx], data);
+      localStorage.setItem(PRU_KEY, JSON.stringify(pruUsers));
+      return { ok:true, user:pruUsers[idx] };
+    }
+
+    // Coba update data di tabel mahasiswa
+    let mhsUsers = JSON.parse(localStorage.getItem(MHS_KEY) || '[]');
+    idx = mhsUsers.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      Object.assign(mhsUsers[idx], data);
+      localStorage.setItem(MHS_KEY, JSON.stringify(mhsUsers));
+      return { ok:true, user:mhsUsers[idx] };
+    }
+
+    return { ok:false, message:'User tidak ditemukan.' };
   }
 
   function saveProfile(profileData) {
     const session = getSession();
     if (!session) return { ok:false, message:'Tidak ada sesi aktif.' };
-    const users = getUsers();
+    
+    const KEY = session.type === 'perusahaan' ? PRU_KEY : MHS_KEY;
+    const users = JSON.parse(localStorage.getItem(KEY) || '[]');
     const idx = users.findIndex(u => u.id===session.id);
+    
     if (idx===-1) return { ok:false, message:'User tidak ditemukan.' };
     if (profileData.name)   users[idx].name   = profileData.name;
     if (profileData.avatar) users[idx].avatar = profileData.avatar;
     const prev = users[idx].profile || {};
     users[idx].profile = Object.assign({}, prev, profileData, { updatedAt:new Date().toISOString() });
-    saveUsers(users);
+    
+    localStorage.setItem(KEY, JSON.stringify(users));
     return { ok:true, user:users[idx] };
   }
 
