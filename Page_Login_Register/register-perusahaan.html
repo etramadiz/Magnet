@@ -100,7 +100,7 @@
 
     const result = await firebaseRegister({ name, email, phone: '', password }, 'perusahaan');
     if (result.success) {
-      // Simpan data tambahan (tentang, lokasi) ke companies/
+      // Simpan data tambahan ke companies/ menggunakan uid
       await updateCompanyProfile(result.uid, {
         deskripsi: tentang,
         lokasi: `${kota}, ${provinsi}`,
@@ -108,8 +108,8 @@
         provinsi: provinsi,
         updatedAt: new Date().toISOString()
       });
-      alert('Pendaftaran berhasil! Mengalihkan ke dashboard...');
-      window.location.href = '../Page_Perusahaan/dashboard.html';
+      alert('Pendaftaran berhasil! Silakan masuk.');
+      window.location.href = 'login-perusahaan.html';  // ← LANGSUNG KE LOGIN
     }
   };
 </script>

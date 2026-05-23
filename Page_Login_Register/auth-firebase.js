@@ -49,7 +49,7 @@ export async function firebaseLogin(email, password, expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
 
-    // setelah localStorage.setItem('magnet_session', ...)
+    // Sinkronkan profil dari Firebase ke localStorage
     await syncProfileFromFirebase(user.uid);
 
     showToast(`Halo, ${localUser.name}!`, 'success');
@@ -60,6 +60,7 @@ export async function firebaseLogin(email, password, expectedRole) {
   }
 }
 
+// Fungsi register (untuk mahasiswa dan perusahaan)
 export async function firebaseRegister(data, role) {
   const { name, email, phone, password, universitas, semester, jurusan, ipk } = data;
   try {
@@ -73,7 +74,7 @@ export async function firebaseRegister(data, role) {
       nomorTelepon: phone || '',
       tipeAkun: role,
       createdAt: new Date().toISOString(),
-      profile: {          // ← data tambahan untuk profil
+      profile: {
         universitas: universitas || '',
         semester: semester || '',
         jurusan: jurusan || '',
@@ -90,6 +91,15 @@ export async function firebaseRegister(data, role) {
 
     await set(ref(db, 'users/' + user.uid), userData);
     
+    // Jika perusahaan, simpan data awal ke companies/
+    if (role === 'perusahaan') {
+      await set(ref(db, `companies/${user.uid}`), {
+        nama: name,
+        email: email,
+        createdAt: new Date().toISOString()
+      });
+    }
+
     // Simpan ke localStorage
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     users.push({
@@ -101,13 +111,13 @@ export async function firebaseRegister(data, role) {
     });
     localStorage.setItem('magnet_users', JSON.stringify(users));
 
-    // Jangan langsung login, biarkan user logout agar harus login ulang
+    // Logout agar harus login ulang (opsional, bisa juga langsung login)
     await signOut(auth);
     showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
-    return true;
+    return { success: true, uid: user.uid };
   } catch (err) {
     showToast('Gagal daftar: ' + err.message, 'error');
-    return false;
+    return { success: false };
   }
 }
 
@@ -159,7 +169,8 @@ export function checkSessionAndRedirect() {
         localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
       }
       // Redirect ke dashboard sesuai role
-      if (window.location.pathname.includes('login') || window.location.pathname.includes('register') || window.location.pathname.endsWith('index.html')) {
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
         if (role === 'perusahaan') window.location.href = '../Page_Perusahaan/dashboard.html';
         else window.location.href = '../Page_Mahasiswa/dashboard.html';
       }

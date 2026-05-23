@@ -174,31 +174,53 @@
   import { getCompanyProfile, logoutPerusahaan } from './firebase-company.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-  // Proteksi halaman: jika tidak login, redirect ke login perusahaan
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = '../Page_Login_Register/login-perusahaan.html';
       return;
     }
     const uid = user.uid;
-    // Ambil data profil dari Firebase Realtime Database
     const data = await getCompanyProfile(uid);
     
-    // Ambil nama dari data atau dari user.displayName atau email
     const companyName = data?.nama || user.displayName || 'Perusahaan';
     const companyEmail = user.email;
     
-    // Update header
+    // Update teks nama dan email
     document.getElementById('companyName').textContent = companyName;
     document.getElementById('companyEmail').textContent = companyEmail;
-    const profileLogo = document.getElementById('profileLogo');
-    profileLogo.textContent = companyName.charAt(0).toUpperCase();
     
-    // Update navbar user name
+    // ========== UPDATE LOGO BESAR DI CARD PROFIL ==========
+    const profileLogoDiv = document.getElementById('profileLogo');
+    if (data?.logo) {
+      // Jika ada logo, tampilkan gambar
+      profileLogoDiv.innerHTML = `<img src="${data.logo}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`;
+      profileLogoDiv.style.background = 'transparent';
+      profileLogoDiv.style.color = 'transparent';
+    } else {
+      // Jika tidak ada logo, tampilkan inisial
+      profileLogoDiv.innerHTML = '';
+      profileLogoDiv.textContent = companyName.charAt(0).toUpperCase();
+      profileLogoDiv.style.background = 'rgba(255,255,255,0.2)';
+      profileLogoDiv.style.color = '#fff';
+    }
+    
+    // ========== UPDATE AVATAR DI NAVBAR (KANAN ATAS) ==========
+    const userAvatarDiv = document.querySelector('.user-avatar');
+    if (data?.logo && userAvatarDiv) {
+      // Tampilkan gambar avatar
+      userAvatarDiv.innerHTML = `<img src="${data.logo}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+      userAvatarDiv.style.background = 'transparent';
+    } else if (userAvatarDiv) {
+      // Kembalikan ke ikon SVG default
+      userAvatarDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>`;
+      userAvatarDiv.style.background = '';
+    }
+    
+    // Update nama di navbar
     const navUserName = document.getElementById('navUserName');
     if (navUserName) navUserName.textContent = companyName;
     
-    // Isi field lainnya dari data (jika ada)
+    // Isi field data perusahaan lainnya
     document.getElementById('companyIndustri').textContent = data?.industri || '-';
     document.getElementById('companyLokasi').textContent = data?.lokasi || '-';
     document.getElementById('companyAlamat').textContent = data?.alamat || '-';
@@ -210,8 +232,6 @@
     document.getElementById('companyDesc').textContent = data?.deskripsi || 'Belum diisi';
     document.getElementById('companyBudaya').textContent = data?.budaya || 'Belum diisi';
     document.getElementById('companyBenefit').textContent = data?.benefit || 'Belum diisi';
-
-    // Statistik masih dummy, bisa diisi nanti
   });
 
   window.handleLogout = async () => {

@@ -1,5 +1,4 @@
-// edit-user-perusahaan.js (versi Firebase)
-
+// edit-user-perusahaan.js – Firebase version
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getCompanyProfile, updateCompanyProfile } from './firebase-company.js';
@@ -16,7 +15,8 @@ async function loadData() {
     uid = user.uid;
     const data = await getCompanyProfile(uid);
     
-    if (data) {
+    if (data && Object.keys(data).length > 0) {
+      // Isi form dengan data dari Firebase
       document.getElementById('editNama').value = data.nama || '';
       document.getElementById('editIndustri').value = data.industri || 'Teknologi Informasi';
       document.getElementById('editUkuran').value = data.ukuran || '50–100 karyawan';
@@ -27,21 +27,34 @@ async function loadData() {
       document.getElementById('editDeskripsi').value = data.deskripsi || '';
       document.getElementById('editBudaya').value = data.budaya || '';
       document.getElementById('editBenefit').value = data.benefit || '';
+      
+      // Logo
       if (data.logo) {
         const preview = document.getElementById('logoPreview');
-        preview.innerHTML = `<img src="${data.logo}" alt="Logo" />`;
+        preview.innerHTML = `<img src="${data.logo}" alt="Logo" style="width:100%;height:100%;object-fit:cover" />`;
         currentLogoBase64 = data.logo;
       } else {
-        // Tampilkan inisial nama perusahaan
         const preview = document.getElementById('logoPreview');
         preview.textContent = (data.nama || user.displayName || '?').charAt(0).toUpperCase();
+        preview.style.background = '#3B2A8E';
+        preview.style.display = 'flex';
+        preview.style.alignItems = 'center';
+        preview.style.justifyContent = 'center';
+        preview.style.fontSize = '28px';
+        preview.style.fontWeight = '800';
       }
     } else {
-      // Belum ada data profil, isi dengan nama dari user auth
+      // Data kosong, isi dengan nama dari user auth
       const userName = user.displayName || 'Perusahaan';
       document.getElementById('editNama').value = userName;
       const preview = document.getElementById('logoPreview');
       preview.textContent = userName.charAt(0).toUpperCase();
+      preview.style.background = '#3B2A8E';
+      preview.style.display = 'flex';
+      preview.style.alignItems = 'center';
+      preview.style.justifyContent = 'center';
+      preview.style.fontSize = '28px';
+      preview.style.fontWeight = '800';
     }
   });
 }
@@ -52,7 +65,7 @@ function previewLogo(event) {
   const reader = new FileReader();
   reader.onload = e => {
     const preview = document.getElementById('logoPreview');
-    preview.innerHTML = `<img src="${e.target.result}" alt="Logo" />`;
+    preview.innerHTML = `<img src="${e.target.result}" alt="Logo" style="width:100%;height:100%;object-fit:cover" />`;
     currentLogoBase64 = e.target.result;
   };
   reader.readAsDataURL(file);
@@ -61,6 +74,7 @@ function previewLogo(event) {
 async function saveProfile() {
   const nama = document.getElementById('editNama').value.trim();
   if (!nama) { alert('Nama perusahaan harus diisi.'); return; }
+  if (!uid) { alert('Session tidak valid.'); return; }
 
   const dataToSave = {
     nama: nama,
@@ -82,10 +96,16 @@ async function saveProfile() {
   try {
     await updateCompanyProfile(uid, dataToSave);
     
+    // Update juga nama di Firebase Authentication (displayName)
+    const user = auth.currentUser;
+    if (user && user.updateProfile) {
+      await user.updateProfile({ displayName: nama });
+    }
+    
     // Feedback visual
     const btn = document.querySelector('.form-actions .btn-primary');
     const orig = btn.innerHTML;
-    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg> Tersimpan!';
+    btn.innerHTML = '<svg ...> Tersimpan!';
     btn.style.background = '#2E7D32';
     btn.style.borderColor = '#2E7D32';
 
