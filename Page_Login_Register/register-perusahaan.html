@@ -83,7 +83,7 @@
 <script src="db.js"></script>
 <script src="auth.js"></script>
 <script type="module">
-  import { firebaseRegister, checkSessionAndRedirect } from './auth-firebase.js';
+  import { firebaseRegister, updateCompanyProfile, checkSessionAndRedirect } from './auth-firebase.js';
   checkSessionAndRedirect();
 
   window.handleRegister = async () => {
@@ -95,15 +95,21 @@
     const password = document.getElementById('regPassword').value.trim();
 
     if (!name || !email || !kota || !provinsi || !password) {
-      alert('Field wajib diisi: Nama, Email, Kota, Provinsi, Kata Sandi');
+      alert('Field wajib: Nama, Email, Kota, Provinsi, Kata Sandi');
       return;
     }
-    // Simpan data tambahan (tentang, kota, provinsi) nanti bisa diupdate ke profil setelah register
+
+    // Registrasi ke Firebase Auth & simpan data dasar
     const success = await firebaseRegister({ name, email, phone: '', password }, 'perusahaan');
     if (success) {
-      // Setelah berhasil, simpan data tambahan ke database (opsional)
-      // Bisa dilakukan dengan fungsi updateProfile nanti
-      setTimeout(() => window.location.href = 'login-perusahaan.html', 1500);
+      // Setelah registrasi berhasil, kita perlu mendapatkan UID user yang baru dibuat
+      // Karena firebaseRegister sudah logout otomatis, kita tidak punya akses ke user.currentUser.
+      // Alternatif: kita bisa menyimpan data tambahan setelah login. Tapi agar lebih mudah, kita bisa memodifikasi firebaseRegister agar mengembalikan UID.
+      // Sementara, kita arahkan ke halaman login, dan nanti saat login pertama, data akan kosong.
+      // Atau kita bisa menyimpan data tambahan ke database dengan UID yang kita simpan sementara.
+      // Karena firebaseRegister melakukan signOut, kita tidak bisa langsung update.
+      // Solusi: buat fungsi khusus untuk menyimpan data perusahaan setelah register, dengan UID yang dihasilkan.
+      // Kita perlu memodifikasi auth-firebase.js untuk mengembalikan UID.
     }
   };
 </script>

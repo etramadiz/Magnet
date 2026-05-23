@@ -75,11 +75,11 @@
         <div class="profile-header-card">
           <div class="profile-header-content">
             <div class="profile-logo-wrap">
-              <div class="profile-logo">K</div>
+              <div class="profile-logo" id="profileLogo">K</div>
             </div>
             <div class="profile-info">
-              <h2 class="profile-company-name">PT Kreasi Digital</h2>
-              <p class="profile-email">kreasi@digital.co.id</p>
+              <h2 class="profile-company-name" id="companyName">Memuat...</h2>
+              <p class="profile-email" id="companyEmail">—</p>
             </div>
           </div>
           <a href="edit-user-perusahaan.html" class="btn btn-outline profile-edit-btn">
@@ -92,12 +92,12 @@
         <div class="card profile-section">
           <h3 class="profile-section-title">Tentang Perusahaan</h3>
           <table class="profile-table">
-            <tr><td class="pt-label">Industri</td><td class="pt-value">Teknologi Informasi</td></tr>
-            <tr><td class="pt-label">Lokasi</td><td class="pt-value">Semarang, Jawa Tengah</td></tr>
-            <tr><td class="pt-label">Alamat Kantor</td><td class="pt-value">Jl. Pemuda No.123, Semarang</td></tr>
-            <tr><td class="pt-label">Ukuran Karyawan</td><td class="pt-value">50–100 karyawan</td></tr>
-            <tr><td class="pt-label">Website</td><td class="pt-value"><a href="#" style="color:var(--primary)">https://kreasidigital.co.id</a></td></tr>
-            <tr class="no-border"><td class="pt-label">Berdiri Sejak</td><td class="pt-value">2018</td></tr>
+            <tr><td class="pt-label">Industri</td><td class="pt-value" id="companyIndustri">—</td></tr>
+            <tr><td class="pt-label">Lokasi</td><td class="pt-value" id="companyLokasi">—</td></tr>
+            <tr><td class="pt-label">Alamat Kantor</td><td class="pt-value" id="companyAlamat">—</td></tr>
+            <tr><td class="pt-label">Ukuran Karyawan</td><td class="pt-value" id="companyUkuran">—</td></tr>
+            <tr><td class="pt-label">Website</td><td class="pt-value" id="companyWebsite">—</td></tr>
+            <tr class="no-border"><td class="pt-label">Berdiri Sejak</td><td class="pt-value" id="companyTahun">—</td></tr>
           </table>
         </div>
 
@@ -106,19 +106,19 @@
           <h3 class="profile-section-title">Statistik Rekrutmen</h3>
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-number" id="statLowongan">9</div>
+              <div class="stat-number" id="statLowongan">0</div>
               <div class="stat-label">Total Lowongan</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number" id="statPelamar">47</div>
+              <div class="stat-number" id="statPelamar">0</div>
               <div class="stat-label">Total Pelamar</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number" id="statDiterima">12</div>
+              <div class="stat-number" id="statDiterima">0</div>
               <div class="stat-label">Pelamar Diterima</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number" id="statBuka">6</div>
+              <div class="stat-number" id="statBuka">0</div>
               <div class="stat-label">Lowongan Aktif</div>
             </div>
           </div>
@@ -129,19 +129,19 @@
         <!-- Deskripsi -->
         <div class="card profile-section">
           <h3 class="profile-section-title">Deskripsi Perusahaan</h3>
-          <p class="profile-text">PT Kreasi Digital adalah perusahaan teknologi yang bergerak di bidang pengembangan aplikasi mobile dan web. Kami berdedikasi untuk menciptakan solusi digital inovatif yang membantu bisnis berkembang di era transformasi digital.</p>
+          <p class="profile-text" id="companyDesc">—</p>
         </div>
 
         <!-- Budaya Kerja -->
         <div class="card profile-section">
           <h3 class="profile-section-title">Budaya Kerja</h3>
-          <p class="profile-text">Kami percaya pada budaya kerja yang kolaboratif, inovatif, dan inklusif. Setiap anggota tim dihargai kontribusinya dan didorong untuk terus belajar dan berkembang. Kami mendukung work-life balance dan kreativitas tanpa batas.</p>
+          <p class="profile-text" id="companyBudaya">—</p>
         </div>
 
         <!-- Benefit -->
         <div class="card profile-section">
           <h3 class="profile-section-title">Benefit &amp; Fasilitas</h3>
-          <p class="profile-text">Uang saku kompetitif, mentoring langsung oleh senior developer, akses ke tools premium, sertifikat magang, flexible working hours, dan kesempatan untuk diangkat menjadi karyawan tetap setelah magang.</p>
+          <p class="profile-text" id="companyBenefit">—</p>
         </div>
 
         <!-- Review -->
@@ -169,12 +169,65 @@
   </div>
 </div>
 
-
 <script src="db.js"></script>
 <script src="sidebar.js"></script>
-<script src="user-perusahaan.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => { MagnetDB.requirePerusahaanAuth(); });
+<script type="module">
+  import { getCompanyProfile, logoutPerusahaan } from './firebase-company.js';
+  import { getSession } from './db.js';
+
+  // Cek login
+  const session = getSession();
+  if (!session || session.type !== 'perusahaan') {
+    window.location.href = '../Page_Login_Register/login-perusahaan.html';
+  }
+
+  // Update nama di navbar
+  const navUserName = document.getElementById('navUserName');
+  if (navUserName) navUserName.textContent = session.name;
+
+  // Load data perusahaan
+  async function loadProfile() {
+    const uid = session.id;
+    const data = await getCompanyProfile(uid);
+    if (data) {
+      // Header
+      document.getElementById('companyName').textContent = data.nama || session.name;
+      document.getElementById('companyEmail').textContent = session.email;
+      // Logo huruf pertama
+      const logoDiv = document.getElementById('profileLogo');
+      if (logoDiv) logoDiv.textContent = (data.nama || session.name).charAt(0).toUpperCase();
+      
+      // Tabel informasi
+      document.getElementById('companyIndustri').textContent = data.industri || '-';
+      document.getElementById('companyLokasi').textContent = data.lokasi || '-';
+      document.getElementById('companyAlamat').textContent = data.alamat || '-';
+      document.getElementById('companyUkuran').textContent = data.ukuran || '-';
+      const websiteCell = document.getElementById('companyWebsite');
+      if (data.website) websiteCell.innerHTML = `<a href="${data.website}" target="_blank">${data.website}</a>`;
+      else websiteCell.textContent = '-';
+      document.getElementById('companyTahun').textContent = data.tahun || '-';
+      
+      // Deskripsi, budaya, benefit
+      document.getElementById('companyDesc').textContent = data.deskripsi || 'Belum diisi';
+      document.getElementById('companyBudaya').textContent = data.budaya || 'Belum diisi';
+      document.getElementById('companyBenefit').textContent = data.benefit || 'Belum diisi';
+    } else {
+      // Jika belum ada data di Firebase, tampilkan kosong
+      document.getElementById('companyName').textContent = session.name;
+      document.getElementById('companyEmail').textContent = session.email;
+      const logoDiv = document.getElementById('profileLogo');
+      if (logoDiv) logoDiv.textContent = session.name.charAt(0).toUpperCase();
+      // Biarkan semua field tetap '-'
+    }
+    // TODO: Nanti bisa update statistik dari data lowongan nyata
+  }
+
+  loadProfile();
+
+  window.handleLogout = async () => {
+    await logoutPerusahaan();
+    window.location.href = '../Page_Login_Register/index.html';
+  };
 </script>
 </body>
 </html>
