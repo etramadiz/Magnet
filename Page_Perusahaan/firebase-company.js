@@ -35,17 +35,18 @@ export async function saveJob(jobData, companyId) {
   await set(newJobRef, jobWithMeta);
   return { ok: true, jobId, job: jobWithMeta };
 }
-
-// Ambil semua lowongan berdasarkan companyId
 export async function getJobsByCompany(companyId) {
   const jobsRef = ref(db, 'jobs');
-  const q = query(jobsRef, orderByChild('companyId'), equalTo(companyId));
-  const snapshot = await get(q);
+  const snapshot = await get(jobsRef);
   const jobs = [];
   snapshot.forEach(child => {
-    jobs.push({ id: child.key, ...child.val() });
+    const job = { id: child.key, ...child.val() };
+    if (job.companyId === companyId) {
+      jobs.push(job);
+    }
   });
   jobs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  console.log("Filtered jobs for", companyId, jobs);
   return jobs;
 }
 

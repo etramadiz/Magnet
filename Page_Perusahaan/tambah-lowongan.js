@@ -88,11 +88,11 @@ async function saveForm(mode) {
   });
 
   // Hapus field yang nilainya kosong/null/undefined
-  Object.keys(jobData).forEach(key => {
-    if (jobData[key] === undefined || jobData[key] === null || jobData[key] === '') {
-      delete jobData[key];
-    }
-  });
+  //Object.keys(jobData).forEach(key => {
+    //if (jobData[key] === undefined || jobData[key] === null || jobData[key] === '') {
+      //delete jobData[key];
+    //}
+  //});
 
   try {
     const result = await saveJob(jobData, companyId);
