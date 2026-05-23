@@ -43,7 +43,13 @@
 })();
 
 // Global logout untuk semua halaman perusahaan
-function handleLogout() {
+async function handleLogout() {
+  // Hapus session lokal
   MagnetDB.logout();
+  // Logout dari Firebase
+  const { signOut } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js");
+  const { auth } = await import("../Page_Login_Register/firebase-config.js");
+  await signOut(auth);
+  // Redirect ke halaman login
   window.location.href = '../Page_Login_Register/index.html';
 }

@@ -336,10 +336,24 @@ document.addEventListener('click', (e) => {
 
 
 /* ═══════════════════════════
-   LOGOUT
+   LOGOUT dengan Firebase
 ═══════════════════════════ */
-function handleLogout() {
+async function handleLogout() {
+  // 1. Hapus session dari localStorage (MagnetDB)
   MagnetDB.logout();
+  
+  // 2. Logout dari Firebase Auth
+  try {
+    // Dynamic import agar tidak perlu mengubah struktur module
+    const { signOut } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js");
+    const { auth } = await import("../Page_Login_Register/firebase-config.js");
+    await signOut(auth);
+    console.log("Firebase logout berhasil");
+  } catch (err) {
+    console.warn("Firebase logout error:", err);
+  }
+  
+  // 3. Redirect ke halaman utama login
   window.location.href = '../Page_Login_Register/index.html';
 }
 

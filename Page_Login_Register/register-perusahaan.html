@@ -82,34 +82,30 @@
 <div class="toast" id="auth-toast"></div>
 <script src="db.js"></script>
 <script src="auth.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', checkExistingSession);
+<script type="module">
+  import { firebaseRegister, checkSessionAndRedirect } from './auth-firebase.js';
+  checkSessionAndRedirect();
 
-  function handleRegister() {
-    const nama     = document.getElementById('regNama').value.trim();
-    const email    = document.getElementById('regEmail').value.trim();
-    const tentang  = document.getElementById('regTentang').value.trim();
-    const kota     = document.getElementById('regKota').value.trim();
+  window.handleRegister = async () => {
+    const name = document.getElementById('regNama').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const tentang = document.getElementById('regTentang').value.trim();
+    const kota = document.getElementById('regKota').value.trim();
     const provinsi = document.getElementById('regProvinsi').value.trim();
     const password = document.getElementById('regPassword').value.trim();
 
-    if (!nama)                          { showToast('Masukkan nama perusahaan.', 'error');     shakeInput('regNama');     return; }
-    if (!email || !validEmail(email))   { showToast('Masukkan email yang valid.', 'error');    shakeInput('regEmail');    return; }
-    if (!password || password.length<8) { showToast('Kata sandi minimal 8 karakter.', 'error'); shakeInput('regPassword'); return; }
-
-    const result = MagnetDB.register({ name:nama, email, phone:'', password, type:'perusahaan' });
-    if (!result.ok) { showToast(result.message, 'error'); shakeInput('regEmail'); return; }
-
-    MagnetDB.updateUser(result.user.id, {
-      description: tentang,
-      location   : [kota, provinsi].filter(Boolean).join(', '),
-    });
-
-    showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
-    setTimeout(() => window.location.href = 'login-perusahaan.html', 1500);
-  }
-
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+    if (!name || !email || !kota || !provinsi || !password) {
+      alert('Field wajib diisi: Nama, Email, Kota, Provinsi, Kata Sandi');
+      return;
+    }
+    // Simpan data tambahan (tentang, kota, provinsi) nanti bisa diupdate ke profil setelah register
+    const success = await firebaseRegister({ name, email, phone: '', password }, 'perusahaan');
+    if (success) {
+      // Setelah berhasil, simpan data tambahan ke database (opsional)
+      // Bisa dilakukan dengan fungsi updateProfile nanti
+      setTimeout(() => window.location.href = 'login-perusahaan.html', 1500);
+    }
+  };
 </script>
 </body>
 </html>

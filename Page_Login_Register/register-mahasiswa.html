@@ -91,33 +91,25 @@
 <div class="toast" id="auth-toast"></div>
 <script src="db.js"></script>
 <script src="auth.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', checkExistingSession);
+<script type="module">
+  import { firebaseRegister, checkSessionAndRedirect } from './auth-firebase.js';
+  checkSessionAndRedirect();
 
-  function handleRegister() {
-    const nama        = document.getElementById('regNama').value.trim();
-    const email       = document.getElementById('regEmail').value.trim();
-    const phone       = document.getElementById('regPhone').value.trim();
-    const universitas = document.getElementById('regUniversitas').value.trim();
-    const semester    = document.getElementById('regSemester').value;
-    const jurusan     = document.getElementById('regJurusan').value.trim();
-    const password    = document.getElementById('regPassword').value.trim();
+  window.handleRegister = async () => {
+    const name = document.getElementById('regNama').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
 
-    if (!nama)                          { showToast('Masukkan nama lengkap.', 'error');        shakeInput('regNama');     return; }
-    if (!email || !validEmail(email))   { showToast('Masukkan email yang valid.', 'error');    shakeInput('regEmail');    return; }
-    if (!phone)                         { showToast('Masukkan nomor telepon.', 'error');       shakeInput('regPhone');    return; }
-    if (!password || password.length<6) { showToast('Kata sandi minimal 6 karakter.', 'error'); shakeInput('regPassword'); return; }
-
-    const result = MagnetDB.register({ name:nama, email, phone, password, type:'mahasiswa' });
-    if (!result.ok) { showToast(result.message, 'error'); shakeInput('regEmail'); return; }
-
-    MagnetDB.updateUser(result.user.id, { universitas, jurusan, semester });
-
-    showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
-    setTimeout(() => window.location.href = 'login-mahasiswa.html', 1500);
-  }
-
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+    if (!name || !email || !phone || !password) {
+      alert('Semua field harus diisi');
+      return;
+    }
+    const success = await firebaseRegister({ name, email, phone, password }, 'mahasiswa');
+    if (success) {
+      setTimeout(() => window.location.href = 'login-mahasiswa.html', 1500);
+    }
+  };
 </script>
 </body>
 </html>

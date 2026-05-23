@@ -79,28 +79,29 @@
 <div class="toast" id="auth-toast"></div>
 <script src="db.js"></script>
 <script src="auth.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', checkExistingSession);
+<script type="module">
+  import { firebaseLogin, firebaseGoogleLogin, checkSessionAndRedirect } from './auth-firebase.js';
+  checkSessionAndRedirect();
 
-  function handleLogin() {
-    const email    = document.getElementById('loginEmail').value.trim();
+  window.handleLogin = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
-
-    if (!email)    { showToast('Masukkan email perusahaan.', 'error'); shakeInput('loginEmail');    return; }
-    if (!password) { showToast('Masukkan kata sandi.', 'error');       shakeInput('loginPassword'); return; }
-
-    const result = MagnetDB.login(email, password);
-    if (!result.ok) { showToast(result.message, 'error'); shakeInput('loginEmail'); shakeInput('loginPassword'); return; }
-
-    if (result.user.type !== 'perusahaan') {
-      showToast('Akun ini bukan akun perusahaan.', 'error'); return;
+    if (!email || !password) {
+      alert('Email dan password harus diisi');
+      return;
     }
+    const success = await firebaseLogin(email, password, 'perusahaan');
+    if (success) {
+      setTimeout(() => window.location.href = '../Page_Perusahaan/dashboard.html', 1000);
+    }
+  };
 
-    showToast(`Halo, ${result.user.name}! Mengalihkan…`, 'success');
-    setTimeout(() => window.location.href = '../Page_Perusahaan/dashboard.html', 1000);
-  }
-
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+  window.googleAuth = async () => {
+    const success = await firebaseGoogleLogin('perusahaan');
+    if (success) {
+      setTimeout(() => window.location.href = '../Page_Perusahaan/dashboard.html', 1000);
+    }
+  };
 </script>
 </body>
 </html>

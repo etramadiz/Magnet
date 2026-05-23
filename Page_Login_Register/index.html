@@ -46,6 +46,9 @@
 <div class="toast" id="auth-toast"></div>
 <script src="db.js"></script>
 <script src="auth.js"></script>
-<script>document.addEventListener('DOMContentLoaded', checkExistingSession);</script>
+<script type="module">
+  import { checkSessionAndRedirect } from './auth-firebase.js';
+  checkSessionAndRedirect();
+</script>
 </body>
 </html>
