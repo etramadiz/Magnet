@@ -57,13 +57,12 @@ export async function firebaseLogin(email, password, expectedRole) {
   }
 }
 
-// Fungsi register mahasiswa/perusahaan
 export async function firebaseRegister(data, role) {
   const { name, email, phone, password } = data;
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    // Simpan ke Realtime Database
+    // Simpan ke users/
     await set(ref(db, 'users/' + user.uid), {
       namaLengkap: name,
       email: email,
@@ -71,16 +70,28 @@ export async function firebaseRegister(data, role) {
       tipeAkun: role,
       createdAt: new Date().toISOString()
     });
-    // Simpan ke localStorage (opsional)
+    
+    // Jika perusahaan, simpan juga ke companies/
+    if (role === 'perusahaan') {
+      await set(ref(db, `companies/${user.uid}`), {
+        nama: name,
+        email: email,
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    // Simpan ke localStorage
     const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     users.push({ id: user.uid, name, email, type: role });
     localStorage.setItem('magnet_users', JSON.stringify(users));
-    await signOut(auth); // logout otomatis, user harus login setelah daftar
-    showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
-    return true;
+    
+    // Jangan logout dulu, biarkan user tetap login agar bisa langsung mengedit profil
+    // await signOut(auth);  // <-- HAPUS atau comment baris ini
+    showToast('Pendaftaran berhasil! Mengalihkan...', 'success');
+    return { success: true, uid: user.uid };
   } catch (err) {
     showToast('Gagal daftar: ' + err.message, 'error');
-    return false;
+    return { success: false };
   }
 }
 
@@ -138,4 +149,9 @@ export function checkSessionAndRedirect() {
       }
     }
   });
+}
+
+// Update data perusahaan (merge)
+export async function updateCompanyProfile(uid, data) {
+  await set(ref(db, `companies/${uid}`), data, { merge: true });
 }

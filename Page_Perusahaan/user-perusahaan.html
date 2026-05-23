@@ -175,51 +175,45 @@
   import { getCompanyProfile, logoutPerusahaan } from './firebase-company.js';
   import { getSession } from './db.js';
 
-  // Cek login
   const session = getSession();
   if (!session || session.type !== 'perusahaan') {
     window.location.href = '../Page_Login_Register/login-perusahaan.html';
   }
 
-  // Update nama di navbar
+  // Set nama di navbar
   const navUserName = document.getElementById('navUserName');
   if (navUserName) navUserName.textContent = session.name;
 
-  // Load data perusahaan
   async function loadProfile() {
     const uid = session.id;
     const data = await getCompanyProfile(uid);
-    if (data) {
-      // Header
-      document.getElementById('companyName').textContent = data.nama || session.name;
-      document.getElementById('companyEmail').textContent = session.email;
-      // Logo huruf pertama
-      const logoDiv = document.getElementById('profileLogo');
-      if (logoDiv) logoDiv.textContent = (data.nama || session.name).charAt(0).toUpperCase();
-      
-      // Tabel informasi
-      document.getElementById('companyIndustri').textContent = data.industri || '-';
-      document.getElementById('companyLokasi').textContent = data.lokasi || '-';
-      document.getElementById('companyAlamat').textContent = data.alamat || '-';
-      document.getElementById('companyUkuran').textContent = data.ukuran || '-';
-      const websiteCell = document.getElementById('companyWebsite');
-      if (data.website) websiteCell.innerHTML = `<a href="${data.website}" target="_blank">${data.website}</a>`;
-      else websiteCell.textContent = '-';
-      document.getElementById('companyTahun').textContent = data.tahun || '-';
-      
-      // Deskripsi, budaya, benefit
-      document.getElementById('companyDesc').textContent = data.deskripsi || 'Belum diisi';
-      document.getElementById('companyBudaya').textContent = data.budaya || 'Belum diisi';
-      document.getElementById('companyBenefit').textContent = data.benefit || 'Belum diisi';
+    
+    // Header - selalu tampilkan nama dari session jika data kosong
+    const companyNameEl = document.getElementById('companyName');
+    const companyEmailEl = document.getElementById('companyEmail');
+    const profileLogo = document.getElementById('profileLogo');
+    
+    if (data && data.nama) {
+      companyNameEl.textContent = data.nama;
+      profileLogo.textContent = data.nama.charAt(0).toUpperCase();
     } else {
-      // Jika belum ada data di Firebase, tampilkan kosong
-      document.getElementById('companyName').textContent = session.name;
-      document.getElementById('companyEmail').textContent = session.email;
-      const logoDiv = document.getElementById('profileLogo');
-      if (logoDiv) logoDiv.textContent = session.name.charAt(0).toUpperCase();
-      // Biarkan semua field tetap '-'
+      companyNameEl.textContent = session.name;
+      profileLogo.textContent = session.name.charAt(0).toUpperCase();
     }
-    // TODO: Nanti bisa update statistik dari data lowongan nyata
+    companyEmailEl.textContent = session.email;
+
+    // Isi field lain (jika ada data)
+    document.getElementById('companyIndustri').textContent = data?.industri || '-';
+    document.getElementById('companyLokasi').textContent = data?.lokasi || '-';
+    document.getElementById('companyAlamat').textContent = data?.alamat || '-';
+    document.getElementById('companyUkuran').textContent = data?.ukuran || '-';
+    const websiteCell = document.getElementById('companyWebsite');
+    if (data?.website) websiteCell.innerHTML = `<a href="${data.website}" target="_blank">${data.website}</a>`;
+    else websiteCell.textContent = '-';
+    document.getElementById('companyTahun').textContent = data?.tahun || '-';
+    document.getElementById('companyDesc').textContent = data?.deskripsi || 'Belum diisi';
+    document.getElementById('companyBudaya').textContent = data?.budaya || 'Belum diisi';
+    document.getElementById('companyBenefit').textContent = data?.benefit || 'Belum diisi';
   }
 
   loadProfile();
