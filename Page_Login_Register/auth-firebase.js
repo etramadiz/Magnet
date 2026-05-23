@@ -57,7 +57,6 @@ export async function firebaseLogin(email, password, expectedRole) {
   }
 }
 
-// Fungsi register mahasiswa/perusahaan
 export async function firebaseRegister(data, role) {
   const { name, email, phone, password, universitas, semester, jurusan, ipk } = data;
   try {
@@ -110,7 +109,7 @@ export async function firebaseRegister(data, role) {
     return true;
   } catch (err) {
     showToast('Gagal daftar: ' + err.message, 'error');
-    return false;
+    return { success: false };
   }
 }
 
@@ -168,4 +167,9 @@ export function checkSessionAndRedirect() {
       }
     }
   });
+}
+
+// Update data perusahaan (merge)
+export async function updateCompanyProfile(uid, data) {
+  await set(ref(db, `companies/${uid}`), data, { merge: true });
 }
