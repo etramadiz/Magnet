@@ -77,6 +77,7 @@ function initPhotoSection() {
    PROGRESS
 ════════════ */
 function updateProgress() {
+  console.log('updateProgress dipanggil');
   const user = MagnetDB.getSession();
   const checks = [
     !!user?.name,
@@ -284,7 +285,7 @@ async function doSave(strict = true) {
 }
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
-window.saveProfile = async function() {
+async function saveProfile() {
   await doSave(true);
 };
 
@@ -333,6 +334,13 @@ function loadProfile() {
       if (fn) fn.textContent = profile.cv.name;
       if (fm) fm.textContent = (profile.cv.size/1024).toFixed(0) + ' KB · PDF · Tersimpan';
     }
+  }
+
+  // 🔥 Ambil avatar dari profile.avatar (bisa juga dari user.avatar)
+  const savedAvatar = profile?.avatar || user?.avatar;
+  if (savedAvatar) {
+    photoDataURL = savedAvatar;
+    applyPhotoPreview(savedAvatar);
   }
 
   // URL param ?edit=1 atau belum ada profil → langsung edit mode
