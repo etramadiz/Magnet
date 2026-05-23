@@ -163,8 +163,9 @@
 <script src="db.js"></script>
 <script src="sidebar.js"></script>
 <script src="detail-pelamar.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => { MagnetDB.requirePerusahaanAuth(); });
+<script type="module">
+  import { checkSessionAndRedirect } from '../Page_Login_Register/auth-firebase.js';
+  checkSessionAndRedirect();
 </script>
 </body>
 </html>
