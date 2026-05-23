@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Edit Profil Perusahaan</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="edit-user-perusahaan.css" />
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Mag<span class="n-grad">n</span>et</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        Beranda
+      </a>
+      <a href="lihat-pelamar.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+        Lihat Pelamar
+      </a>
+      <a href="user-perusahaan.html" class="active">
+        <span class="side-nav a svg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <span class="sidebar-label">Profile Perusahaan</span>
+      </a>
+    </nav>
+      <div class="sidebar-footer">
+      <a href="#" class="sidebar-logout" onclick="handleLogout(); return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Keluar</span>
+      </a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="navbar-toggle" id="sidebarToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      </button>
+      <a href="dashboard.html" class="navbar-brand">Mag<span class="n-grad">n</span>et</a>
+      <div class="navbar-space"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="notifikasi-perusahaan.html" class="navbar-bell" style="display: flex; align-items: center; justify-content: center; text-decoration: none; color: inherit;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+            </svg>
+          </a>
+        <a href="user-perusahaan.html" class="navbar-user">
+          <div class="user-avatar"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg></div>
+          <span id="navUserName">Perusahaan</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <a href="user-perusahaan.html" class="btn-back">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
+        Kembali ke Profil
+      </a>
+
+      <div class="page-title" style="margin-bottom:22px;">Edit Profil Perusahaan</div>
+
+      <div class="edit-sections">
+        <!-- Logo -->
+        <div class="card edit-section">
+          <div class="edit-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+            Logo Perusahaan
+          </div>
+          <div class="divider"></div>
+          <div class="logo-upload-row">
+            <div class="logo-preview" id="logoPreview">K</div>
+            <div class="logo-upload-info">
+              <p class="logo-format">Format jpg/png. Ukuran maks. 8MB.</p>
+              <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="previewLogo(event)" />
+              <button class="btn btn-primary" onclick="document.getElementById('logoInput').click()">Update Logo</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Perusahaan -->
+        <div class="card edit-section">
+          <div class="edit-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+            Detail Perusahaan
+          </div>
+          <div class="divider"></div>
+          <div class="form-group">
+            <label class="form-label">Nama Perusahaan</label>
+            <input type="text" class="form-control" id="editNama" value="PT Kreasi Digital" />
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Industri</label>
+              <select class="form-control" id="editIndustri">
+                <option selected>Teknologi Informasi</option>
+                <option>Desain Kreatif</option>
+                <option>Pemasaran Digital</option>
+                <option>Keuangan</option>
+                <option>Pendidikan</option>
+                <option>Kesehatan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ukuran Karyawan</label>
+              <select class="form-control" id="editUkuran">
+                <option>1–10 karyawan</option>
+                <option>11–50 karyawan</option>
+                <option selected>50–100 karyawan</option>
+                <option>100–500 karyawan</option>
+                <option>500+ karyawan</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Lokasi Perusahaan</label>
+              <input type="text" class="form-control" id="editLokasi" value="Semarang, Jawa Tengah" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Website</label>
+              <input type="url" class="form-control" id="editWebsite" value="https://kreasidigital.co.id" />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Alamat Perusahaan</label>
+              <input type="text" class="form-control" id="editAlamat" value="Jl. Pemuda No.123, Semarang" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Berdiri Sejak</label>
+              <input type="number" class="form-control" id="editTahun" value="2018" min="1900" max="2025" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Deskripsi -->
+        <div class="card edit-section">
+          <h2 class="section-title">Deskripsi Perusahaan</h2>
+          <textarea class="form-control" id="editDeskripsi" rows="5">PT Kreasi Digital adalah perusahaan teknologi yang bergerak di bidang pengembangan aplikasi mobile dan web. Kami berdedikasi untuk menciptakan solusi digital inovatif yang membantu bisnis berkembang di era transformasi digital.</textarea>
+        </div>
+
+        <!-- Budaya Kerja -->
+        <div class="card edit-section">
+          <h2 class="section-title">Budaya Kerja</h2>
+          <textarea class="form-control" id="editBudaya" rows="4">Kami percaya pada budaya kerja yang kolaboratif, inovatif, dan inklusif. Setiap anggota tim dihargai kontribusinya dan didorong untuk terus belajar dan berkembang.</textarea>
+        </div>
+
+        <!-- Benefit -->
+        <div class="card edit-section">
+          <h2 class="section-title">Benefit &amp; Fasilitas</h2>
+          <textarea class="form-control" id="editBenefit" rows="4">Uang saku kompetitif, mentoring langsung oleh senior developer, akses ke tools premium, sertifikat magang, flexible working hours, dan kesempatan untuk diangkat menjadi karyawan tetap.</textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <a href="user-perusahaan.html" class="btn btn-outline">Batalkan</a>
+          <button class="btn btn-primary" onclick="saveProfile()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+            Simpan Perubahan
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+
+<script src="db.js"></script>
+<script src="sidebar.js"></script>
+<script src="edit-user-perusahaan.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => { MagnetDB.requirePerusahaanAuth(); });
+</script>
+</body>
+</html>

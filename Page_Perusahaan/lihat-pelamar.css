@@ -1,0 +1,179 @@
+/* lihat-pelamar.css */
+
+.pelamar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Job group card */
+.job-group {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px rgba(59,42,142,0.08);
+  overflow: hidden; /* Memastikan isi list mahasiswa ikut melengkung rapi di sudut bawah */
+}
+
+.job-group-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  border-bottom: 1px solid transparent;
+  transition: var(--tr);
+}
+
+.job-group-header:hover {
+  background-color: rgba(59, 42, 142, 0.02);
+}
+
+.job-group-logo {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.job-group-info { 
+  flex: 1; 
+}
+
+.job-group-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.job-group-company {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* List Pelamar title */
+.list-pelamar-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 16px 22px 10px;
+}
+
+/* Pelamar row */
+.pelamar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--border);
+  transition: background 0.18s;
+}
+
+.pelamar-row:hover { 
+  background: #FAFAFE; 
+}
+
+.pelamar-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.pelamar-avatar svg { 
+  width: 22px; height: 22px; 
+}
+
+.pelamar-info {
+  flex: 1; /* Mengambil sisa ruang di tengah agar status & detail terdorong ke kanan */
+  min-width: 0;
+}
+
+.pelamar-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.pelamar-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pelamar-status-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pelamar-action {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+@media (max-width: 600px) {
+  .pelamar-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pelamar-info { flex: 1 0 100%; }
+  .pelamar-status-wrap { width: auto; }
+}
+
+/* ─── ACCORDION SYSTEM (FIXED) ───────────────── */
+
+/* Kontainer utama daftar pelamar default-nya disembunyikan */
+.job-accordion-content {
+  display: none !important; /* Kunci default sembunyi */
+  opacity: 0;
+  background: #fafafd;
+  transition: opacity 0.25s ease-in-out;
+}
+
+/* State ketika aktif (Terbuka) - Target spesifik agar menang dari css lain */
+.job-group .job-accordion-content.active {
+  display: block !important; /* Paksa tampil instan saat dipicu JS */
+  opacity: 1;
+  border-top: 1px dashed var(--border); /* Garis batas putus-putus pembatas dengan header lowongan */
+}
+
+/* Styling komponen pembungkus ikon panah */
+.accordion-arrow {
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: transform 0.25s ease; /* Animasi putar */
+}
+
+/* Efek hover pada area header lowongan */
+.job-group-header:hover .accordion-arrow {
+  background: rgba(59, 42, 142, 0.06);
+  color: var(--primary);
+}
+
+/* Animasi rotasi panah berputar ke atas saat dibuka */
+.accordion-arrow.rotated {
+  transform: rotate(-180deg) !important; /* Berputar menghadap atas */
+  color: var(--primary);
+}
+
+/* Penyesuaian sedikit margin detail pelamar agar lebih presisi */
+.job-accordion-content .pelamar-row:first-of-type {
+  border-top: none; /* Hilangkan border double paling atas setelah title */
+}

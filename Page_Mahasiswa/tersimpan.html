@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Lowongan Tersimpan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .ts-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    .ts-title  { font-family:var(--font-display); font-size:1.1rem; font-weight:800; color:var(--text-dark); }
+    .ts-count  { font-size:0.85rem; color:var(--text-light); margin-bottom:20px; }
+    .ts-clear-btn {
+      padding:7px 14px; border-radius:9px; border:1.5px solid #FCA5A5;
+      background:var(--white); color:var(--red); font-family:var(--font-body);
+      font-size:0.82rem; font-weight:600; cursor:pointer; transition:all var(--transition);
+    }
+    .ts-clear-btn:hover { background:#FEF2F2; }
+
+    /* Empty state */
+    .ts-empty {
+      display:flex; flex-direction:column; align-items:center;
+      gap:12px; padding:64px 24px; text-align:center;
+    }
+    .ts-empty svg    { width:56px; height:56px; opacity:0.2; display:block; }
+    .ts-empty h3     { font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--text-mid); }
+    .ts-empty p      { font-size:0.85rem; color:var(--text-light); max-width:260px; line-height:1.5; }
+    .ts-empty-cta    {
+      padding:10px 24px; background:var(--blue-primary); color:#fff;
+      border-radius:12px; text-decoration:none; font-family:var(--font-display);
+      font-weight:700; font-size:0.88rem; transition:background var(--transition);
+    }
+    .ts-empty-cta:hover { background:var(--blue-hover); }
+
+    /* Card remove btn */
+    .ts-remove-btn {
+      background:none; border:none; cursor:pointer;
+      color:var(--text-light); padding:2px;
+      transition:color var(--transition);
+    }
+    .ts-remove-btn:hover { color:var(--red); }
+    .ts-remove-btn svg { width:18px; height:18px; display:block; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Mag<span class="n-grad">n</span>et</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item" data-page="home">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </span>
+        <span class="nav-label">Beranda</span>
+      </a>
+
+      <a href="lowongan.html" class="nav-item" data-page="lowongan">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+        </span>
+        <span class="nav-label">Cari Lowongan</span>
+      </a>
+
+      <a href="lamaran.html" class="nav-item" data-page="lamaran">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </span>
+        <span class="nav-label">Status Lamaran</span>
+        <span class="nav-badge" id="nav-lamaran-badge" style="display:none">0</span>
+      </a>
+      
+      <a href="tersimpan.html" class="nav-item active"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">Tersimpan</span></a>
+
+      <a href="profil.html" class="nav-item" data-page="profil">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <span class="nav-label">Profil Saya</span>
+      </a>
+    </nav>
+
+    <button class="sidebar-logout" onclick="handleLogout()">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+      <span class="nav-label">Keluar</span>
+    </button>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <main class="main-content">
+    <header class="top-header">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="header-brand"><span class="header-brand-name">Lowongan Tersimpan</span></div>
+      <!-- Username Avatar sebelum profile -->
+         <span class="header-user-name" id="profileNavName">halodec</span>
+      <div class="header-actions"><div class="avatar-btn" onclick="window.location.href='profil.html'" style="cursor:pointer"><span id="avatarInitial">M</span></div></div>
+    </header>
+
+    <div class="page-body">
+      <div class="ts-header">
+        <button class="ts-clear-btn" id="clearAllBtn" onclick="clearAll()" style="display:none">Hapus Semua</button>
+      </div>
+      <p class="ts-count" id="tsCount">Memuat…</p>
+      <div class="jobs-list" id="tsList"></div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="db.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="jobs-data.js"></script>
+  <script>
+    let savedSet = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
+
+    function persistSaved() {
+      localStorage.setItem('mg_saved', JSON.stringify([...savedSet]));
+    }
+
+    function removeJob(id) {
+      savedSet.delete(id);
+      persistSaved();
+      renderSaved();
+      showToast('Lowongan dihapus dari simpanan');
+    }
+
+    function clearAll() {
+      if (!confirm('Hapus semua lowongan tersimpan?')) return;
+      savedSet.clear();
+      persistSaved();
+      renderSaved();
+      showToast('Semua lowongan tersimpan dihapus');
+    }
+
+    function renderSaved() {
+      const ids  = [...savedSet];
+      const jobs = ids.map(id => MAGNET_JOBS.find(j => j.id === id)).filter(Boolean);
+
+      const countEl   = document.getElementById('tsCount');
+      const clearBtn  = document.getElementById('clearAllBtn');
+      const list      = document.getElementById('tsList');
+
+      if (countEl)  countEl.textContent  = jobs.length + ' lowongan tersimpan';
+      if (clearBtn) clearBtn.style.display = jobs.length > 0 ? 'inline-block' : 'none';
+
+      if (!jobs.length) {
+        list.innerHTML = `
+          <div class="ts-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <h3>Belum ada yang disimpan</h3>
+            <p>Tekan ikon bookmark di card lowongan untuk menyimpannya di sini.</p>
+            <a href="hasil-pencarian.html" class="ts-empty-cta">Cari Lowongan →</a>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = jobs.map((job, i) => `
+        <div class="job-card" style="animation-delay:${i*0.06}s" onclick="window.location.href='detail-lowongan.html?id=${job.id}'">
+          <div class="job-card-top">
+            <div class="company-logo" style="background:${job.logoColor}18;color:${job.logoColor};border-color:${job.logoColor}22">${job.companyShort}</div>
+            <div class="job-main">
+              <p class="job-title">${job.title}</p>
+              <p class="job-company">${job.company}</p>
+            </div>
+            <div class="job-card-actions">
+              <button class="ts-remove-btn" onclick="event.stopPropagation();removeJob(${job.id})" title="Hapus dari simpanan">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </button>
+              ${job.isNew ? '<span class="new-badge">Baru</span>' : ''}
+            </div>
+          </div>
+          <div class="job-meta">
+            <span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${job.location}</span>
+            <span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${job.durasiLabel}</span>
+            <span class="meta-item" style="text-transform:capitalize">${job.remoteKey}</span>
+          </div>
+          <p class="job-salary">${job.salary}</p>
+          <div class="job-card-footer">
+            <span class="job-time">Tutup ${job.deadline}</span>
+            <button class="apply-btn" onclick="event.stopPropagation();window.location.href='detail-lowongan.html?id=${job.id}'">Lihat Detail</button>
+          </div>
+        </div>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      MagnetDB.requireAuth('index.html');
+      restoreSidebarState();
+      const user = MagnetDB.getSession();
+      if (user) {
+        const av = document.getElementById('avatarInitial');
+        if (av) av.textContent = user.name.charAt(0).toUpperCase();
+      }
+      renderSaved();
+    });
+  </script>
+</body>
+</html>

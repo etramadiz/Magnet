@@ -1,0 +1,90 @@
+/* detail-pelamar.css */
+
+.detail-card {
+  padding: 28px;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.detail-avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.detail-avatar svg { width: 34px; height: 34px; }
+
+.detail-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Fields */
+.detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.detail-value-box {
+  padding: 11px 14px;
+  background: #F8F6FD;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.detail-file-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: #F8F6FD;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--tr);
+}
+
+.detail-file-box:hover { background: #eee8fc; border-color: var(--primary); }
+
+.detail-file-box svg {
+  width: 18px; height: 18px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Action buttons */
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .detail-card { padding: 18px; }
+  .detail-actions { justify-content: stretch; }
+  .detail-actions .btn { flex: 1; justify-content: center; }
+}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Tambah Lowongan</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="tambah-lowongan.css" />
+</head>
+<body>
+<div class="layout">
+
+    <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Mag<span class="n-grad">n</span>et</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        Beranda
+      </a>
+      <a href="lihat-pelamar.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+        Lihat Pelamar
+      </a>
+      <a href="user-perusahaan.html">
+        <span class="side-nav a svg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <span class="sidebar-label">Profile Perusahaan</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="#" class="sidebar-logout" onclick="handleLogout(); return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Keluar</span>
+      </a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="navbar-toggle" id="sidebarToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      </button>
+      <a href="dashboard.html" class="navbar-brand">Mag<span class="n-grad">n</span>et</a>
+      <div class="navbar-space"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="notifikasi-perusahaan.html" class="navbar-bell" style="display: flex; align-items: center; justify-content: center; text-decoration: none; color: inherit;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+            </svg>
+          </a>
+        <a href="user-perusahaan.html" class="navbar-user">
+          <div class="user-avatar"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg></div>
+          <span id="navUserName">Nama Pengguna</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <a href="dashboard.html" class="btn-back">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
+        Kembali
+      </a>
+
+      <div class="page-title" style="margin-bottom:22px;" id="formTitle">Tambah Lowongan</div>
+
+      <div class="form-sections">
+        <!-- Tentang Pekerjaan -->
+        <div class="card form-section">
+          <h2 class="section-title">Tentang Pekerjaan</h2>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Nama Lowongan</label>
+              <input type="text" class="form-control" id="namaLowongan" placeholder="Contoh: UI/UX Designer Intern" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Perusahaan</label>
+              <input type="text" class="form-control" id="namaPerusahaan" placeholder="Nama perusahaan" />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Kategori Industri</label>
+              <select class="form-control" id="kategori">
+                <option value="">Pilih kategori</option>
+                <option>Teknologi Informasi</option>
+                <option>Desain Kreatif</option>
+                <option>Pemasaran Digital</option>
+                <option>Keuangan</option>
+                <option>Pendidikan</option>
+                <option>Kesehatan</option>
+                <option>Lainnya</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Lokasi</label>
+              <input type="text" class="form-control" id="lokasi" placeholder="Kota, Provinsi" />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Durasi Magang</label>
+              <select class="form-control" id="durasi">
+                <option value="">Pilih durasi</option>
+                <option>1 Bulan</option>
+                <option>2 Bulan</option>
+                <option>3 Bulan</option>
+                <option>4 Bulan</option>
+                <option>6 Bulan</option>
+                <option>12 Bulan</option>
+                <option>Fleksibel</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Batas Daftar</label>
+              <input type="date" class="form-control" id="batasDaftar" />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Mode Kerja</label>
+              <select class="form-control" id="modeKerja">
+                <option value="">Pilih mode</option>
+                <option>On-site</option>
+                <option>Remote</option>
+                <option>Hybrid</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Pekerjaan</label>
+              <select class="form-control" id="statusPekerjaan">
+                <option value="">Pilih status</option>
+                <option>Magang</option>
+                <option>Part-time</option>
+                <option>Full-time</option>
+                <option>Freelance</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gaji / Uang Saku (per bulan)</label>
+            <div class="salary-row">
+              <span class="salary-label">Min</span>
+              <input type="number" class="form-control" id="gajiMin" placeholder="500000" />
+              <span class="salary-label">Max</span>
+              <input type="number" class="form-control" id="gajiMax" placeholder="1000000" />
+              <span class="salary-unit">/ bulan</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deskripsi -->
+        <div class="card form-section">
+          <h2 class="section-title">Deskripsi Pekerjaan</h2>
+          <textarea class="form-control" id="deskripsi" rows="5" placeholder="Tuliskan deskripsi pekerjaan secara detail..."></textarea>
+        </div>
+
+        <!-- Persyaratan -->
+        <div class="card form-section">
+          <h2 class="section-title">Persyaratan</h2>
+          <textarea class="form-control" id="persyaratan" rows="5" placeholder="Tuliskan persyaratan yang dibutuhkan..."></textarea>
+        </div>
+
+        <!-- Skill -->
+        <div class="card form-section">
+          <h2 class="section-title">Skill yang Dibutuhkan</h2>
+          <div class="skill-chips" id="skillChips"></div>
+          <div class="skill-add-row">
+            <input type="text" class="form-control" id="skillInput" placeholder="Tambahkan skill..." />
+            <button class="btn btn-outline" onclick="addSkill()">Tambah</button>
+          </div>
+        </div>
+
+        <!-- Benefit -->
+        <div class="card form-section">
+          <h2 class="section-title">Benefit dan Fasilitas</h2>
+          <textarea class="form-control" id="benefit" rows="4" placeholder="Tuliskan benefit dan fasilitas yang ditawarkan..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <a href="dashboard.html" class="btn btn-outline">Batalkan</a>
+          <button class="btn btn-outline" onclick="saveForm('draft')">Simpan</button>
+          <button class="btn btn-primary" onclick="saveForm('publish')">Publikasikan</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+
+<script src="db.js"></script>
+<script src="sidebar.js"></script>
+<script src="tambah-lowongan.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => { MagnetDB.requirePerusahaanAuth(); });
+</script>
+</body>
+</html>

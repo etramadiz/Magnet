@@ -1,0 +1,130 @@
+/* dashboard.css */
+
+.job-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* Job card */
+.job-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px rgba(59,42,142,0.08);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(59,42,142,0.13);
+}
+
+/* Card header */
+.job-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.job-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.job-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.job-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.job-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.job-company {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* Card details */
+.job-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+.job-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.job-detail-row:last-child { border-bottom: none; }
+
+.job-detail-row svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--primary);
+  opacity: 0.6;
+}
+
+/* Card actions */
+.job-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.job-card-actions .btn {
+  font-size: 12.5px;
+  padding: 7px 13px;
+}
+
+.btn-view { flex: 1; justify-content: center; }
+
+/* Responsive grid */
+@media (max-width: 1100px) {
+  .job-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 650px) {
+  .job-grid { grid-template-columns: 1fr; }
+  .job-card-actions { flex-direction: column; }
+  .job-card-actions .btn { width: 100%; justify-content: center; }
+  .btn-view { flex: none; }
+}

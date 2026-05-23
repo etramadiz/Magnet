@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Daftar Perusahaan</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+
+<div class="auth-layout">
+
+  <!-- KIRI: Form -->
+  <div class="auth-form-side">
+    <div class="auth-form-wrap">
+      <span class="auth-logo">Mag<span class="n-grad">n</span>et</span>
+      <span class="auth-badge perusahaan">Perusahaan</span>
+      <h1 class="auth-title">Daftar Perusahaan</h1>
+      <p class="auth-sub">Buat akun perusahaan untuk mulai memposting lowongan magang.</p>
+
+      <div class="form-group">
+        <label class="form-label">Nama Perusahaan</label>
+        <input type="text" class="form-control" id="regNama" placeholder="PT / CV / Nama Perusahaan" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">E-Mail Perusahaan</label>
+        <input type="email" class="form-control" id="regEmail" placeholder="email@perusahaan.com" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tentang Perusahaan</label>
+        <textarea class="form-control" id="regTentang" rows="3" placeholder="Deskripsikan perusahaan Anda..."></textarea>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Kota</label>
+          <input type="text" class="form-control" id="regKota" placeholder="Nama kota" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Provinsi</label>
+          <input type="text" class="form-control" id="regProvinsi" placeholder="Nama provinsi" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Kata Sandi</label>
+        <div class="password-wrap">
+          <input type="password" class="form-control" id="regPassword" placeholder="Minimal 8 karakter" />
+          <button type="button" class="password-toggle" onclick="togglePw('regPassword', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary auth-btn" onclick="handleRegister()">Daftar</button>
+
+      <p class="auth-hint">Sudah punya akun? <a href="login-perusahaan.html">Masuk</a></p>
+      <p class="auth-hint" style="margin-top:6px">
+        <a href="pilih-daftar.html" style="font-size:13px;color:#9090B0;text-decoration:none;font-weight:600">← Kembali</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- KANAN: Brand -->
+  <div class="auth-brand-side">
+    <div class="auth-brand-content">
+      <div class="brand-icon-img">
+        <img src="../Assets/logo.png" alt="Magnet" class="brand-logo-img" onerror="this.style.display='none'" />
+      </div>
+      <div class="brand-logo-text">Magnet</div>
+      <p class="brand-tagline">Platform rekrutmen magang terpercaya untuk perusahaan dan mahasiswa Indonesia.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="auth-toast"></div>
+<script src="db.js"></script>
+<script src="auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', checkExistingSession);
+
+  function handleRegister() {
+    const nama     = document.getElementById('regNama').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const tentang  = document.getElementById('regTentang').value.trim();
+    const kota     = document.getElementById('regKota').value.trim();
+    const provinsi = document.getElementById('regProvinsi').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+
+    if (!nama)                          { showToast('Masukkan nama perusahaan.', 'error');     shakeInput('regNama');     return; }
+    if (!email || !validEmail(email))   { showToast('Masukkan email yang valid.', 'error');    shakeInput('regEmail');    return; }
+    if (!password || password.length<8) { showToast('Kata sandi minimal 8 karakter.', 'error'); shakeInput('regPassword'); return; }
+
+    const result = MagnetDB.register({ name:nama, email, phone:'', password, type:'perusahaan' });
+    if (!result.ok) { showToast(result.message, 'error'); shakeInput('regEmail'); return; }
+
+    MagnetDB.updateUser(result.user.id, {
+      description: tentang,
+      location   : [kota, provinsi].filter(Boolean).join(', '),
+    });
+
+    showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
+    setTimeout(() => window.location.href = 'login-perusahaan.html', 1500);
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+</script>
+</body>
+</html>

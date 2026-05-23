@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Platform Magang</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+
+<div class="landing-layout">
+
+  <!-- KIRI: Brand -->
+  <div class="landing-brand">
+    <div class="auth-brand-content">
+      <div class="brand-icon-img">
+        <img src="../Assets/logo.png" alt="Magnet" class="brand-logo-img" onerror="this.style.display='none'" />
+      </div>
+      <div class="brand-logo-text">Magnet</div>
+      <p class="brand-tagline">Platform rekrutmen magang terpercaya untuk perusahaan dan mahasiswa Indonesia.</p>
+    </div>
+  </div>
+
+  <!-- KANAN: Aksi -->
+  <div class="landing-actions">
+    <div class="landing-card">
+      <p class="landing-title">Selamat Datang 👋</p>
+      <p class="landing-sub">Temukan magang impianmu atau rekrut talenta terbaik bersama Magnet.</p>
+
+      <a href="../Page_Mahasiswa/lowongan.html" class="btn btn-white btn-full">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Jelajahi Lowongan
+      </a>
+
+      <a href="pilih-login.html" class="btn btn-primary btn-full">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Masuk
+      </a>
+
+      <p class="auth-hint">Belum punya akun? <a href="pilih-daftar.html">Daftar Sekarang</a></p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="auth-toast"></div>
+<script src="db.js"></script>
+<script src="auth.js"></script>
+<script>document.addEventListener('DOMContentLoaded', checkExistingSession);</script>
+</body>
+</html>

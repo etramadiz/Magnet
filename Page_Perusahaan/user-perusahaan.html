@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnet – Profil Perusahaan</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="user-perusahaan.css" />
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Mag<span class="n-grad">n</span>et</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        Beranda
+      </a>
+      <a href="lihat-pelamar.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+        Lihat Pelamar
+      </a>
+      <a href="user-perusahaan.html" class="active">
+        <span class="side-nav a svg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <span class="sidebar-label">Profile Perusahaan</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="#" class="sidebar-logout" onclick="handleLogout(); return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Keluar</span>
+      </a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="navbar-toggle" id="sidebarToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      </button>
+      <div class="header-brand"><span class="header-brand-name">Profil Saya</span></div>
+      <div class="navbar-space"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="notifikasi-perusahaan.html" class="navbar-bell" style="display: flex; align-items: center; justify-content: center; text-decoration: none; color: inherit;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+            </svg>
+          </a>
+        <a href="user-perusahaan.html" class="navbar-user">
+          <div class="user-avatar"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg></div>
+          <span id="navUserName">Perusahaan</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <a href="dashboard.html" class="btn-back">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
+        Kembali ke Dashboard
+      </a>
+
+      <div class="profile-wrap">
+        <!-- Profile Header Card -->
+        <div class="profile-header-card">
+          <div class="profile-header-content">
+            <div class="profile-logo-wrap">
+              <div class="profile-logo">K</div>
+            </div>
+            <div class="profile-info">
+              <h2 class="profile-company-name">PT Kreasi Digital</h2>
+              <p class="profile-email">kreasi@digital.co.id</p>
+            </div>
+          </div>
+          <a href="edit-user-perusahaan.html" class="btn btn-outline profile-edit-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
+            Edit Profile
+          </a>
+        </div>
+
+        <!-- About -->
+        <div class="card profile-section">
+          <h3 class="profile-section-title">Tentang Perusahaan</h3>
+          <table class="profile-table">
+            <tr><td class="pt-label">Industri</td><td class="pt-value">Teknologi Informasi</td></tr>
+            <tr><td class="pt-label">Lokasi</td><td class="pt-value">Semarang, Jawa Tengah</td></tr>
+            <tr><td class="pt-label">Alamat Kantor</td><td class="pt-value">Jl. Pemuda No.123, Semarang</td></tr>
+            <tr><td class="pt-label">Ukuran Karyawan</td><td class="pt-value">50–100 karyawan</td></tr>
+            <tr><td class="pt-label">Website</td><td class="pt-value"><a href="#" style="color:var(--primary)">https://kreasidigital.co.id</a></td></tr>
+            <tr class="no-border"><td class="pt-label">Berdiri Sejak</td><td class="pt-value">2018</td></tr>
+          </table>
+        </div>
+
+        <!-- Stats / Mini-presentation -->
+        <div class="card profile-section">
+          <h3 class="profile-section-title">Statistik Rekrutmen</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number" id="statLowongan">9</div>
+              <div class="stat-label">Total Lowongan</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="statPelamar">47</div>
+              <div class="stat-label">Total Pelamar</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="statDiterima">12</div>
+              <div class="stat-label">Pelamar Diterima</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="statBuka">6</div>
+              <div class="stat-label">Lowongan Aktif</div>
+            </div>
+          </div>
+          <!-- Mini bar chart -->
+          <div class="mini-chart" id="miniChart"></div>
+        </div>
+
+        <!-- Deskripsi -->
+        <div class="card profile-section">
+          <h3 class="profile-section-title">Deskripsi Perusahaan</h3>
+          <p class="profile-text">PT Kreasi Digital adalah perusahaan teknologi yang bergerak di bidang pengembangan aplikasi mobile dan web. Kami berdedikasi untuk menciptakan solusi digital inovatif yang membantu bisnis berkembang di era transformasi digital.</p>
+        </div>
+
+        <!-- Budaya Kerja -->
+        <div class="card profile-section">
+          <h3 class="profile-section-title">Budaya Kerja</h3>
+          <p class="profile-text">Kami percaya pada budaya kerja yang kolaboratif, inovatif, dan inklusif. Setiap anggota tim dihargai kontribusinya dan didorong untuk terus belajar dan berkembang. Kami mendukung work-life balance dan kreativitas tanpa batas.</p>
+        </div>
+
+        <!-- Benefit -->
+        <div class="card profile-section">
+          <h3 class="profile-section-title">Benefit &amp; Fasilitas</h3>
+          <p class="profile-text">Uang saku kompetitif, mentoring langsung oleh senior developer, akses ke tools premium, sertifikat magang, flexible working hours, dan kesempatan untuk diangkat menjadi karyawan tetap setelah magang.</p>
+        </div>
+
+        <!-- Review -->
+        <div class="card profile-section">
+          <h3 class="profile-section-title">Review Perusahaan</h3>
+          <div class="review-stars">
+            ★★★★☆ <span class="review-score">4.2 / 5</span>
+          </div>
+          <p class="profile-text" style="margin-top:10px">"Tempat magang yang sangat mendukung, mentor responsif, dan proyek yang dikerjakan nyata digunakan. Sangat direkomendasikan untuk mahasiswa yang ingin belajar secara profesional."</p>
+          <p class="review-author">— Magangers 2024</p>
+        </div>
+
+        <!-- Bottom actions -->
+        <div class="profile-bottom-actions">
+          <a href="edit-user-perusahaan.html" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
+            Edit Profile
+          </a>
+          <button onclick="handleLogout()" class="btn btn-danger" style="cursor:pointer">
+            <span>Keluar</span>
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+
+<script src="db.js"></script>
+<script src="sidebar.js"></script>
+<script src="user-perusahaan.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => { MagnetDB.requirePerusahaanAuth(); });
+</script>
+</body>
+</html>
