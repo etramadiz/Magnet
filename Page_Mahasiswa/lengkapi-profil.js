@@ -1,3 +1,5 @@
+import { saveProfileToFirebase } from './auth-firebase.js';
+
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
@@ -234,7 +236,7 @@ function applyEditMode() {
  * strict = true  → validasi ketat, tampilkan error kalau field wajib kosong
  * strict = false → partial save, simpan apa yang sudah diisi
  */
-function doSave(strict = true) {
+async function doSave(strict = true) {
   const nama        = document.getElementById('f-nama')?.value.trim()        || '';
   const universitas = document.getElementById('f-universitas')?.value.trim() || '';
   const jurusan     = document.getElementById('f-jurusan')?.value.trim()     || '';
@@ -262,6 +264,18 @@ function doSave(strict = true) {
 
   if (!result.ok) { showToast(result.message); return false; }
 
+  const session = MagnetDB.getSession();
+  if (session && session.id) {
+    await saveProfileToFirebase(session.id, {
+      universitas, jurusan, semester, ipk,
+      skills: skillTags,
+      minat: minatTags,
+      pendidikan, pengalaman, prestasi,
+      cv: cvData,
+      avatar: photoDataURL
+    });
+  }
+
   showToast('Profil berhasil disimpan ✓');
   isEditMode = false;
   applyEditMode();
@@ -270,9 +284,9 @@ function doSave(strict = true) {
 }
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
-function saveProfile() {
-  doSave(true);
-}
+window.saveProfile = async function() {
+  await doSave(true);
+};
 
 function hlField(id) {
   const el = document.getElementById(id);

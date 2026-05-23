@@ -49,6 +49,9 @@ export async function firebaseLogin(email, password, expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
 
+    // setelah localStorage.setItem('magnet_session', ...)
+    await syncProfileFromFirebase(user.uid);
+
     showToast(`Halo, ${localUser.name}!`, 'success');
     return true;
   } catch (err) {
@@ -74,33 +77,28 @@ export async function firebaseRegister(data, role) {
         universitas: universitas || '',
         semester: semester || '',
         jurusan: jurusan || '',
-        ipk: ipk || ''
+        ipk: ipk || '',
+        skills: [],
+        minat: [],
+        pendidikan: '',
+        pengalaman: '',
+        prestasi: '',
+        cv: null,
+        avatar: null
       }
     };
 
     await set(ref(db, 'users/' + user.uid), userData);
-
-    // Simpan ke localStorage untuk keperluan MagnetDB
-    const localProfile = {
-      universitas: universitas || '',
-      semester: semester || '',
-      jurusan: jurusan || '',
-      ipk: ipk || ''
-    };
-
+    
+    // Simpan ke localStorage
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-    const existingIdx = users.findIndex(u => u.id === user.uid);
-    if (existingIdx !== -1) {
-      users[existingIdx].profile = localProfile;
-    } else {
-      users.push({
-        id: user.uid,
-        name: name,
-        email: email,
-        type: role,
-        profile: localProfile
-      });
-    }
+    users.push({
+      id: user.uid,
+      name: name,
+      email: email,
+      type: role,
+      profile: userData.profile
+    });
     localStorage.setItem('magnet_users', JSON.stringify(users));
 
     // Jangan langsung login, biarkan user logout agar harus login ulang
@@ -109,7 +107,7 @@ export async function firebaseRegister(data, role) {
     return true;
   } catch (err) {
     showToast('Gagal daftar: ' + err.message, 'error');
-    return { success: false };
+    return false;
   }
 }
 
@@ -167,6 +165,40 @@ export function checkSessionAndRedirect() {
       }
     }
   });
+}
+
+// Ambil profil dari Firebase dan simpan ke localStorage
+export async function syncProfileFromFirebase(uid) {
+  try {
+    const snapshot = await get(ref(db, 'users/' + uid));
+    if (snapshot.exists()) {
+      const userData = snapshot.val();
+      const profile = userData.profile || {};
+      // Update localStorage
+      const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+      const idx = users.findIndex(u => u.id === uid);
+      if (idx !== -1) {
+        users[idx].profile = profile;
+        localStorage.setItem('magnet_users', JSON.stringify(users));
+      }
+      return profile;
+    }
+    return null;
+  } catch (err) {
+    console.error('Gagal sync profil:', err);
+    return null;
+  }
+}
+
+// Simpan profil ke Firebase
+export async function saveProfileToFirebase(uid, profileData) {
+  try {
+    await set(ref(db, 'users/' + uid + '/profile'), profileData);
+    return true;
+  } catch (err) {
+    console.error('Gagal simpan profil ke Firebase:', err);
+    return false;
+  }
 }
 
 // Update data perusahaan (merge)
