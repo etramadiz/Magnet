@@ -30,12 +30,17 @@ const MagnetDB = (() => {
     return { ok:true, user };
   }
 
-  function getSession() {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    try { const { userId } = JSON.parse(raw); return getUsers().find(u => u.id===userId) || null; }
-    catch(e) { return null; }
-  }
+function getSession() {
+  // Baca session yang disimpan oleh firebaseLogin
+  const raw = localStorage.getItem('magnet_session');
+  if (!raw) return null;
+  try {
+    const { userId } = JSON.parse(raw);
+    // Cari user di magnet_users (tempat firebaseLogin menyimpan data user)
+    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    return users.find(u => u.id === userId) || null;
+  } catch(e) { return null; }
+}
 
   function logout() { localStorage.removeItem(SESSION_KEY); }
 
