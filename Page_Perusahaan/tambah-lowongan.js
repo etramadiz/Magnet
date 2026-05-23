@@ -1,7 +1,7 @@
 // tambah-lowongan.js - FINAL
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { saveJob } from './firebase-company.js';
+import { saveJob, getCompanyProfile } from './firebase-company.js';
 
 let companyId = null;
 let companyName = '';
@@ -13,15 +13,16 @@ onAuthStateChanged(auth, async (user) => {
   }
   companyId = user.uid;
   // Ambil nama perusahaan dari profil Firebase
-  const { getCompanyProfile } = await import('./firebase-company.js');
   const profile = await getCompanyProfile(companyId);
   companyName = profile?.nama || user.displayName || 'Perusahaan';
+  console.log("Company loaded:", companyName, "ID:", companyId);
 });
 
 const skills = [];
 
 function renderChips() {
   const container = document.getElementById('skillChips');
+  if (!container) return;
   container.innerHTML = skills.map((s, i) => `
     <span class="skill-chip">
       ${s}
@@ -46,9 +47,12 @@ function removeSkill(idx) {
   renderChips();
 }
 
-document.getElementById('skillInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
-});
+const skillInput = document.getElementById('skillInput');
+if (skillInput) {
+  skillInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
+  });
+}
 
 async function saveForm(mode) {
   const title = document.getElementById('namaLowongan').value.trim();
@@ -58,7 +62,7 @@ async function saveForm(mode) {
   // Ambil data dari form
   const jobData = {
     title: title,
-    companyName: companyName,  // pakai nama dari Firebase
+    companyName: companyName,
     type: document.getElementById('statusPekerjaan').value,
     duration: document.getElementById('durasi').value,
     description: document.getElementById('deskripsi').value,
@@ -74,6 +78,14 @@ async function saveForm(mode) {
     benefits: document.getElementById('benefit').value.split('\n').filter(b => b.trim()),
     status: mode === 'publish' ? 'Buka' : 'Draft'
   };
+
+  console.log("Data sebelum dikirim:", {
+    title, 
+    description: jobData.description, 
+    requirements: jobData.requirements, 
+    skills: jobData.skills, 
+    benefits: jobData.benefits
+  });
 
   // Hapus field yang nilainya kosong/null/undefined
   Object.keys(jobData).forEach(key => {
@@ -91,6 +103,7 @@ async function saveForm(mode) {
       alert('Gagal menyimpan lowongan.');
     }
   } catch (err) {
+    console.error(err);
     alert('Terjadi kesalahan: ' + err.message);
   }
 }

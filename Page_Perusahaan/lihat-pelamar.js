@@ -51,9 +51,11 @@ async function render() {
             </div>
             <div class="job-group-company">${job.companyName}</div>
           </div>
-          <div class="accordion-arrow" id="arrow-${job.id}">
-            <svg ...>...</svg>
-          </div>
+<div class="accordion-arrow" id="arrow-${job.id}">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:20px;height:20px">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+  </svg>
+</div>
         </div>
         <div class="job-accordion-content" id="accordion-content-${job.id}">
           <div class="list-pelamar-title">List Pelamar (${applicants.length} Orang)</div>
