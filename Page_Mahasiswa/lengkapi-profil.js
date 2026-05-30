@@ -1,52 +1,40 @@
-// lengkapi-profil.js (FIXED - All Bugs Resolved)
+// lengkapi-profil.js (FINAL FIX)
 import { auth, saveProfileToFirebase, syncProfileFromFirebase } from './auth-firebase.js';
-import { MagnetDB } from './db.js';
+import { MagnetDB } from './db.js'; // asumsikan db.js sudah ada
 
 /* ═══════════════════════════════════════════════════════════
-    HELPER: Toast (fallback jika dashboard.js belum load)
+    MAGNET – LENGKAPI-PROFIL.JS (RESOLVED)
 ════════════════════════════════════════════════════════════ */
-function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast');
-  if (toast) {
-    toast.textContent = message;
-    toast.className = `toast show ${type}`;
-    setTimeout(() => toast.classList.remove('show'), 3000);
-  } else {
-    alert(message);
-  }
-}
 
-/* ═══════════════════════════════════════════════════════════
-    GLOBAL VARIABLES
-════════════════════════════════════════════════════════════ */
 let skillTags    = [];
 let minatTags    = [];
-let cvData       = null;      // { name, size, uploadedAt } atau { url, name } jika pakai Storage
+let cvData       = null;
 let isEditMode   = false;
-let photoDataURL = null;      // base64 foto
+let photoDataURL = null;
 
-// Helper ambil elemen (support id dengan/tanpa f-)
+// Helper untuk mengambil elemen dengan ID alternatif (f- prefix)
 function getElem(id) {
   return document.getElementById(id) || document.getElementById('f-' + id);
 }
 
-/* ═══════════════════════════════════════════════════════════
-    FOTO PROFIL
-════════════════════════════════════════════════════════════ */
-window.triggerPhotoUpload = () => document.getElementById('photoFileInput')?.click();
+/* ════════════════════
+    PHOTO UPLOAD
+════════════════════ */
+window.triggerPhotoUpload = function() {
+  const input = document.getElementById('photoFileInput');
+  if (input) input.click();
+};
 
-window.handlePhotoUpload = function(input) {
+function handlePhotoUpload(input) {
   const file = input.files[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) {
-    showToast('Hanya file gambar (JPG, PNG, WEBP)', 'error');
-    input.value = '';
-    return;
+    showToast('Hanya file gambar (JPG, PNG, WEBP)');
+    input.value = ''; return;
   }
   if (file.size > 2 * 1024 * 1024) {
-    showToast('Ukuran foto maksimal 2MB', 'error');
-    input.value = '';
-    return;
+    showToast('Ukuran foto maksimal 2MB');
+    input.value = ''; return;
   }
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -55,9 +43,9 @@ window.handlePhotoUpload = function(input) {
     showToast('Foto berhasil dipilih ✓');
     updateProgress();
   };
-  reader.onerror = () => showToast('Gagal membaca file', 'error');
   reader.readAsDataURL(file);
-};
+}
+window.handlePhotoUpload = handlePhotoUpload; // expose untuk inline onchange
 
 function applyPhotoPreview(dataURL) {
   const img = document.getElementById('photoImg');
@@ -82,62 +70,54 @@ window.removePhoto = function() {
   const removeBtn = document.getElementById('photoRemoveBtn');
   if (removeBtn) removeBtn.style.display = 'none';
   updateProgress();
-  showToast('Foto dihapus');
 };
 
-/* ═══════════════════════════════════════════════════════════
-    PROGRESS (samakan dengan halaman profil)
-════════════════════════════════════════════════════════════ */
+/* ════════════
+    PROGRESS
+════════════ */
 function updateProgress() {
   const nama    = getElem('nama')?.value?.trim() || '';
   const univ    = getElem('universitas')?.value?.trim() || '';
   const jur     = getElem('jurusan')?.value?.trim() || '';
   const sem     = getElem('semester')?.value || '';
-  // Kriteria sama dengan profil.html (tanpa email/phone karena tidak di form)
   const checks = [
     !!nama, !!univ, !!jur, !!sem,
     skillTags.length > 0,
     minatTags.length > 0,
+    !!photoDataURL,
     !!cvData,
-    !!photoDataURL   // opsional, kalau mau lebih lengkap
   ];
-  const pct = Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
   const pctEl = document.getElementById('progressPct');
   if (pctEl) pctEl.textContent = pct + '%';
   const fillEl = document.getElementById('progressFill');
   if (fillEl) fillEl.style.width = pct + '%';
   const hint = document.getElementById('progressHint');
-  const banner = document.getElementById('lpBanner');
   if (hint) {
     if (pct === 100) {
       hint.textContent = '✓ Profil kamu sudah lengkap!';
-      if (banner) banner.classList.add('hidden');
+      document.getElementById('lpBanner')?.classList.add('hidden');
     } else {
-      const kurang = checks.length - checks.filter(Boolean).length;
-      hint.textContent = `${kurang} data lagi untuk melengkapi profil`;
-      if (banner) banner.classList.remove('hidden');
+      hint.textContent = `${checks.length - checks.filter(Boolean).length} data lagi untuk melengkapi profil`;
+      document.getElementById('lpBanner')?.classList.remove('hidden');
     }
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-    TAGS (SKILL & MINAT)
-════════════════════════════════════════════════════════════ */
+/* ════════════
+    TAGS
+════════════ */
 function renderTags(type) {
   const arr = type === 'skill' ? skillTags : minatTags;
   const container = document.getElementById(type + 'Tags');
-  if (!container) {
-    console.warn(`Container #${type}Tags tidak ditemukan`);
-    return;
-  }
+  if (!container) return;
   container.innerHTML = arr.map((tag, i) => `
     <span class="tag-item">
-      ${escapeHtml(tag)}
+      ${tag}
       ${isEditMode ? `<button type="button" class="tag-remove" data-type="${type}" data-index="${i}">×</button>` : ''}
     </span>
   `).join('');
-
-  // Event listener untuk tombol hapus
+  // Pasang event listener untuk tombol hapus
   container.querySelectorAll('.tag-remove').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const t = btn.dataset.type;
@@ -151,27 +131,13 @@ function renderTags(type) {
   updateProgress();
 }
 
-// Helper untuk menghindari XSS
-function escapeHtml(str) {
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
 window.addTag = function(type) {
   const input = document.getElementById(type + 'Input');
   if (!input) return;
   const val = input.value.trim();
   if (!val) return;
   const arr = type === 'skill' ? skillTags : minatTags;
-  if (arr.includes(val)) {
-    showToast('Tag sudah ada', 'info');
-    input.value = '';
-    return;
-  }
+  if (arr.includes(val)) { input.value = ''; return; }
   arr.push(val);
   input.value = '';
   renderTags(type);
@@ -182,67 +148,52 @@ window.addSuggestion = function(type, value) {
   if (arr.includes(value) || arr.length >= 15) return;
   arr.push(value);
   renderTags(type);
-  showToast(`"${value}" ditambahkan ke ${type === 'skill' ? 'Skill' : 'Minat'}`);
 };
 
-/* ═══════════════════════════════════════════════════════════
+/* ════════════
     CV UPLOAD
-════════════════════════════════════════════════════════════ */
+════════════ */
 window.handleCVUpload = function(input) {
   const file = input.files[0];
   if (!file) return;
   if (file.type !== 'application/pdf') {
-    showToast('Hanya file PDF yang diterima', 'error');
+    showToast('Hanya file PDF yang diterima');
     input.value = '';
     return;
   }
   if (file.size > 5 * 1024 * 1024) {
-    showToast('Ukuran file maksimal 5MB', 'error');
+    showToast('Ukuran file maksimal 5MB');
     input.value = '';
     return;
   }
-  // Simpan metadata CV (jika tidak pakai Storage)
   cvData = { name: file.name, size: file.size, uploadedAt: new Date().toISOString() };
-  
-  // Update UI
-  const placeholder = document.getElementById('cvPlaceholder');
-  if (placeholder) placeholder.style.display = 'none';
+  document.getElementById('cvPlaceholder').style.display = 'none';
   const area = document.getElementById('cvUploadArea');
-  if (area) {
-    area.onclick = null;
-    area.style.cursor = 'default';
-  }
-  const statusDiv = document.getElementById('cvStatus');
-  if (statusDiv) statusDiv.style.display = 'flex';
-  const fileNameSpan = document.getElementById('cvFileName');
-  if (fileNameSpan) fileNameSpan.textContent = file.name;
-  const metaSpan = document.getElementById('cvFileMeta');
-  if (metaSpan) metaSpan.textContent = (file.size/1024).toFixed(0) + ' KB · PDF';
-  
+  if (area) { area.onclick = null; area.style.cursor = 'default'; }
+  document.getElementById('cvStatus').style.display = 'flex';
+  document.getElementById('cvFileName').textContent = file.name;
+  document.getElementById('cvFileMeta').textContent = (file.size/1024).toFixed(0) + ' KB · PDF';
   showToast('CV berhasil diunggah ✓');
   updateProgress();
 };
 
 window.removeCV = function() {
   cvData = null;
-  const fileInput = document.getElementById('cvFileInput');
-  if (fileInput) fileInput.value = '';
-  const statusDiv = document.getElementById('cvStatus');
-  if (statusDiv) statusDiv.style.display = 'none';
+  document.getElementById('cvFileInput').value = '';
+  document.getElementById('cvStatus').style.display = 'none';
+  const area = document.getElementById('cvUploadArea');
   const placeholder = document.getElementById('cvPlaceholder');
   if (placeholder) placeholder.style.display = 'flex';
-  const area = document.getElementById('cvUploadArea');
   if (area) {
     area.style.cursor = 'pointer';
     area.onclick = () => document.getElementById('cvFileInput').click();
   }
   updateProgress();
-  showToast('CV dihapus');
 };
 
-/* ═══════════════════════════════════════════════════════════
+/* ════════════
     EDIT MODE & SAVE
-════════════════════════════════════════════════════════════ */
+════════════ */
 window.toggleEditMode = function() {
   if (isEditMode) {
     doSave(false);
@@ -265,7 +216,6 @@ function applyEditMode() {
     btn?.classList.remove('editing');
     if (label) label.textContent = 'Edit';
   }
-  // Re-render tags biar tombol remove muncul/sesuai mode
   renderTags('skill');
   renderTags('minat');
 }
@@ -281,7 +231,7 @@ async function doSave(strict = true) {
   const prestasi    = getElem('prestasi')?.value.trim()    || '';
 
   if (!nama && strict) {
-    showToast('Nama lengkap wajib diisi', 'error');
+    showToast('Nama lengkap wajib diisi');
     getElem('nama')?.focus();
     return false;
   }
@@ -295,40 +245,32 @@ async function doSave(strict = true) {
     uid = session?.id;
   }
   if (!uid) {
-    showToast('Sesi tidak valid, silakan login ulang', 'error');
+    showToast('Sesi tidak valid, silakan login ulang');
     return false;
   }
 
   const profileData = {
     nama, universitas, jurusan, semester, ipk,
     skills: skillTags,
-    minat: minatTags,        // konsisten: pakai 'minat' bukan 'minats'
+    minats: minatTags,
     pendidikan, pengalaman, prestasi,
     cv: cvData,
     avatar: photoDataURL
   };
 
-  try {
-    const saved = await saveProfileToFirebase(uid, profileData);
-    if (!saved) {
-      showToast('Gagal menyimpan ke server', 'error');
-      return false;
-    }
-  } catch (err) {
-    console.error('Save error:', err);
-    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  // Simpan ke Firebase
+  const saved = await saveProfileToFirebase(uid, profileData);
+  if (!saved) {
+    showToast('Gagal menyimpan ke server', 'error');
     return false;
   }
 
-  // Update localStorage dengan field yang sama (pakai 'nama', bukan 'name')
+  // Update localStorage via MagnetDB
   MagnetDB.saveProfile({
-    nama: nama,
-    universitas, jurusan, semester, ipk,
-    skills: skillTags,
-    minat: minatTags,
+    name: nama, universitas, jurusan, semester, ipk,
+    skills: skillTags, minat: minatTags,
     pendidikan, pengalaman, prestasi,
-    cv: cvData,
-    avatar: photoDataURL
+    cv: cvData, avatar: photoDataURL
   });
 
   showToast('Profil berhasil disimpan ✓');
@@ -343,10 +285,11 @@ window.saveProfile = async function() {
   await doSave(true);
 };
 
-/* ═══════════════════════════════════════════════════════════
-    LOAD DATA DARI FIREBASE + LOCALSTORAGE
-════════════════════════════════════════════════════════════ */
+/* ════════════
+    LOAD DATA
+════════════ */
 async function loadProfile() {
+  // Ambil UID
   let uid = auth.currentUser?.uid;
   if (!uid) {
     const session = MagnetDB.getSession();
@@ -357,72 +300,58 @@ async function loadProfile() {
     return;
   }
 
-  let firebaseProfile = null;
-  try {
-    firebaseProfile = await syncProfileFromFirebase(uid);
-  } catch (err) {
-    console.error('Gagal sync dari Firebase:', err);
-  }
-
+  // Ambil dari Firebase
+  const firebaseProfile = await syncProfileFromFirebase(uid);
   let profile = firebaseProfile;
   if (!profile) {
+    // Fallback ke localStorage
     const session = MagnetDB.getSession();
     profile = session?.profile || {};
   }
 
-  // Isi form (gunakan 'nama' dari profile, kalau tidak ada pakai 'name' dari session)
+  // Isi form
   const setVal = (id, val) => { const el = getElem(id); if (el) el.value = val || ''; };
   setVal('nama', profile.nama || profile.name || '');
-  setVal('universitas', profile.universitas || '');
-  setVal('jurusan', profile.jurusan || '');
-  setVal('semester', profile.semester || '');
-  setVal('ipk', profile.ipk || '');
-  setVal('pendidikan', profile.pendidikan || '');
-  setVal('pengalaman', profile.pengalaman || '');
-  setVal('prestasi', profile.prestasi || '');
+  setVal('universitas', profile.universitas);
+  setVal('jurusan', profile.jurusan);
+  setVal('semester', profile.semester);
+  setVal('ipk', profile.ipk);
+  setVal('pendidikan', profile.pendidikan);
+  setVal('pengalaman', profile.pengalaman);
+  setVal('prestasi', profile.prestasi);
 
-  // Tags
   skillTags = Array.isArray(profile.skills) ? [...profile.skills] : [];
-  minatTags = Array.isArray(profile.minat) ? [...profile.minat] : (Array.isArray(profile.minats) ? [...profile.minats] : []);
+  minatTags = Array.isArray(profile.minats) ? [...profile.minats] : (Array.isArray(profile.minat) ? [...profile.minat] : []);
   renderTags('skill');
   renderTags('minat');
 
-  // CV
   if (profile.cv) {
     cvData = profile.cv;
-    const placeholder = document.getElementById('cvPlaceholder');
-    if (placeholder) placeholder.style.display = 'none';
+    document.getElementById('cvPlaceholder').style.display = 'none';
     const area = document.getElementById('cvUploadArea');
     if (area) { area.onclick = null; area.style.cursor = 'default'; }
-    const statusDiv = document.getElementById('cvStatus');
-    if (statusDiv) statusDiv.style.display = 'flex';
-    const fileNameSpan = document.getElementById('cvFileName');
-    if (fileNameSpan) fileNameSpan.textContent = profile.cv.name || 'CV.pdf';
-    const metaSpan = document.getElementById('cvFileMeta');
-    if (metaSpan) metaSpan.textContent = profile.cv.size ? (profile.cv.size/1024).toFixed(0) + ' KB · PDF' : 'PDF';
+    document.getElementById('cvStatus').style.display = 'flex';
+    document.getElementById('cvFileName').textContent = profile.cv.name;
+    document.getElementById('cvFileMeta').textContent = (profile.cv.size/1024).toFixed(0) + ' KB · PDF';
   }
 
-  // Foto
   if (profile.avatar) {
     photoDataURL = profile.avatar;
     applyPhotoPreview(photoDataURL);
-  } else {
-    // reset preview
-    removePhoto();
   }
 
-  // Tentukan mode edit: jika belum ada profil di Firebase, atau URL param edit=1
+  // Mode edit dari URL atau belum ada profil
   const params = new URLSearchParams(window.location.search);
   isEditMode = params.get('edit') === '1' || !firebaseProfile;
   applyEditMode();
   updateProgress();
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ════════════
     INIT
-════════════════════════════════════════════════════════════ */
+════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
-  // Pastikan user login (mahasiswa)
+  // Pastikan user sudah login (mahasiswa)
   if (typeof MagnetDB !== 'undefined' && MagnetDB.requireMahasiswaAuth) {
     MagnetDB.requireMahasiswaAuth();
   }
@@ -437,10 +366,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  await loadProfile();
+  loadProfile();
 
-  // Pasang event listener untuk update progress realtime
-  ['nama', 'universitas', 'jurusan', 'semester', 'ipk', 'pendidikan', 'pengalaman', 'prestasi'].forEach(id => {
+  // Binding event listener untuk input real-time progress
+  ['nama', 'universitas', 'jurusan', 'semester', 'ipk'].forEach(id => {
     const el = getElem(id);
     if (el) {
       el.addEventListener('input', updateProgress);
@@ -448,13 +377,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Enter untuk menambah tag
+  // Binding untuk tombol tambah tag via Enter
   const skillInput = document.getElementById('skillInput');
   const minatInput = document.getElementById('minatInput');
   if (skillInput) skillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('skill'); } });
   if (minatInput) minatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('minat'); } });
 
-  // Drag & drop CV
+  // Untuk drag & drop CV
   const cvArea = document.getElementById('cvUploadArea');
   if (cvArea) {
     cvArea.addEventListener('dragover', e => { e.preventDefault(); cvArea.classList.add('drag-over'); });
@@ -470,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.files = dt.files;
         handleCVUpload(input);
       } else {
-        showToast('Hanya file PDF yang diterima', 'error');
+        showToast('Hanya file PDF yang diterima');
       }
     });
   }

@@ -164,17 +164,20 @@
   <script>
     /* ── Hitung progress dari data nyata ── */
     function hitungProgress(user, profile) {
-    const checks = [
-      !!(profile?.universitas),
-      !!(profile?.jurusan),
-      !!(profile?.semester),
-      !!(profile?.skills?.length),
-      !!(profile?.minat?.length),
-      !!(profile?.cv),
-    ];
-    const filled = checks.filter(Boolean).length;
-    return Math.round((filled / checks.length) * 100);
-}
+      const checks = [
+        !!user.name,
+        !!user.email,
+        !!user.phone,
+        !!(profile?.universitas),
+        !!(profile?.jurusan),
+        !!(profile?.semester),
+        !!(profile?.skills?.length),
+        !!(profile?.minat?.length),
+        !!(profile?.cv),
+      ];
+      const filled = checks.filter(Boolean).length;
+      return Math.round((filled / checks.length) * 100);
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       MagnetDB.requireAuth('index.html');
@@ -193,7 +196,7 @@
       const profile   = MagnetDB.getProfile();
       const initial   = user.name.charAt(0).toUpperCase();
       const typeLabel = user.type === 'mahasiswa' ? 'Mahasiswa' : 'Perusahaan';
-      const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) : 'Belum tersedia';
+      const joinDate  = new Date(user.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
       const pct       = hitungProgress(user, profile);
 
       // Progress tips: ceklis jika sudah diisi
