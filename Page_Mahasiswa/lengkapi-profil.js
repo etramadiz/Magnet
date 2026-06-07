@@ -1,11 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
-import { auth } from '../Page_Login_Register/firebase-config.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
-import { MagnetDB } from './db.js';
-const showToast = window.showToast;
 
 let skillTags  = [];
 let minatTags  = [];
@@ -34,7 +29,6 @@ function handlePhotoUpload(input) {
     showToast('Foto berhasil dipilih ✓');
     updateProgress();
   };
-  reader.onerror = () => showToast('Gagal membaca file', 'error');
   reader.readAsDataURL(file);
 }
 
@@ -75,6 +69,8 @@ function initPhotoSection() {
   if (saved) { photoDataURL = saved; applyPhotoPreview(saved); }
 }
 
+
+
 /* ════════════
    PROGRESS
 ════════════ */
@@ -84,7 +80,6 @@ function updateProgress() {
     !!user?.name,
     !!user?.email,
     !!user?.phone,
-    !!photoDataURL,
     !!(document.getElementById('f-universitas')?.value?.trim()),
     !!(document.getElementById('f-jurusan')?.value?.trim()),
     !!(document.getElementById('f-semester')?.value),
@@ -390,15 +385,4 @@ document.addEventListener('DOMContentLoaded', () => {
       handleCVUpload(input);
     });
   }
-
-  window.handlePhotoUpload = handlePhotoUpload;
-  window.removePhoto = removePhoto;
-  window.addTag = addTag;
-  window.removeTag = removeTag;
-  window.addSuggestion = addSuggestion;
-  window.handleCVUpload = handleCVUpload;
-  window.removeCV = removeCV;
-  window.toggleEditMode = toggleEditMode;
-  window.saveProfile = saveProfile;
-  window.updateProgress = updateProgress;
 });
