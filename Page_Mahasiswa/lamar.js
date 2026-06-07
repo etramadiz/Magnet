@@ -2,6 +2,8 @@
    MAGNET – LAMAR.JS
 ════════════════════════════════════════════════════════════ */
 
+import { getJobById } from '../Page_Perusahaan/firebase-company.js';
+
 let currentJob = null;
 const docs = { cv: null, surat: null, porto: null };
 
@@ -192,7 +194,7 @@ function submitLamaran() {
     jobId:        currentJob.id,
     jobTitle:     currentJob.title,
     company:      currentJob.company,
-    companyShort: currentJob.companyShort,
+    companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
     logoColor:    currentJob.logoColor,
     documents: {
       cv:    docs.cv,
@@ -214,7 +216,7 @@ function submitLamaran() {
   // Tampilkan halaman sukses
   document.getElementById('pageStep1').style.display   = 'none';
   document.getElementById('pageSuccess').style.display = 'block';
-  document.getElementById('successCompany').textContent = currentJob.company;
+  document.getElementById('successCompany').textContent = currentJob.companyName || currentJob.company;
 
   // Update step indicator
   document.getElementById('step1').classList.add('done');
@@ -227,21 +229,24 @@ function submitLamaran() {
 /* ════════════════════
    INIT
 ════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   MagnetDB.requireMahasiswaAuth();
   restoreSidebarState();
 
-  // Isi avatar
   const user = MagnetDB.getSession();
   if (user) {
     const av = document.getElementById('avatarInitial');
     if (av) av.textContent = user.name.charAt(0).toUpperCase();
   }
 
-  // Baca job id dari URL
-  const id  = parseInt(new URLSearchParams(window.location.search).get('id'));
-  const job = MAGNET_JOBS.find(j => j.id === id);
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id) {
+    showToast('ID lowongan tidak ditemukan');
+    setTimeout(() => window.location.href = 'lowongan.html', 1500);
+    return;
+  }
 
+  const job = await getJobById(id);
   if (!job) {
     showToast('Lowongan tidak ditemukan');
     setTimeout(() => window.location.href = 'lowongan.html', 1500);
@@ -250,31 +255,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   currentJob = job;
 
-  // Isi summary card (tetap tampil meskipun profil belum lengkap)
-  const logoEl    = document.getElementById('lmJobLogo');
-  const titleEl   = document.getElementById('lmJobTitle');
+  // Isi summary card
+  const logoEl = document.getElementById('lmJobLogo');
+  const titleEl = document.getElementById('lmJobTitle');
   const companyEl = document.getElementById('lmJobCompany');
-  const linkEl    = document.getElementById('lmJobLink');
+  const linkEl = document.getElementById('lmJobLink');
 
-  if (logoEl)    { logoEl.textContent = job.companyShort; logoEl.style.color = job.logoColor; logoEl.style.borderColor = job.logoColor + '40'; }
-  if (titleEl)   titleEl.textContent   = job.title;
-  if (companyEl) companyEl.textContent = job.company;
-  if (linkEl)    linkEl.href           = `detail-lowongan.html?id=${job.id}`;
+  const companyName = job.companyName || job.company || 'Perusahaan';
+  const companyShort = job.companyShort || (companyName ? companyName.charAt(0) : '?');
+  const logoColor = job.logoColor || '#3B2A8E';
 
-  // ── 1. Cek kelengkapan profil (harus dilakukan sebelum hal lain) ──
+  if (logoEl) { logoEl.textContent = companyShort; logoEl.style.color = logoColor; logoEl.style.borderColor = logoColor + '40'; }
+  if (titleEl) titleEl.textContent = job.title;
+  if (companyEl) companyEl.textContent = companyName;
+  if (linkEl) linkEl.href = `detail-lowongan.html?id=${job.id}`;
+
+  // Cek kelengkapan profil
   if (!checkProfileComplete()) return;
 
-  // ── 2. Cek sudah pernah melamar ──
+  // Cek sudah pernah melamar
   if (MagnetDB.hasApplied(job.id)) {
     showToast('Kamu sudah pernah melamar posisi ini');
     setTimeout(() => window.location.href = 'lamaran.html', 2000);
     return;
   }
 
-  // ── 3. Tampilkan form lamaran ──
+  // Tampilkan form lamaran
   document.getElementById('pageStep1').style.display = 'block';
 
-  // Tampilkan tip CV dari profil jika ada
   const profile = MagnetDB.getProfile();
   if (profile?.cv) {
     document.getElementById('cvTip').style.display = 'flex';
@@ -300,4 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
       handleUpload(typeMap[areaId], input);
     });
   });
+  window.triggerUpload = triggerUpload;
+window.handleUpload = handleUpload;
+window.removeFile = removeFile;
+window.useSavedCV = useSavedCV;
+window.updateCharCount = updateCharCount;
+window.submitLamaran = submitLamaran;
 });
