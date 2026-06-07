@@ -6,7 +6,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/f
 import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
 import { MagnetDB } from './db.js';
 
-let uid = null;
 let skillTags  = [];
 let minatTags  = [];
 let cvData     = null;
@@ -36,7 +35,6 @@ function handlePhotoUpload(input) {
     showToast('Foto berhasil dipilih ✓');
     updateProgress();
   };
-  reader.onerror = () => showToast('Gagal membaca file', 'error');
   reader.readAsDataURL(file);
 }
 
