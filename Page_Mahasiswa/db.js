@@ -11,8 +11,18 @@ const MagnetDB = (() => {
   const MHS_DASH  = 'dashboard.html';
   const PRU_DASH  = '../../../Page Login Register/index.html';
 
-  function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }
-  function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+  function getUsers() { 
+    const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+    return users.map(user => {
+    if (!user.createdAt) {
+      user.createdAt = new Date().toISOString();
+    }
+    return user;
+  }); 
+  }
+  function saveUsers(u) { 
+    localStorage.setItem(USERS_KEY, JSON.stringify(u)); 
+  }
 
   function register({ name, email, phone, password, type }) {
     const users = getUsers();

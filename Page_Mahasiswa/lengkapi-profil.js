@@ -1,12 +1,19 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
+import { auth } from '../Page_Login_Register/firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
+import { MagnetDB } from './db.js';
 
+let uid = null;
 let skillTags  = [];
 let minatTags  = [];
 let cvData     = null;
 let isEditMode = false;
 let photoDataURL = null; // base64 foto profil
+
+const showToast = window.showToast;
 
 /* ════════════════════
    PHOTO UPLOAD
@@ -385,4 +392,15 @@ document.addEventListener('DOMContentLoaded', () => {
       handleCVUpload(input);
     });
   }
+
+  window.handlePhotoUpload = handlePhotoUpload;
+  window.removePhoto = removePhoto;
+  window.addTag = addTag;
+  window.removeTag = removeTag;
+  window.addSuggestion = addSuggestion;
+  window.handleCVUpload = handleCVUpload;
+  window.removeCV = removeCV;
+  window.toggleEditMode = toggleEditMode;
+  window.saveProfile = saveProfile;
+  window.updateProgress = updateProgress;
 });
