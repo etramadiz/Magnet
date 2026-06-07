@@ -161,12 +161,7 @@
 
   <script src="db.js"></script>
   <script src="dashboard.js"></script>
-  <script type="module">
-    import { auth } from '../Page_Login_Register/firebase-config.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-    import { getMahasiswaProfile } from './firebase-mahasiswa.js';
-    import { MagnetDB } from './db.js';
-
+  <script>
     /* ── Hitung progress dari data nyata ── */
     function hitungProgress(user, profile) {
       const checks = [
@@ -185,30 +180,32 @@
       return Math.round((filled / checks.length) * 100);
     }
 
-    onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = '../Page_Login_Register/index.html';
-      return;
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      MagnetDB.requireAuth('index.html');
+      restoreSidebarState();
+      const user = MagnetDB.getSession();
+      if (!user) return;
 
-    const uid = user.uid;
-    const profile = await getMahasiswaProfile(uid);
-    // Fallback ke session lokal jika perlu
-    const localSession = MagnetDB.getSession();
-    const userName = profile?.name || localSession?.name || user.displayName || 'Pengguna';
-    const userEmail = profile?.email || user.email || localSession?.email || '';
-    const userPhone = profile?.phone || localSession?.phone || '';
-    const joinDateRaw = profile?.createdAt || localSession?.createdAt || user.metadata?.creationTime || new Date();
-    let joinDate;
-    try {
-      const d = new Date(joinDateRaw);
-      if (isNaN(d.getTime())) throw new Error();
-      joinDate = d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-    } catch(e) {
-      joinDate = 'Baru saja bergabung';
-    }
-    const pct = hitungProgress({ name: userName, email: userEmail, phone: userPhone }, profile);
-    const initial = userName.charAt(0).toUpperCase()
+      // Update badge Status Lamaran secara dinamis
+      const apps = MagnetDB.getUserApplications();
+      const badge = document.getElementById('nav-lamaran-badge');
+      if (badge) {
+        if (apps.length > 0) { badge.textContent = apps.length; badge.style.display = 'inline-flex'; }
+        else badge.style.display = 'none';
+      }
+
+      const profile   = MagnetDB.getProfile();
+      const initial   = user.name.charAt(0).toUpperCase();
+      const typeLabel = user.type === 'mahasiswa' ? 'Mahasiswa' : 'Perusahaan';
+      let joinDate;
+          try {
+              const d = new Date(user.createdAt);
+              if (isNaN(d.getTime())) throw new Error();
+                joinDate = d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+            } catch(e) {
+                joinDate = 'Baru saja bergabung';
+              }
+      const pct       = hitungProgress(user, profile);
 
       // Progress tips: ceklis jika sudah diisi
       const tipCV     = profile?.cv;
