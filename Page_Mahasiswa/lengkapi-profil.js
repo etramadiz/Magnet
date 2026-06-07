@@ -7,7 +7,6 @@ import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.
 import { MagnetDB } from './db.js';
 const showToast = window.showToast;
 
-let uid = null;
 let skillTags  = [];
 let minatTags  = [];
 let cvData     = null;
