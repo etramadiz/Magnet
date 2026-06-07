@@ -405,6 +405,21 @@ function applyGuestMode() {
   }
 }
 
+// ========== EKSPOS FUNGSI KE GLOBAL ==========
+// Letakkan ini di luar DOMContentLoaded, agar langsung tersedia
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.setFilter = setFilter;
+window.toggleSave = toggleSave;
+window.applyJob = applyJob;
+window.openJob = openJob;
+window.handleLogout = handleLogout;
+window.showToast = showToast;
+window.toggleNotif = toggleNotif;
+window.markAllRead = markAllRead;
+window.toggleSearch = toggleSearch;
+window.triggerSearch = triggerSearch;
+
 /* ═══════════════════════════
    INIT
 ═══════════════════════════ */
@@ -435,17 +450,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Muat lowongan dari Firebase
     loadJobsFromFirebase();
   }
-  // Ekspos fungsi ke global scope agar bisa dipanggil dari atribut onclick di HTML
-window.toggleSidebar = toggleSidebar;
-window.closeSidebar = closeSidebar;
-window.setFilter = setFilter;
-window.toggleSave = toggleSave;
-window.applyJob = applyJob;
-window.openJob = openJob;
-window.handleLogout = handleLogout;
-window.showToast = showToast;
-window.toggleNotif = toggleNotif;
-window.markAllRead = markAllRead;
-window.toggleSearch = toggleSearch;
-window.triggerSearch = triggerSearch;
 });
