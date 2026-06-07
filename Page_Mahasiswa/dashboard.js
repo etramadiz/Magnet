@@ -435,4 +435,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Muat lowongan dari Firebase
     loadJobsFromFirebase();
   }
+  // Ekspos fungsi ke global scope agar bisa dipanggil dari atribut onclick di HTML
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.setFilter = setFilter;
+window.toggleSave = toggleSave;
+window.applyJob = applyJob;
+window.openJob = openJob;
+window.handleLogout = handleLogout;
+window.showToast = showToast;
+window.toggleNotif = toggleNotif;
+window.markAllRead = markAllRead;
+window.toggleSearch = toggleSearch;
+window.triggerSearch = triggerSearch;
 });
