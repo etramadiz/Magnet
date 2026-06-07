@@ -1,8 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
+import { auth } from '../Page_Login_Register/firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
+import { MagnetDB } from './db.js';
 const showToast = window.showToast;
 
+let uid = null;
 let skillTags  = [];
 let minatTags  = [];
 let cvData     = null;
