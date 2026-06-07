@@ -73,3 +73,23 @@ export async function deleteJob(jobId) {
   await remove(jobRef);
   return { ok: true };
 }
+
+// ==================== LOWONGAN UNTUK MAHASISWA ====================
+
+// Ambil semua lowongan (tanpa filter perusahaan)
+export async function getAllJobs() {
+  const jobsRef = ref(db, 'jobs');
+  const snapshot = await get(jobsRef);
+  const jobs = [];
+  snapshot.forEach(child => {
+    const job = { id: child.key, ...child.val() };
+    // Hanya tampilkan lowongan yang statusnya 'Buka' (jika ada field status)
+    // Jika tidak ada field status, anggap terbuka
+    if (job.status !== 'Tutup') {
+      jobs.push(job);
+    }
+  });
+  // Urutkan dari yang terbaru (berdasarkan createdAt)
+  jobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return jobs;
+}
