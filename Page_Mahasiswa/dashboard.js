@@ -69,7 +69,7 @@ function renderJobs(filter = 'all') {
 
       <div class="job-card-footer">
         <span class="job-time">${formatRelativeTime(job.createdAt)}</span>
-        <button class="apply-btn" onclick="applyJob(event, ${job.id})">Lamar</button>
+        <button class="apply-btn" onclick="applyJob(event, '${job.id}')">Lamar</button>
       </div>
     </div>
   `).join('');
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       list.innerHTML = filtered.map((job, i) => `
-        <div class="job-card" style="animation-delay:${i * 0.05}s" onclick="openJob(${job.id})">
+        <div class="job-card" style="animation-delay:${i * 0.05}s" onclick="openJob('${job.id}')">
           <div class="job-card-top">
             <div class="company-logo" style="background:${job.logoColor}18; color:${job.logoColor};">
               ${job.companyShort || (job.companyName ? job.companyName.charAt(0) : '?')}
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="job-salary">${job.salary || 'Rp 0'}</p>
           <div class="job-card-footer">
             <span class="job-time">${formatRelativeTime(job.createdAt)}</span>
-            <button class="apply-btn" onclick="applyJob(event, ${job.id})">Lamar</button>
+            <button class="apply-btn" onclick="applyJob(event, '${job.id}')">Lamar</button>
           </div>
         </div>`).join('');
     });
