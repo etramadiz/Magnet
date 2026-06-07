@@ -1,10 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
-import { auth } from '../Page_Login_Register/firebase-config.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
-import { MagnetDB } from './db.js';
 const showToast = window.showToast;
 
 let skillTags  = [];
@@ -239,7 +235,7 @@ function applyEditMode() {
  * strict = true  → validasi ketat, tampilkan error kalau field wajib kosong
  * strict = false → partial save, simpan apa yang sudah diisi
  */
-async function doSave(strict = true) {
+function doSave(strict = true) {
   const nama        = document.getElementById('f-nama')?.value.trim()        || '';
   const universitas = document.getElementById('f-universitas')?.value.trim() || '';
   const jurusan     = document.getElementById('f-jurusan')?.value.trim()     || '';
@@ -256,41 +252,27 @@ async function doSave(strict = true) {
     return false;
   }
 
-  const session = MagnetDB.getSession();
-  if (!session || !session.id) {
-    showToast('Sesi tidak valid, silakan login ulang', 'error');
-    return false;
-  }
-  
-  const profilePayload ={
+  const result = MagnetDB.saveProfile({
     name: nama, universitas, jurusan, semester, ipk,
     skills: [...skillTags],
     minat:  [...minatTags],
     pendidikan, pengalaman, prestasi,
     cv: cvData,
     avatar: photoDataURL,
-    updatedAt: new Date().toISOString()
-  };
+  });
 
-  try {
-    await saveMahasiswaProfile(session.id, profilePayload);
-    MagnetDB.saveProfile(profilePayload); // Update cache lokal
-  
-    showToast('Profil berhasil disimpan ✓');
-    isEditMode = false;
-    applyEditMode();
-    updateProgress();
-    return true;
-  } catch (error) {
-    console.error('Gagal menyimpan profil:', error);
-    showToast('Gagal menyimpan profil ke server', 'error');
-    return false;
-  }
+  if (!result.ok) { showToast(result.message); return false; }
+
+  showToast('Profil berhasil disimpan ✓');
+  isEditMode = false;
+  applyEditMode();
+  updateProgress();
+  return true;
 }
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
-async function saveProfile() {
-  await doSave(true);
+function saveProfile() {
+  doSave(true);
 }
 
 function hlField(id) {
@@ -304,23 +286,13 @@ function hlField(id) {
 /* ════════════
    LOAD DATA
 ════════════ */
-async function loadProfile() {
+function loadProfile() {
   const user    = MagnetDB.getSession();
-  if (!user) return;
+  const profile = MagnetDB.getProfile();
 
   // Pre-fill nama dari akun
   const namaEl = document.getElementById('f-nama');
   if (namaEl) namaEl.value = user?.name || '';
-
-  let profile = null;
-  try {
-    profile = await getMahasiswaProfile(user.id);
-    if (profile) { MagnetDB.saveProfile(profile); // Cache profil di MagnetDB untuk akses cepat
-    }
-  } catch (error) {
-    console.error('Gagal memuat profil:', error);
-    profile = MagnetDB.getProfile(); // Coba ambil dari cache lokal
-  }
 
   if (profile) {
     if (namaEl) namaEl.value = profile.name || user?.name || '';
@@ -336,11 +308,6 @@ async function loadProfile() {
     skillTags = Array.isArray(profile.skills) ? [...profile.skills] : [];
     minatTags = Array.isArray(profile.minat)  ? [...profile.minat]  : [];
 
-    if (profile.avatar) {
-      photoDataURL = profile.avatar;
-      applyPhotoPreview(photoDataURL);
-    }
-    
     if (profile.cv) {
       cvData = profile.cv;
       document.getElementById('cvPlaceholder').style.display = 'none';
