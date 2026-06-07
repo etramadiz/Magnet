@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
+const showToast = window.showToast;
 
 let skillTags  = [];
 let minatTags  = [];
@@ -385,4 +386,15 @@ document.addEventListener('DOMContentLoaded', () => {
       handleCVUpload(input);
     });
   }
+
+  window.handlePhotoUpload = handlePhotoUpload;
+  window.removePhoto = removePhoto;
+  window.addTag = addTag;
+  window.removeTag = removeTag;
+  window.addSuggestion = addSuggestion;
+  window.handleCVUpload = handleCVUpload;
+  window.removeCV = removeCV;
+  window.toggleEditMode = toggleEditMode;
+  window.saveProfile = saveProfile;
+  window.updateProgress = updateProgress;
 });
