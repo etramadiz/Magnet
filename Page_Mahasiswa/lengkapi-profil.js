@@ -29,6 +29,7 @@ function handlePhotoUpload(input) {
     showToast('Foto berhasil dipilih ✓');
     updateProgress();
   };
+  reader.onerror = () => showToast('Gagal membaca file', 'error');
   reader.readAsDataURL(file);
 }
 
@@ -69,8 +70,6 @@ function initPhotoSection() {
   if (saved) { photoDataURL = saved; applyPhotoPreview(saved); }
 }
 
-
-
 /* ════════════
    PROGRESS
 ════════════ */
@@ -80,6 +79,7 @@ function updateProgress() {
     !!user?.name,
     !!user?.email,
     !!user?.phone,
+    !!photoDataURL,
     !!(document.getElementById('f-universitas')?.value?.trim()),
     !!(document.getElementById('f-jurusan')?.value?.trim()),
     !!(document.getElementById('f-semester')?.value),
