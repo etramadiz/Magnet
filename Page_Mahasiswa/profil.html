@@ -197,7 +197,14 @@
       const profile   = MagnetDB.getProfile();
       const initial   = user.name.charAt(0).toUpperCase();
       const typeLabel = user.type === 'mahasiswa' ? 'Mahasiswa' : 'Perusahaan';
-      const joinDate  = new Date(user.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+      let joinDate;
+          try {
+              const d = new Date(user.createdAt);
+              if (isNaN(d.getTime())) throw new Error();
+                joinDate = d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+            } catch(e) {
+                joinDate = 'Baru saja bergabung';
+              }
       const pct       = hitungProgress(user, profile);
 
       // Progress tips: ceklis jika sudah diisi
