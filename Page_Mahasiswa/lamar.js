@@ -169,26 +169,26 @@ async function submitLamaran() {
   // 2. Simpan juga ke Firebase
   const session = MagnetDB.getSession();
   if (session) {
-    const firebaseApp = {
-      userId: session.id,
-      userName: session.name,
-      userEmail: session.email,
-      jobId: currentJob.id,
-      jobTitle: currentJob.title,
-      companyId: currentJob.companyId,
-      companyName: currentJob.companyName || currentJob.company,
-      companyShort: currentJob.companyShort,
-      logoColor: currentJob.logoColor,
-      status: 'terkirim',
-      appliedAt: new Date().toISOString(),
-      documents: {
-        cv: docs.cv,
-        surat: docs.surat,
-        porto: docs.porto,
-        portoLink,
-        catatan,
-      }
-    };
+const firebaseApp = {
+  userId: session.id,
+  userName: session.name,
+  userEmail: session.email,
+  jobId: currentJob.id,
+  jobTitle: currentJob.title,
+  companyId: currentJob.companyId,
+  companyName: currentJob.companyName || currentJob.company || 'Perusahaan',
+  companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
+  logoColor: currentJob.logoColor || '#3B2A8E',
+  status: 'terkirim',
+  appliedAt: new Date().toISOString(),
+  documents: {
+    cv: docs.cv || null,
+    surat: docs.surat || null,
+    porto: docs.porto || null,
+    portoLink: portoLink || null,
+    catatan: catatan || null,
+  }
+};
     try {
       await saveApplicationToFirebase(firebaseApp);
       console.log('Lamaran berhasil disimpan ke Firebase');
