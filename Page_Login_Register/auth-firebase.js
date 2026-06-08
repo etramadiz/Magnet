@@ -147,7 +147,7 @@ export async function firebaseGoogleLogin(expectedRole) {
     const user = result.user;
     const snapshot = await get(ref(db, 'users/' + user.uid));
     let role = expectedRole;
-    let userName = user.displayName || user.email; // fallback
+    let userName = user.displayName || user.email; // Nama bawaan google (sunhpark)
 
     if (snapshot.exists()) {
       role = snapshot.val().tipeAkun;
@@ -156,11 +156,8 @@ export async function firebaseGoogleLogin(expectedRole) {
         await signOut(auth);
         return false;
       }
-      // Gunakan nama dari database jika ada
-      if (snapshot.val().namaLengkap) {
-        userName = snapshot.val().namaLengkap;
-      }
     } else {
+      // Jika user baru, buat node di users
       await set(ref(db, 'users/' + user.uid), {
         namaLengkap: user.displayName || '',
         email: user.email,
@@ -170,13 +167,20 @@ export async function firebaseGoogleLogin(expectedRole) {
       });
     }
 
-    // Sinkronkan profil dari node mahasiswa
+    // 🔥 AMBIL DATA DARI NODE MAHASISWA
     const mahasiswaSnapshot = await get(ref(db, `mahasiswa/${user.uid}`));
     let profileData = mahasiswaSnapshot.exists() ? mahasiswaSnapshot.val() : {};
 
+    // 🔥 KUNCI PERBAIKAN: Paksa timpa userName Google dengan nama dari database jika sudah pernah diisi!
+    if (profileData && profileData.name) {
+      userName = profileData.name;
+    } else if (snapshot.exists() && snapshot.val().namaLengkap) {
+      userName = snapshot.val().namaLengkap;
+    }
+
     const localUser = {
       id: user.uid,
-      name: userName,
+      name: userName, // Sekarang pasti memakai "Rahma Pratiwi" jika ada
       email: user.email,
       type: role,
       profile: profileData

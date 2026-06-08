@@ -303,9 +303,10 @@ function showToast(msg, dur = 3000) {
 }
 
 async function syncProfile() {
-  const user = auth.currentUser;
-  if (user) {
-    await syncProfileFromFirebase(user.uid);
+  // Ambil ID dari localStorage yang sudah pasti langsung ada tanpa loading
+  const session = MagnetDB.getSession();
+  if (session && session.id) {
+    await syncProfileFromFirebase(session.id);
   }
 }
 
