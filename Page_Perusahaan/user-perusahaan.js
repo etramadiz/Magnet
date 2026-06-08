@@ -1,24 +1,69 @@
-// user-perusahaan.js
+// user-perusahaan.js - versi dengan statistik real
 
+// Fungsi untuk mengambil data dari Firebase dan localStorage
+async function refreshStats() {
+  // Ambil user session
+  const session = MagnetDB.getSession();
+  if (!session || session.type !== 'perusahaan') return;
+
+  const uid = session.id;
+
+  // Import fungsi dari firebase-company.js (path relatif)
+  const { getJobsByCompany } = await import('./firebase-company.js');
+  const jobs = await getJobsByCompany(uid);
+  const jobCount = jobs.length;
+
+  // Hitung total pelamar dan diterima dari semua lowongan
+  let totalPelamar = 0;
+  let totalDiterima = 0;
+  const allApps = MagnetDB.getAllApplications();
+  for (const job of jobs) {
+    const jobApps = allApps.filter(app => app.jobId === String(job.id));
+    totalPelamar += jobApps.length;
+    totalDiterima += jobApps.filter(app => app.status === 'Diterima').length;
+  }
+  const lowonganAktif = jobs.filter(job => job.status !== 'Tutup').length;
+
+  // Update elemen statistik
+  animateCount(document.getElementById('statLowongan'), jobCount);
+  animateCount(document.getElementById('statPelamar'), totalPelamar);
+  animateCount(document.getElementById('statDiterima'), totalDiterima);
+  animateCount(document.getElementById('statBuka'), lowonganAktif);
+}
+
+// Fungsi animasi (sama seperti asli)
 function animateCount(el, target, duration = 900) {
   if (!el) return;
   let start = 0;
   const step = target / (duration / 16);
   const timer = setInterval(() => {
     start += step;
-    if (start >= target) { el.textContent = target; clearInterval(timer); return; }
+    if (start >= target) {
+      el.textContent = target;
+      clearInterval(timer);
+      return;
+    }
     el.textContent = Math.floor(start);
   }, 16);
 }
 
-window.addEventListener('load', () => {
-  if (document.getElementById('statLowongan')) animateCount(document.getElementById('statLowongan'), 9);
-  if (document.getElementById('statPelamar')) animateCount(document.getElementById('statPelamar'), 47);
-  if (document.getElementById('statDiterima')) animateCount(document.getElementById('statDiterima'), 12);
-  if (document.getElementById('statBuka')) animateCount(document.getElementById('statBuka'), 6);
+// Panggil refreshStats setelah DOM siap
+document.addEventListener('DOMContentLoaded', async () => {
+  // Tunggu sebentar agar session tersedia
+  const session = MagnetDB.getSession();
+  if (session) {
+    await refreshStats();
+  } else {
+    // Coba lagi setelah 500ms
+    setTimeout(async () => {
+      if (MagnetDB.getSession()) await refreshStats();
+    }, 500);
+  }
+  // Chart tetap statis
   renderChart();
 });
 
+// Chart data (tetap statis)
 const chartData = [
   { label: 'Jan', val: 4 },
   { label: 'Feb', val: 8 },
@@ -32,7 +77,6 @@ function renderChart() {
   const container = document.getElementById('miniChart');
   if (!container) return;
   const max = Math.max(...chartData.map(d => d.val));
-
   container.innerHTML = chartData.map(d => `
     <div class="chart-bar-wrap">
       <div class="chart-bar" style="height:${(d.val / max) * 64}px;" title="${d.val} pelamar"></div>
@@ -41,7 +85,7 @@ function renderChart() {
   `).join('');
 }
 
-// SOLUSI MASALAH 1: Injeksi data dinamis hasil input registrasi/edit profil
+// Sisanya (inject data profil, dll) tetap seperti sebelumnya
 document.addEventListener('DOMContentLoaded', () => {
   const s = MagnetDB.getSession();
   if (!s) return;
@@ -51,11 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.profile-email, .profile-user-email').forEach(el => el.textContent = s.email);
   if (document.getElementById('navUserName')) document.getElementById('navUserName').textContent = s.name;
   
-  // Set inisial huruf pertama logo berdasarkan nama perusahaan terbaru
   const logoBox = document.querySelector('.profile-logo');
   if (logoBox && s.name) logoBox.textContent = s.name.charAt(0).toUpperCase();
 
-  // Injeksi teks deskripsi panjang, budaya, dan benefit
   const descEl = document.getElementById('profileDeskripsi');
   if (descEl) descEl.textContent = s.description || 'Deskripsi perusahaan belum diisi.';
 
@@ -65,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const benefitEl = document.getElementById('profileBenefit');
   if (benefitEl) benefitEl.textContent = s.benefits || 'Informasi benefit belum diisi.';
 
-  // Injeksi data spesifik ke komponen spesifikasi detail box
   const indEl = document.getElementById('profileIndustri');
   if (indEl) indEl.textContent = s.industry || '—';
 
