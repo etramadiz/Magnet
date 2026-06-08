@@ -1,5 +1,5 @@
 /* perusahaan.js - Mengambil data dari Firebase (tanpa sample review) */
-import { getCompanyProfile, getJobsByCompany } from '../Page_Perusahaan/firebase-company.js';
+import { getCompanyProfile, getJobsByCompany, getReviewsByCompany } from '../Page_Perusahaan/firebase-company.js';
 import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 import { db } from '../Page_Login_Register/firebase-config.js';
 
