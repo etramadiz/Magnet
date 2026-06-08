@@ -29,7 +29,7 @@ function renderJobs(filter = 'all') {
   }
 
   list.innerHTML = filtered.map((job, i) => `
-    <div class="job-card" style="animation-delay:${i * 0.06}s" onclick="openJob(${job.id})">
+    <div class="job-card" style="animation-delay:${i * 0.06}s" onclick="openJob('${job.id}')">
       <div class="job-card-top">
         <div class="company-logo" style="background:${job.logoColor}18; color:${job.logoColor}; border-color:${job.logoColor}22;">
           ${job.companyShort || (job.companyName ? job.companyName.charAt(0) : '?')}
@@ -39,9 +39,9 @@ function renderJobs(filter = 'all') {
           <p class="job-company">${escapeHtml(job.companyName || job.company)}</p>
         </div>
         <div class="job-card-actions">
-          <button class="bookmark-btn ${savedJobs.has(job.id) ? 'saved' : ''}"
-            onclick="toggleSave(event, ${job.id})" title="Simpan">
-            <svg viewBox="0 0 24 24" fill="${savedJobs.has(job.id) ? 'currentColor' : 'none'}"
+          <button class="bookmark-btn ${savedJobs.has(String(job.id)) ? 'saved' : ''}"
+            onclick="toggleSave(event, '${job.id}')" title="Simpan">
+            <svg viewBox="0 0 24 24" fill="${savedJobs.has(String(job.id)) ? 'currentColor' : 'none'}"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
@@ -116,6 +116,7 @@ function setFilter(el, filter) {
 /* ── Bookmark ── */
 function toggleSave(e, id) {
   e.stopPropagation();
+  const strId = String(id);
   if (savedJobs.has(id)) {
     savedJobs.delete(id);
     showToast('Lowongan dihapus dari simpanan');

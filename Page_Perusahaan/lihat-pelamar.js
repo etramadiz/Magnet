@@ -104,3 +104,6 @@ onAuthStateChanged(auth, async (user) => {
 document.addEventListener('DOMContentLoaded', () => {
   if (companyId) render();
 });
+
+// Tambahkan di baris paling bawah lihat-pelamar.js
+window.toggleAccordion = toggleAccordion;
