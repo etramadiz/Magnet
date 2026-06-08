@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
-import { auth } from '../Page_Login_Register/firebase-config.js';
+import { db, auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
 
@@ -87,42 +87,34 @@ function removePhoto() {
 }
 
 function _getInitial() {
-  const user = MagnetDB.getSession();
-  return user?.name?.charAt(0).toUpperCase() || '?';
+  const user = auth.currentUser;
+  const name = user?.displayName || MagnetDB.getSession()?.name || '?';
+  return name.charAt(0).toUpperCase();
 }
 
 function initPhotoSection() {
-  const user    = MagnetDB.getSession();
-  const profile = MagnetDB.getProfile();
-  const saved   = user?.avatar || profile?.avatar || null;
-  if (saved) { 
-    photoDataURL = saved; 
-    applyPhotoPreview(saved); 
-  } else {
-    const initial = document.getElementById('photoInitial');
-    if (initial) {
-      initial.textContent = _getInitial();
-    }
-  }
+  const initial = document.getElementById('photoInitial');
+  if (initial) initial.textContent = _getInitial();
 }
 
 /* ════════════
    PROGRESS
 ════════════ */
 function updateProgress() {
-  const user = MagnetDB.getSession();
-  const profile = MagnetDB.getProfile();
+  const nama        = document.getElementById('f-nama')?.value?.trim() || '';
+  const email       = document.getElementById('f-email')?.value?.trim() || '';
+  const telepon     = document.getElementById('f-telepon')?.value?.trim() || '';
+  const universitas = document.getElementById('f-universitas')?.value?.trim() || '';
+  const jurusan     = document.getElementById('f-jurusan')?.value?.trim() || '';
+  const semester    = document.getElementById('f-semester')?.value || '';
+  const ipk         = document.getElementById('f-ipk')?.value?.trim() || '';
+  const hasSkill    = skillTags.length > 0;
+  const hasMinat    = minatTags.length > 0;
+  const hasCV       = cvData !== null;
+
   const checks = [
-    !!user?.name,
-    !!user?.email,
-    !!user?.phone,
-    !!user?.avatar,
-    !!(profile?.universitas || document.getElementById('f-universitas')?.value?.trim()),
-    !!(profile?.jurusan     || document.getElementById('f-jurusan')?.value?.trim()),
-    !!(profile?.semester    || document.getElementById('f-semester')?.value),
-    (skillTags.length > 0)  || (profile?.skills?.length > 0),
-    (minatTags.length > 0)  || (profile?.minat?.length > 0),
-    !!(cvData || profile?.cv),
+    !!nama, !!email, !!telepon, !!photoDataURL,
+    !!universitas, !!jurusan, !!semester, hasSkill, hasMinat, hasCV
   ];
   const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
 
@@ -271,7 +263,12 @@ function applyEditMode() {
  * strict = true  → validasi ketat, tampilkan error kalau field wajib kosong
  * strict = false → partial save, simpan apa yang sudah diisi
  */
-function doSave(strict = true) {
+async function doSave(strict = true) {
+  if (!currentUserId) {
+    showToast('User tidak terautentikasi');
+    return false;
+  }
+
   const nama        = document.getElementById('f-nama')?.value.trim()        || '';
   const email       = document.getElementById('f-email')?.value.trim()       || '';
   const telepon     = document.getElementById('f-telepon')?.value.trim()     || '';
@@ -290,43 +287,55 @@ function doSave(strict = true) {
     return false;
   }
 
-  const result = MagnetDB.saveProfile({
-    name: nama, 
-    email: email, 
-    telepon: telepon,
-    universitas: universitas, 
-    jurusan: jurusan, 
-    semester: semester, 
-    ipk: ipk,
-    skills: [...skillTags],
-    minat:  [...minatTags],
-    pendidikan: pendidikan,
-    pengalaman: pengalaman,
-    prestasi: prestasi,
-    cv: cvData,
-    avatar: photoDataURL,
-  });
-
-  if (!result.ok) { showToast(result.message); return false; }
-
-  showToast('Profil berhasil disimpan ✓');
-  isEditMode = false;
-  applyEditMode();
-  updateProgress();
-
-  const avatarInitial = document.getElementById('avatarInitial');
-  if (avatarInitial && photoDataURL) {
-    const avatarDiv = document.querySelector('.avatar-btn');
-    if (avatarDiv) {
-      avatarDiv.style.backgroundImage = `url(${photoDataURL})`;
-      avatarDiv.style.backgroundSize = 'cover';
-      avatarDiv.style.backgroundPosition = 'center';
-      avatarInitial.style.display = 'none';
-    }
+    const profileData = {
+      name: nama, 
+      email: email, 
+      phone: telepon,
+      universitas: universitas, 
+      jurusan: jurusan, 
+      semester: semester, 
+      ipk: ipk,
+      skills: [...skillTags],
+      minat: [...minatTags],
+      pendidikan: pendidikan,
+      pengalaman: pengalaman,
+      prestasi: prestasi,
+      cv: cvData,
+      avatar: photoDataURL,
+      updatedAt: new Date().toISOString()
+    };
   }
 
-  return true;
-}
+  try {
+    await saveMahasiswaProfile(currentUid, profileData);
+    showToast('Profil berhasil disimpan ke cloud ✓');
+    
+    // Optional: Update displayName di Firebase Auth
+    if (auth.currentUser && nama !== auth.currentUser.displayName) {
+      await auth.currentUser.updateProfile({ displayName: nama });
+    }
+
+    isEditMode = false;
+    applyEditMode();
+    updateProgress();
+
+    // Update avatar di header jika ada
+    const avatarInitial = document.getElementById('avatarInitial');
+    if (avatarInitial && photoDataURL) {
+      const avatarDiv = document.querySelector('.avatar-btn');
+      if (avatarDiv) {
+        avatarDiv.style.backgroundImage = `url(${photoDataURL})`;
+        avatarDiv.style.backgroundSize = 'cover';
+        avatarDiv.style.backgroundPosition = 'center';
+        avatarInitial.style.display = 'none';
+      }
+    }
+    return true;
+  } catch (err) {
+    console.error(err);
+    showToast('Gagal menyimpan profil: ' + err.message);
+    return false;
+  }
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
 function saveProfile() {
@@ -344,131 +353,145 @@ function hlField(id) {
 /* ════════════
    LOAD DATA
 ════════════ */
-function loadProfile() {
-  const user    = MagnetDB.getSession();
-  const profile = MagnetDB.getProfile();
+async function loadProfile() {
+  if (!currentUid) return;
+  try {
+      const profile = await getMahasiswaProfile(currentUid);
+      if (profile) {
+      // Isi form dengan data dari Firebase
+      const setField = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+      };
+      setField('f-nama', profile.name);
+      setField('f-email', profile.email);
+      setField('f-telepon', profile.phone);
+      setField('f-universitas', profile.universitas);
+      setField('f-jurusan', profile.jurusan);
+      setField('f-semester', profile.semester);
+      setField('f-ipk', profile.ipk);
+      setField('f-pendidikan', profile.pendidikan);
+      setField('f-pengalaman', profile.pengalaman);
+      setField('f-prestasi', profile.prestasi);
 
-  // Pre-fill nama dari akun
-  const namaEl = document.getElementById('f-nama');
-  if (namaEl) namaEl.value = user?.name || '';
+      skillTags = profile.skills ? [...profile.skills] : [];
+      minatTags = profile.minat ? [...profile.minat] : [];
+      cvData = profile.cv || null;
+      photoDataURL = profile.avatar || null;
 
-  const emailEl = document.getElementById('f-email');
-  if (emailEl) emailEl.value = user?.email || '';
-
-  const teleponEl = document.getElementById('f-telepon');
-  if (teleponEl) teleponEl.value = user?.phone || '';
-
-  if (profile) {
-    if (namaEl) namaEl.value = profile.name || user?.name || '';
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-    set('f-universitas', profile.universitas);
-    set('f-jurusan',     profile.jurusan);
-    set('f-semester',    profile.semester);
-    set('f-ipk',         profile.ipk);
-    set('f-pendidikan',  profile.pendidikan);
-    set('f-pengalaman',  profile.pengalaman);
-    set('f-prestasi',    profile.prestasi);
-
-    skillTags = Array.isArray(profile.skills) ? [...profile.skills] : [];
-    minatTags = Array.isArray(profile.minat)  ? [...profile.minat]  : [];
-
-    if (profile.cv) {
-      cvData = profile.cv;
-      document.getElementById('cvPlaceholder').style.display = 'none';
-      const area = document.getElementById('cvUploadArea');
-      if (area) { area.onclick = null; area.style.cursor = 'default'; }
-      const st = document.getElementById('cvStatus');
-      if (st)  { st.style.display = 'flex'; }
-      const fn = document.getElementById('cvFileName');
-      const fm = document.getElementById('cvFileMeta');
-      if (fn) fn.textContent = profile.cv.name;
-      if (fm) fm.textContent = (profile.cv.size/1024).toFixed(0) + ' KB · PDF · Tersimpan';
+      if (photoDataURL) applyPhotoPreview(photoDataURL);
+      if (cvData) {
+        document.getElementById('cvPlaceholder').style.display = 'none';
+        const area = document.getElementById('cvUploadArea');
+        if (area) { area.onclick = null; area.style.cursor = 'default'; }
+        const st = document.getElementById('cvStatus');
+        if (st) st.style.display = 'flex';
+        const fn = document.getElementById('cvFileName');
+        const fm = document.getElementById('cvFileMeta');
+        if (fn) fn.textContent = cvData.name;
+        if (fm) fm.textContent = (cvData.size/1024).toFixed(0) + ' KB · PDF';
+      }
+    } else {
+      // Profile belum ada, biarkan form kosong
+      skillTags = [];
+      minatTags = [];
+      cvData = null;
+      photoDataURL = null;
     }
+    renderTags('skill');
+    renderTags('minat');
+
+    // Tentukan edit mode: jika belum ada profil, langsung edit mode
+    const params = new URLSearchParams(window.location.search);
+    isEditMode = params.get('edit') === '1' || !profile;
+    applyEditMode();
+    updateProgress();
+
+    if (profile && isProfileCompleteFromForm()) {
+      document.getElementById('lpBanner')?.classList.add('hidden');
+    }
+  } catch (err) {
+    console.error('Gagal load profil dari Firebase:', err);
+    showToast('Gagal memuat profil');
   }
+}
 
-  // Jika belum ada profile, kosongkan tags
-  if (!profile) {
-    skillTags = [];
-    minatTags = [];
-    cvData = null;
-  }
-
-  renderTags('skill');
-  renderTags('minat');
-
-  // URL param ?edit=1 atau belum ada profil → langsung edit mode
-  const params = new URLSearchParams(window.location.search);
-  isEditMode   = params.get('edit') === '1' || !profile;
-  applyEditMode();
-  updateProgress();
-
-  // Scroll ke anchor kalau ada (#sect-xxx)
-  const hash = window.location.hash;
-  if (hash) {
-    setTimeout(() => {
-      const target = document.querySelector(hash);
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
-  }
-
-  if (MagnetDB.isProfileComplete()) {
-    document.getElementById('lpBanner')?.classList.add('hidden');
-  }
+function isProfileCompleteFromForm() {
+  const universitas = document.getElementById('f-universitas')?.value?.trim();
+  const jurusan = document.getElementById('f-jurusan')?.value?.trim();
+  const semester = document.getElementById('f-semester')?.value;
+  const hasSkill = skillTags.length > 0;
+  const hasMinat = minatTags.length > 0;
+  const hasCV = cvData !== null;
+  return !!(universitas && jurusan && semester && hasSkill && hasMinat && hasCV);
 }
 
 /* ════════════
    INIT
 ════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-  MagnetDB.requireMahasiswaAuth();
-  restoreSidebarState();
-
-  // Update badge Status Lamaran
-  const apps  = MagnetDB.getUserApplications();
-  const badge = document.getElementById('nav-lamaran-badge');
-  if (badge) {
-    if (apps.length > 0) { badge.textContent = apps.length; badge.style.display = 'inline-flex'; }
-    else badge.style.display = 'none';
-  }
-
-  loadProfile();
-  initPhotoSection();
-
-  // Enter key untuk tag input
-  const si = document.getElementById('skillInput');
-  const mi = document.getElementById('minatInput');
-  if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('skill'); } });
-  if (mi) mi.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('minat'); } });
-
-  // Live progress update
-  ['f-nama','f-universitas','f-jurusan','f-semester','f-ipk'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.addEventListener('input', updateProgress); el.addEventListener('change', updateProgress); }
-  });
-
-  // Drag & drop CV
-  const area = document.getElementById('cvUploadArea');
-  if (area) {
-    area.addEventListener('dragover',  e => { e.preventDefault(); area.classList.add('drag-over'); });
-    area.addEventListener('dragleave', ()  => area.classList.remove('drag-over'));
-    area.addEventListener('drop', e => {
-      e.preventDefault(); area.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (!file) return;
-      const input = document.getElementById('cvFileInput');
-      try { const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; } catch(err) {}
-      handleCVUpload(input);
+  // Cek auth state Firebase
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // Redirect ke login jika belum login
+      window.location.href = '../../../Page Login Register/index.html';
+      return;
+    }
+    currentUid = user.uid;
+    
+    // Optional: pastikan session MagnetDB juga sync (untuk keperluan lamaran, dll)
+    // Tapi untuk profil, kita tidak pakai MagnetDB.
+    
+    // Load sidebar dll
+    restoreSidebarState();
+    
+    // Update badge lamaran (masih pakai MagnetDB, itu boleh)
+    const apps = MagnetDB.getUserApplications();
+    const badge = document.getElementById('nav-lamaran-badge');
+    if (badge) {
+      if (apps.length > 0) { badge.textContent = apps.length; badge.style.display = 'inline-flex'; }
+      else badge.style.display = 'none';
+    }
+    
+    // Load profil dari Firebase
+    await loadProfile();
+    initPhotoSection();
+    
+    // Event listeners
+    const si = document.getElementById('skillInput');
+    const mi = document.getElementById('minatInput');
+    if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('skill'); } });
+    if (mi) mi.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag('minat'); } });
+    
+    ['f-nama','f-universitas','f-jurusan','f-semester','f-ipk'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.addEventListener('input', updateProgress); el.addEventListener('change', updateProgress); }
     });
-  }
-
-  window.handlePhotoUpload = handlePhotoUpload;
-  window.removePhoto = removePhoto;
-  window.addTag = addTag;
-  window.removeTag = removeTag;
-  window.addSuggestion = addSuggestion;
-  window.handleCVUpload = handleCVUpload;
-  window.removeCV = removeCV;
-  window.toggleEditMode = toggleEditMode;
-  window.saveProfile = saveProfile;
-  window.updateProgress = updateProgress;
+    
+    const area = document.getElementById('cvUploadArea');
+    if (area) {
+      area.addEventListener('dragover',  e => { e.preventDefault(); area.classList.add('drag-over'); });
+      area.addEventListener('dragleave', ()  => area.classList.remove('drag-over'));
+      area.addEventListener('drop', e => {
+        e.preventDefault(); area.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const input = document.getElementById('cvFileInput');
+        try { const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; } catch(err) {}
+        handleCVUpload(input);
+      });
+    }
+    
+    // Expose functions ke global
+    window.handlePhotoUpload = handlePhotoUpload;
+    window.removePhoto = removePhoto;
+    window.addTag = addTag;
+    window.removeTag = removeTag;
+    window.addSuggestion = addSuggestion;
+    window.handleCVUpload = handleCVUpload;
+    window.removeCV = removeCV;
+    window.toggleEditMode = toggleEditMode;
+    window.saveProfile = saveProfile;
+    window.updateProgress = updateProgress;
+  });
 });
