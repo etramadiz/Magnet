@@ -33,7 +33,7 @@ function lamarSekarang() {
   if (!currentJob) return;
   if (!MagnetDB.getSession()) {
     showToast('Masuk terlebih dahulu untuk melamar lowongan');
-    setTimeout(() => window.location.href = '../../../Page Login Register/index.html', 1500);
+    setTimeout(() => window.location.href = '../../../Page_Login_Register/index.html', 1500);
     return;
   }
   if (MagnetDB.hasApplied(currentJob.id)) {
