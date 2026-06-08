@@ -1,6 +1,7 @@
 // firebase-mahasiswa.js - Realtime Database version
 import { db, auth } from '../Page_Login_Register/firebase-config.js';
-import { ref, get, set, update, push, query, orderByChild, equalTo, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"";
+// Perbaiki menjadi
+import { ref, get, set, update, push, query, orderByChild, equalTo, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 // Simpan profil mahasiswa ke Realtime Database
 export async function saveMahasiswaProfile(uid, data) {

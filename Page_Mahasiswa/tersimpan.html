@@ -1,25 +1,35 @@
 <script type="module">
   import { getAllJobs } from '../Page_Perusahaan/firebase-company.js';
-
+  
   let savedSet = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
   let allJobs = [];
-
+  
+  // Definisikan showToast
+  function showToast(msg, dur = 3000) {
+    let t = document.getElementById('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+  }
+  window.showToast = showToast;
+  
   async function loadJobs() {
     allJobs = await getAllJobs();
     renderSaved();
   }
-
+  
   function persistSaved() {
     localStorage.setItem('mg_saved', JSON.stringify([...savedSet]));
   }
-
+  
   function removeJob(id) {
     savedSet.delete(id);
     persistSaved();
     renderSaved();
     showToast('Lowongan dihapus dari simpanan');
   }
-
+  
   function clearAll() {
     if (!confirm('Hapus semua lowongan tersimpan?')) return;
     savedSet.clear();
@@ -27,31 +37,69 @@
     renderSaved();
     showToast('Semua lowongan tersimpan dihapus');
   }
-
+  
   function renderSaved() {
     const ids = [...savedSet];
     const jobs = ids.map(id => allJobs.find(j => j.id === id)).filter(Boolean);
     const countEl = document.getElementById('tsCount');
     const clearBtn = document.getElementById('clearAllBtn');
     const list = document.getElementById('tsList');
-
+    
     if (countEl) countEl.textContent = jobs.length + ' lowongan tersimpan';
     if (clearBtn) clearBtn.style.display = jobs.length > 0 ? 'inline-block' : 'none';
-
+    
     if (!jobs.length) {
-      list.innerHTML = `<div class="ts-empty">...</div>`; // konten empty state
+      list.innerHTML = `<div class="ts-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <h3>Belum ada lowongan tersimpan</h3>
+        <p>Simpan lowongan yang kamu minati untuk dilihat nanti.</p>
+        <a href="lowongan.html" class="ts-empty-cta">Cari Lowongan</a>
+      </div>`;
       return;
     }
-
+    
     list.innerHTML = jobs.map((job, i) => `
-      <div class="job-card" onclick="window.location.href='detail-lowongan.html?id=${job.id}'">
-        <!-- tampilkan data job seperti biasa -->
+      <div class="job-card" style="animation-delay:${i*0.05}s" onclick="window.location.href='detail-lowongan.html?id=${job.id}'">
+        <div class="job-card-top">
+          <div class="company-logo" style="background:${job.logoColor || '#3B2A8E'}18; color:${job.logoColor || '#3B2A8E'};">${job.companyShort || (job.companyName ? job.companyName.charAt(0) : '?')}</div>
+          <div class="job-main">
+            <p class="job-title">${job.title}</p>
+            <p class="job-company">${job.companyName || job.company}</p>
+          </div>
+          <button class="bookmark-btn saved" onclick="event.stopPropagation(); removeJob('${job.id}')" title="Hapus simpanan">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="job-meta">
+          <span class="meta-item">${job.type || 'Magang'}</span>
+          <span class="meta-item">${job.location || '-'}</span>
+        </div>
+        <p class="job-salary">${job.salary || 'Rp 0'}</p>
+        <div class="job-card-footer">
+          <span class="job-time">${formatRelativeTime(job.createdAt)}</span>
+          <button class="apply-btn" onclick="event.stopPropagation(); window.location.href='detail-lowongan.html?id=${job.id}'">Lamar</button>
+        </div>
       </div>
     `).join('');
   }
-
+  
+  function formatRelativeTime(isoDate) {
+    if (!isoDate) return 'Baru';
+    const date = new Date(isoDate);
+    const now = new Date();
+    const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'Hari ini';
+    if (diff === 1) return 'Kemarin';
+    if (diff < 7) return `${diff} hari lalu`;
+    return date.toLocaleDateString('id-ID');
+  }
+  
   document.addEventListener('DOMContentLoaded', async () => {
-    MagnetDB.requireAuth('index.html');
+    // Periksa auth
+    if (!MagnetDB.getSession()) {
+      window.location.href = '../Page_Login_Register/index.html';
+      return;
+    }
     window.restoreSidebarState();
     const user = MagnetDB.getSession();
     if (user) {
@@ -60,8 +108,7 @@
     }
     await loadJobs();
   });
-
+  
   window.removeJob = removeJob;
   window.clearAll = clearAll;
-  window.showToast = showToast; // pastikan showToast tersedia
 </script>

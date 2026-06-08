@@ -463,3 +463,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadJobsFromFirebase();
   }
 });
+
+// dashboard.js
+// Ekspos fungsi ke global
+window.restoreSidebarState = restoreSidebarState;
+window.applyGuestMode = applyGuestMode;
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.setFilter = setFilter;
+window.toggleSave = toggleSave;
+window.applyJob = applyJob;
+window.openJob = openJob;
+window.handleLogout = handleLogout;
+window.showToast = showToast;
+window.toggleNotif = toggleNotif;
+window.markAllRead = markAllRead;
+window.toggleSearch = toggleSearch;
+window.triggerSearch = triggerSearch;
+window.MagnetDB = MagnetDB; // pastikan MagnetDB global
