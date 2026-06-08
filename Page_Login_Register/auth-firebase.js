@@ -185,6 +185,12 @@ export async function syncProfileFromFirebase(uid) {
         profile = userSnap.val().profile || {};
       }
     }
+
+        // Jika tidak ada di users, coba ambil dari mahasiswa/
+    if (Object.keys(profile).length === 0) {
+      const mhsSnap = await get(ref(db, `mahasiswa/${uid}`));
+      if (mhsSnap.exists()) profile = mhsSnap.val();
+    }
     
     // Update localStorage
     const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
