@@ -91,19 +91,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const id = new URLSearchParams(window.location.search).get('id');
-  const co = MAGNET_COMPANIES.find(c => c.id === id);
+  
+  // 🔥 PERBAIKAN: Ambil data perusahaan dari Firebase
+  try {
+    const companySnap = await get(ref(db, `companies/${id}`));
+    if (!companySnap.exists()) {
+      showToast('Perusahaan tidak ditemukan');
+      setTimeout(() => history.back(), 1500);
+      return;
+    }
+    
+    const co = { id: companySnap.key, ...companySnap.val() };
+    // Sesuaikan field jika di Firebase namanya 'nama' bukan 'name'
+    co.name = co.nama || co.name;
+    co.short = co.name.charAt(0).toUpperCase();
+    co.color = '#3B2A8E'; // Warna default jika tidak ada di DB
 
-  if (!co) {
-    showToast('Perusahaan tidak ditemukan');
-    setTimeout(() => history.back(), 1500); return;
-  }
-  currentCompany = co;
+    currentCompany = co;
 
-  const logoEl = document.getElementById('rvLogo');
-  const nameEl = document.getElementById('rvCompanyName');
-  if (logoEl) { logoEl.textContent = co.short; logoEl.style.color = co.color; logoEl.style.background = co.color + '18'; logoEl.style.borderColor = co.color + '30'; }
-  if (nameEl) nameEl.textContent = co.name;
-  document.title = `Magnet – Review ${co.name}`;
+    // Fill company card
+    const logoEl = document.getElementById('rvLogo');
+    const nameEl = document.getElementById('rvCompanyName');
+    if (logoEl) { 
+      logoEl.textContent = co.short; 
+      logoEl.style.color = co.color; 
+      logoEl.style.background = co.color + '18'; 
+      logoEl.style.borderColor = co.color + '30'; 
+    }
+    if (nameEl) nameEl.textContent = co.name;
+    document.title = `Magnet – Review ${co.name}`;
 
   try {
     // 1. Cek riwayat lamaran user di Firebase untuk perusahaan ini
@@ -139,6 +155,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       ['rvTitle','rvText'].forEach(id => { countChars(id, id+'Count', id==='rvTitle'?80:1000); });
       document.getElementById('rvSubmitBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Perbarui Review';
     }
+
+      } catch (err) {
+    console.error("Gagal menarik data dari Firebase:", err);
+  }
+  
   } catch (err) {
     console.error("Gagal menarik data dari Firebase:", err);
   }
