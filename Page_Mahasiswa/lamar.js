@@ -8,6 +8,20 @@ import { saveApplicationToFirebase } from './firebase-mahasiswa.js';
 let currentJob = null;
 const docs = { cv: null, surat: null, porto: null };
 
+// === TAMBAHKAN FUNGSI INI ===
+function showToast(msg, dur = 3000) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
 /* ════════════════════
    PROFILE GATE (sama seperti kode Anda, tidak diubah)
 ════════════════════ */
@@ -128,9 +142,6 @@ function updateChecklist() {
   btn.disabled = !hasCv;
 }
 
-/* ════════════════════
-   SUBMIT (DIPERBAIKI)
-════════════════════ */
 async function submitLamaran() {
   if (!docs.cv) {
     showToast('Upload CV terlebih dahulu (wajib)');
@@ -142,73 +153,55 @@ async function submitLamaran() {
   const catatan   = document.getElementById('catatanInput')?.value.trim() || '';
   const portoLink = document.getElementById('portoLink')?.value.trim() || '';
 
-  // 1. Simpan ke localStorage (MagnetDB) dulu
-  const result = MagnetDB.saveApplication({
-    jobId:        currentJob.id,
-    jobTitle:     currentJob.title,
-    company:      currentJob.companyName || currentJob.company,
-    companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
-    logoColor:    currentJob.logoColor,
-    documents: {
-      cv:    docs.cv,
-      surat: docs.surat,
-      porto: docs.porto,
-      portoLink,
-      catatan,
-    },
-  });
-
-  if (!result.ok) {
-    showToast(result.message);
-    if (result.message.includes('sudah')) {
-      setTimeout(() => window.location.href = 'lamaran.html', 1500);
-    }
+  const session = MagnetDB.getSession();
+  if (!session) {
+    showToast('Sesi tidak ditemukan, silakan login ulang.');
     return;
   }
 
-  // 2. Simpan juga ke Firebase
-  const session = MagnetDB.getSession();
-  if (session) {
-const firebaseApp = {
-  userId: session.id,
-  userName: session.name,
-  userEmail: session.email,
-  jobId: currentJob.id,
-  jobTitle: currentJob.title,
-  companyId: currentJob.companyId,
-  companyName: currentJob.companyName || currentJob.company || 'Perusahaan',
-  companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
-  logoColor: currentJob.logoColor || '#3B2A8E',
-  status: 'terkirim',
-  appliedAt: new Date().toISOString(),
-  documents: {
-    cv: docs.cv || null,
-    surat: docs.surat || null,
-    porto: docs.porto || null,
-    portoLink: portoLink || null,
-    catatan: catatan || null,
-  }
-};
-    try {
-      await saveApplicationToFirebase(firebaseApp);
-      console.log('Lamaran berhasil disimpan ke Firebase');
-    } catch (err) {
-      console.error('Gagal simpan ke Firebase:', err);
-      showToast('Lamaran tersimpan di lokal, tetapi gagal sinkron ke server.');
+  // Siapkan data untuk dikirim ke Firebase
+  const firebaseApp = {
+    userId: session.id,
+    userName: session.name,
+    userEmail: session.email,
+    jobId: currentJob.id,
+    jobTitle: currentJob.title,
+    companyId: currentJob.companyId,
+    companyName: currentJob.companyName || currentJob.company || 'Perusahaan',
+    companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
+    logoColor: currentJob.logoColor || '#3B2A8E',
+    status: 'terkirim',
+    appliedAt: new Date().toISOString(),
+    documents: {
+      cv: docs.cv || null,
+      surat: docs.surat || null,
+      porto: docs.porto || null,
+      portoLink: portoLink || null,
+      catatan: catatan || null,
     }
+  };
+
+  try {
+    // 1. Langsung simpan ke Firebase (Hapus pengecekan MagnetDB yang menyebabkan error)
+    await saveApplicationToFirebase(firebaseApp);
+    console.log('Lamaran berhasil disimpan ke Firebase');
+
+    // 2. Tampilkan halaman sukses
+    document.getElementById('pageStep1').style.display   = 'none';
+    document.getElementById('pageSuccess').style.display = 'block';
+    document.getElementById('successCompany').textContent = currentJob.companyName || currentJob.company;
+
+    // 3. Update step indicator
+    document.getElementById('step1').classList.add('done');
+    document.getElementById('step2').classList.add('done');
+    document.getElementById('step3').classList.add('active', 'done');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    console.error('Gagal simpan ke Firebase:', err);
+    showToast('Lamaran gagal dikirim: ' + err.message);
   }
-
-  // Tampilkan halaman sukses
-  document.getElementById('pageStep1').style.display   = 'none';
-  document.getElementById('pageSuccess').style.display = 'block';
-  document.getElementById('successCompany').textContent = currentJob.companyName || currentJob.company;
-
-  // Update step indicator
-  document.getElementById('step1').classList.add('done');
-  document.getElementById('step2').classList.add('done');
-  document.getElementById('step3').classList.add('active', 'done');
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ════════════════════
