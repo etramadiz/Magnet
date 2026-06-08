@@ -172,20 +172,21 @@ export async function firebaseGoogleLogin(expectedRole) {
   }
 }
 
-// ========== SINRONISASI PROFIL ==========
 export async function syncProfileFromFirebase(uid) {
   try {
-    // Cek dari node users dulu
-    let snapshot = await get(ref(db, 'users/' + uid));
-    let profile = {};
-    if (snapshot.exists()) {
-      profile = snapshot.val().profile || {};
-    }
-    // Tapi kita lebih prioritaskan node mahasiswa (karena data lengkap)
+    // Ambil dari node mahasiswa (profil lengkap)
     const mahasiswaSnap = await get(ref(db, `mahasiswa/${uid}`));
-    if (mahasiswaSnap.exists()) {
-      profile = { ...profile, ...mahasiswaSnap.val() };
+    let profile = mahasiswaSnap.exists() ? mahasiswaSnap.val() : {};
+    
+    // Jika tidak ada, coba dari node users (fallback)
+    if (!profile || Object.keys(profile).length === 0) {
+      const userSnap = await get(ref(db, `users/${uid}`));
+      if (userSnap.exists()) {
+        profile = userSnap.val().profile || {};
+      }
     }
+    
+    // Update localStorage
     const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === uid);
     if (idx !== -1) {
