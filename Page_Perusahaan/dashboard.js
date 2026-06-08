@@ -136,12 +136,4 @@ function restoreSidebarState() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const toggleBtn = document.getElementById('sidebarToggle');
-  if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
-  const overlay = document.getElementById('sidebarOverlay');
-  if (overlay) overlay.addEventListener('click', closeSidebar);
-  restoreSidebarState();
-});
-
 window.deleteJobHandler = deleteJobHandler;
