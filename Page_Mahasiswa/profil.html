@@ -161,7 +161,11 @@
 
   <script src="db.js"></script>
   <script type="module" src="dashboard.js"></script>
-  <script type="module">
+  <script>
+    import { db, auth } from '../Page_Login_Register/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
+    
     /* ── Hitung progress dari data nyata ── */
     function hitungProgress(user, profile) {
       const checks = [
@@ -180,41 +184,34 @@
       return Math.round((filled / checks.length) * 100);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      MagnetDB.requireAuth('index.html');
-      restoreSidebarState();
-      const user = MagnetDB.getSession();
-      if (!user) return;
+    onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = '../../../Page Login Register/index.html';
+      return;
+    }
+    const uid = firebaseUser.uid;
+    const userRef = ref(db, `mahasiswa/${uid}`);
+    const snapshot = await get(userRef);
+    const profil = snapshot.exists() ? snapshot.val() : null;
 
-      // Update badge Status Lamaran secara dinamis
-      const apps = MagnetDB.getUserApplications();
-      const badge = document.getElementById('nav-lamaran-badge');
-      if (badge) {
-        if (apps.length > 0) { badge.textContent = apps.length; badge.style.display = 'inline-flex'; }
-        else badge.style.display = 'none';
-      }
+    // Data gabungan untuk tampilan
+    const name = firebaseUser.displayName || profile?.name || 'Pengguna';
+    const email = firebaseUser.email || profile?.email || '';
+    const avatar = profile?.avatar || null;
+    const phone = profile?.phone || '–';
+    const typeLabel = 'Mahasiswa';
+    const joinDate = firebaseUser.metadata.creationTime 
+      ? new Date(firebaseUser.metadata.creationTime).toLocaleDateString('id-ID') 
+      : 'Baru saja';
 
-      const profile   = MagnetDB.getProfile();
-      const initial   = user.name.charAt(0).toUpperCase();
-      const typeLabel = user.type === 'mahasiswa' ? 'Mahasiswa' : 'Perusahaan';
-      let joinDate;
-          try {
-              const d = new Date(user.createdAt);
-              if (isNaN(d.getTime())) throw new Error();
-                joinDate = d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-            } catch(e) {
-                joinDate = 'Baru saja bergabung';
-              }
-      const pct       = hitungProgress(user, profile);
+    const pct = hitungProgress(firebaseUser, profile);
+    const tipCV = !!profile?.cv;
+    const tipData = !!(profile?.universitas && profile?.jurusan && profile?.semester);
+    const tipSkill = !!(profile?.skills?.length && profile?.minat?.length);
 
-      // Progress tips: ceklis jika sudah diisi
-      const tipCV     = profile?.cv;
-      const tipSkill  = profile?.skills?.length > 0 && profile?.minat?.length > 0;
-      const tipData   = !!(profile?.universitas && profile?.jurusan && profile?.semester);
-
-      function tipClass(done) { return done ? 'progress-tip done' : 'progress-tip'; }
-      function checkIcon(done) {
-        return done
+    function tipClass(done) { return done ? 'progress-tip done' : 'progress-tip'; }
+    function checkIcon(done) {
+      return done 
           ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg>`
           : '';
       }
@@ -286,12 +283,6 @@
         if (fill) fill.style.width = pct + '%';
       }, 200);
 
-      // Done tips style
-      document.querySelectorAll('.progress-tip.done').forEach(el => {
-        el.style.opacity = '0.5';
-        el.style.textDecoration = 'line-through';
-        el.style.cursor = 'default';
-      });
     });
   </script>
 </body>
