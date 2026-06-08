@@ -20,8 +20,15 @@ const MagnetDB = (() => {
     return user;
   }); 
   }
-  function saveUsers(u) { 
-    localStorage.setItem(USERS_KEY, JSON.stringify(u)); 
+  function saveUsers(users) { 
+    try {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        throw new Error('Penyimpanan penuh. Hapus beberapa data atau gunakan foto yang lebih kecil.');
+      }
+      throw e;
+    } 
   }
 
   function register({ name, email, phone, password, type }) {
@@ -73,8 +80,12 @@ function getSession() {
     if (profileData.avatar) users[idx].avatar = profileData.avatar;
     const prev = users[idx].profile || {};
     users[idx].profile = Object.assign({}, prev, profileData, { updatedAt:new Date().toISOString() });
-    saveUsers(users);
-    return { ok:true, user:users[idx] };
+    try {
+      saveUsers(users);
+    } catch (err) {
+      return { ok: false, message: err.message };
+    }
+    return { ok: true, user: users[idx] };
   }
 
   function getProfile() {

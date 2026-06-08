@@ -1,13 +1,18 @@
 /* ═══════════════════════════════════════════════════════════
    MAGNET – LENGKAPI-PROFIL.JS
 ════════════════════════════════════════════════════════════ */
-const showToast = window.showToast;
+import { auth } from '../Page_Login_Register/firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
+import { MagnetDB } from './db.js';
 
 let skillTags  = [];
 let minatTags  = [];
 let cvData     = null;
 let isEditMode = false;
 let photoDataURL = null; // base64 foto profil
+
+const showToast = window.showToast;
 
 /* ════════════════════
    PHOTO UPLOAD
@@ -30,7 +35,6 @@ function handlePhotoUpload(input) {
     showToast('Foto berhasil dipilih ✓');
     updateProgress();
   };
-  reader.onerror = () => showToast('Gagal membaca file', 'error');
   reader.readAsDataURL(file);
 }
 
@@ -71,6 +75,8 @@ function initPhotoSection() {
   if (saved) { photoDataURL = saved; applyPhotoPreview(saved); }
 }
 
+
+
 /* ════════════
    PROGRESS
 ════════════ */
@@ -80,7 +86,6 @@ function updateProgress() {
     !!user?.name,
     !!user?.email,
     !!user?.phone,
-    !!photoDataURL,
     !!(document.getElementById('f-universitas')?.value?.trim()),
     !!(document.getElementById('f-jurusan')?.value?.trim()),
     !!(document.getElementById('f-semester')?.value),
@@ -235,8 +240,10 @@ function applyEditMode() {
  * strict = true  → validasi ketat, tampilkan error kalau field wajib kosong
  * strict = false → partial save, simpan apa yang sudah diisi
  */
-function doSave(strict = true) {
+async function doSave(strict = true) {
   const nama        = document.getElementById('f-nama')?.value.trim()        || '';
+  const email       = document.getElementById('f-email')?.value.trim()       || '';
+  const telepon     = document.getElementById('f-telepon')?.value.trim()     || '';
   const universitas = document.getElementById('f-universitas')?.value.trim() || '';
   const jurusan     = document.getElementById('f-jurusan')?.value.trim()     || '';
   const semester    = document.getElementById('f-semester')?.value            || '';
@@ -253,10 +260,18 @@ function doSave(strict = true) {
   }
 
   const result = MagnetDB.saveProfile({
-    name: nama, universitas, jurusan, semester, ipk,
+    name: nama, 
+    email: email, 
+    telepon: telepon,
+    universitas: universitas, 
+    jurusan: jurusan, 
+    semester: semester, 
+    ipk: ipk,
     skills: [...skillTags],
     minat:  [...minatTags],
-    pendidikan, pengalaman, prestasi,
+    pendidikan: pendidikan,
+    pengalaman: pengalaman,
+    prestasi: prestasi,
     cv: cvData,
     avatar: photoDataURL,
   });
@@ -297,6 +312,8 @@ function loadProfile() {
   if (profile) {
     if (namaEl) namaEl.value = profile.name || user?.name || '';
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('f-email',       profile.email);
+    set('f-telepon',     profile.telepon);
     set('f-universitas', profile.universitas);
     set('f-jurusan',     profile.jurusan);
     set('f-semester',    profile.semester);
