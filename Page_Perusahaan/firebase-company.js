@@ -2,6 +2,7 @@
 import { ref, get, set, update, push, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { db, auth } from "../Page_Login_Register/firebase-config.js";
+import { ref, get, set, update, push, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 // ==================== PROFIL PERUSAHAAN ====================
 export async function getCompanyProfile(uid) {
@@ -92,4 +93,25 @@ export async function getAllJobs() {
   // Urutkan dari yang terbaru (berdasarkan createdAt)
   jobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   return jobs;
+}
+
+// ==================== LAMARAN (APPLICATIONS) ====================
+export async function getApplicationsForCompany(companyId) {
+  const appsRef = ref(db, 'applications');
+  const snapshot = await get(appsRef);
+  const apps = [];
+  snapshot.forEach(child => {
+    const app = { id: child.key, ...child.val() };
+    if (app.companyId === companyId) {
+      apps.push(app);
+    }
+  });
+  apps.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+  return apps;
+}
+
+export async function getApplicationById(appId) {
+  const appRef = ref(db, `applications/${appId}`);
+  const snapshot = await get(appRef);
+  return snapshot.exists() ? { id: snapshot.key, ...snapshot.val() } : null;
 }
