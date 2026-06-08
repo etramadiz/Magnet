@@ -4,7 +4,8 @@
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
-import { MagnetDB } from './db.js';
+
+// Hapus import { MagnetDB } from './db.js'; → karena MagnetDB sudah global
 
 let skillTags  = [];
 let minatTags  = [];
@@ -104,8 +105,6 @@ function initPhotoSection() {
     }
   }
 }
-
-
 
 /* ════════════
    PROGRESS
@@ -387,16 +386,15 @@ function loadProfile() {
     }
   }
 
-      // Jika belum ada profile, kosongkan tags
-    if (!profile) {
-      skillTags = [];
-      minatTags = [];
-      cvData = null;
-    }
+  // Jika belum ada profile, kosongkan tags
+  if (!profile) {
+    skillTags = [];
+    minatTags = [];
+    cvData = null;
+  }
 
-    renderTags('skill');
-    renderTags('minat');
-
+  renderTags('skill');
+  renderTags('minat');
 
   // URL param ?edit=1 atau belum ada profil → langsung edit mode
   const params = new URLSearchParams(window.location.search);
