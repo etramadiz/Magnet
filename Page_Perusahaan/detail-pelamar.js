@@ -52,20 +52,48 @@ async function loadData() {
   // --- Bagian dokumen CV dan Portofolio di bawah ini tetap sama ---
 const docs = application.documents || {};
   
-  // Ubah CV menjadi link jika URL-nya ada
-  const cvEl = document.getElementById('cvName');
+// ==========================================
+  // 1. BAGIAN CV
+  // ==========================================
+  document.getElementById('cvName').textContent = docs.cv?.name || 'Tidak ada file';
+  const cvBuka = document.getElementById('cvBuka');
+  const cvUnduh = document.getElementById('cvUnduh');
+
   if (docs.cv?.url) {
-    cvEl.innerHTML = `<a href="${docs.cv.url}" target="_blank" style="color:var(--blue-primary);text-decoration:underline">${docs.cv.name}</a>`;
+    if (cvBuka) { 
+      cvBuka.href = docs.cv.url; 
+      cvBuka.style.display = 'inline-block'; 
+    }
+    if (cvUnduh) { 
+      // Trik Supabase: Tambahkan ?download= di akhir URL agar otomatis terunduh
+      cvUnduh.href = docs.cv.url + '?download='; 
+      cvUnduh.style.display = 'inline-block'; 
+    }
   } else {
-    cvEl.textContent = docs.cv?.name || 'Tidak ada file';
+    // Sembunyikan tombol Buka & Unduh kalau mahasiswanya tidak upload file
+    if (cvBuka) cvBuka.style.display = 'none';
+    if (cvUnduh) cvUnduh.style.display = 'none';
   }
 
-  // Ubah Surat menjadi link jika URL-nya ada
-  const suratEl = document.getElementById('suratName');
+  // ==========================================
+  // 2. BAGIAN SURAT PENGANTAR
+  // ==========================================
+  document.getElementById('suratName').textContent = docs.surat?.name || 'Tidak ada file';
+  const suratBuka = document.getElementById('suratBuka');
+  const suratUnduh = document.getElementById('suratUnduh');
+
   if (docs.surat?.url) {
-    suratEl.innerHTML = `<a href="${docs.surat.url}" target="_blank" style="color:var(--blue-primary);text-decoration:underline">${docs.surat.name}</a>`;
+    if (suratBuka) { 
+      suratBuka.href = docs.surat.url; 
+      suratBuka.style.display = 'inline-block'; 
+    }
+    if (suratUnduh) { 
+      suratUnduh.href = docs.surat.url + '?download='; 
+      suratUnduh.style.display = 'inline-block'; 
+    }
   } else {
-    suratEl.textContent = docs.surat?.name || 'Tidak ada file';
+    if (suratBuka) suratBuka.style.display = 'none';
+    if (suratUnduh) suratUnduh.style.display = 'none';
   }
 
   let porto = docs.porto || docs.portoLink || '';
