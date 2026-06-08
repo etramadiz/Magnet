@@ -189,7 +189,6 @@
   <div class="toast" id="toast"></div>
   <script src="db.js"></script>
   <script type="module" src="dashboard.js"></script>
-  <script src="jobs-data.js"></script>
 <script type="module">
   import { getApplicationsForUser } from './firebase-mahasiswa.js';
   import { auth } from '../Page_Login_Register/firebase-config.js';
@@ -242,10 +241,16 @@
     const list = document.getElementById('lamaranList');
     if (!list) return;
 
-    if (!filtered.length) {
-      list.innerHTML = `<div class="lm-empty">...</div>`; // konten empty state
-      return;
-    }
+javascript
+if (!filtered.length) {
+  list.innerHTML = `<div class="lm-empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <h3>${activeTab === 'semua' ? 'Belum ada lamaran' : 'Tidak ada di kategori ini'}</h3>
+    <p>${activeTab === 'semua' ? 'Kamu belum melamar lowongan manapun.' : `Tidak ada lamaran dengan status "${STATUS_LABEL[activeTab] || activeTab}".`}</p>
+    ${activeTab === 'semua' ? '<a href="lowongan.html" class="lm-empty-cta">Cari Lowongan Sekarang →</a>' : ''}
+  </div>`;
+  return;
+}
 
     list.innerHTML = filtered.map((app, i) => `
       <div class="lm-card" onclick="window.location.href='detail-lowongan.html?id=${app.jobId}'">
