@@ -160,81 +160,74 @@
   <div class="toast" id="toast"></div>
 
   <script src="db.js"></script>
-  <script src="dashboard.js"></script>
-  <script>
-    /* ── Hitung progress dari data nyata ── */
+  <script type="module" src="dashboard.js"></script>
+  <script type="module">
+    import { db, auth } from '../Page_Login_Register/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    
     function hitungProgress(user, profile) {
       const checks = [
-        !!user.name,
-        !!user.email,
-        !!user.phone,
-        !!user.avatar,
-        !!(profile?.universitas),
-        !!(profile?.jurusan),
-        !!(profile?.semester),
-        !!(profile?.skills?.length),
-        !!(profile?.minat?.length),
-        !!(profile?.cv),
+        !!user?.name, !!user?.email, !!user?.phone, !!user?.avatar,
+        !!(profile?.universitas), !!(profile?.jurusan), !!(profile?.semester),
+        !!(profile?.skills?.length), !!(profile?.minat?.length), !!(profile?.cv),
       ];
-      const filled = checks.filter(Boolean).length;
-      return Math.round((filled / checks.length) * 100);
+      return Math.round(checks.filter(Boolean).length / checks.length * 100);
+    }
+    function tipClass(done) { return done ? 'progress-tip done' : 'progress-tip'; }
+    function checkIcon(done) {
+      return done
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg>`
+        : '';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      MagnetDB.requireAuth('index.html');
-      restoreSidebarState();
-      const user = MagnetDB.getSession();
-      if (!user) return;
-
-      // Update badge Status Lamaran secara dinamis
-      const apps = MagnetDB.getUserApplications();
-      const badge = document.getElementById('nav-lamaran-badge');
-      if (badge) {
-        if (apps.length > 0) { badge.textContent = apps.length; badge.style.display = 'inline-flex'; }
-        else badge.style.display = 'none';
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        window.location.href = '../Page_Login_Register/index.html';
+        return;
       }
+      const uid = firebaseUser.uid;
+      const localSession = MagnetDB.getSession();
 
-      const profile   = MagnetDB.getProfile();
-      const initial   = user.name.charAt(0).toUpperCase();
-      const typeLabel = user.type === 'mahasiswa' ? 'Mahasiswa' : 'Perusahaan';
-      let joinDate;
-          try {
-              const d = new Date(user.createdAt);
-              if (isNaN(d.getTime())) throw new Error();
-                joinDate = d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-            } catch(e) {
-                joinDate = 'Baru saja bergabung';
-              }
-      const pct       = hitungProgress(user, profile);
+      // Ambil profil dari Firebase
+      const snapshot = await get(ref(db, `mahasiswa/${uid}`));
+      const profile = snapshot.exists() ? snapshot.val() : (localSession?.profile || {});
 
-      // Progress tips: ceklis jika sudah diisi
-      const tipCV     = profile?.cv;
-      const tipSkill  = profile?.skills?.length > 0 && profile?.minat?.length > 0;
-      const tipData   = !!(profile?.universitas && profile?.jurusan && profile?.semester);
+      const name     = localSession?.name || firebaseUser.displayName || firebaseUser.email || 'Pengguna';
+      const email    = firebaseUser.email || '';
+      const phone    = localSession?.phone || profile?.telepon || profile?.phone || '–';
+      const avatar   = profile?.avatar || localSession?.avatar || null;
+      const initial  = name.charAt(0).toUpperCase();
+      const typeLabel = 'Mahasiswa';
+      const joinDate = firebaseUser.metadata?.creationTime
+        ? new Date(firebaseUser.metadata.creationTime).toLocaleDateString('id-ID')
+        : 'Baru saja';
 
-      function tipClass(done) { return done ? 'progress-tip done' : 'progress-tip'; }
-      function checkIcon(done) {
-        return done
-          ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg>`
-          : '';
-      }
+      const avInit = document.getElementById('avatarInitial');
+      if (avInit) avInit.textContent = initial;
 
-      // Extra profile rows
-      const extraRows = profile ? `
-        ${profile.universitas ? `<div class="info-row"><span class="info-label">Universitas</span><span class="info-value">${profile.universitas}</span></div>` : ''}
-        ${profile.jurusan     ? `<div class="info-row"><span class="info-label">Jurusan</span><span class="info-value">${profile.jurusan}</span></div>` : ''}
-        ${profile.semester    ? `<div class="info-row"><span class="info-label">Semester</span><span class="info-value">Semester ${profile.semester}</span></div>` : ''}
-        ${profile.skills?.length ? `<div class="info-row"><span class="info-label">Skill</span><span class="info-value">${profile.skills.join(', ')}</span></div>` : ''}
-        ${profile.minat?.length  ? `<div class="info-row"><span class="info-label">Minat</span><span class="info-value">${profile.minat.join(', ')}</span></div>` : ''}
-      ` : '';
+      const pct      = hitungProgress({ name, email, phone, avatar }, profile);
+      const tipCV    = !!profile?.cv;
+      const tipData  = !!(profile?.universitas && profile?.jurusan && profile?.semester);
+      const tipSkill = !!(profile?.skills?.length && profile?.minat?.length);
+
+      const extraRows = `
+        ${profile?.universitas ? `<div class="info-row"><span class="info-label">Universitas</span><span class="info-value">${profile.universitas}</span></div>` : ''}
+        ${profile?.jurusan     ? `<div class="info-row"><span class="info-label">Jurusan</span><span class="info-value">${profile.jurusan}</span></div>` : ''}
+        ${profile?.semester    ? `<div class="info-row"><span class="info-label">Semester</span><span class="info-value">Semester ${profile.semester}</span></div>` : ''}
+        ${profile?.skills?.length ? `<div class="info-row"><span class="info-label">Skill</span><span class="info-value">${profile.skills.join(', ')}</span></div>` : ''}
+        ${profile?.minat?.length  ? `<div class="info-row"><span class="info-label">Minat</span><span class="info-value">${profile.minat.join(', ')}</span></div>` : ''}
+      `;
 
       document.getElementById('profilBody').innerHTML = `
         <div class="profil-hero">
-          <div class="profil-avatar" id="profilAvatarDiv" style="${user.avatar ? 'background-image:url(\'' + user.avatar + '\');background-size:cover;background-position:center' : ''}">${user.avatar ? '' : initial}</div>
+          <div class="profil-avatar" style="${avatar ? `background-image:url('${avatar}');background-size:cover;background-position:center` : ''}">
+            ${avatar ? '' : initial}
+          </div>
           <div class="profil-info">
-            <p class="profil-name">${user.name}</p>
+            <p class="profil-name">${name}</p>
             <p class="profil-type">${typeLabel} · Terdaftar ${joinDate}</p>
-            <p class="profil-email">${user.email}</p>
+            <p class="profil-email">${email}</p>
           </div>
           <button class="edit-btn" onclick="window.location.href='lengkapi-profil.html?edit=1'">Edit Profil</button>
         </div>
@@ -242,7 +235,7 @@
         <div class="profil-progress">
           <p class="progress-label">
             <span>Kelengkapan Profil</span>
-            <span style="color:var(--blue-primary)" id="pctLabel">${pct}%</span>
+            <span style="color:var(--blue-primary)">${pct}%</span>
           </p>
           <div class="progress-bar"><div class="progress-fill" id="pFill" style="width:0%"></div></div>
           <div class="progress-tips" ${pct === 100 ? 'style="display:none"' : ''}>
@@ -266,9 +259,9 @@
             <h3>Informasi Akun</h3>
             <button onclick="window.location.href='lengkapi-profil.html?edit=1'">Edit</button>
           </div>
-          <div class="info-row"><span class="info-label">Nama Lengkap</span><span class="info-value">${user.name}</span></div>
-          <div class="info-row"><span class="info-label">Email</span><span class="info-value">${user.email}</span></div>
-          <div class="info-row"><span class="info-label">No. Telepon</span><span class="info-value">${user.phone || '–'}</span></div>
+          <div class="info-row"><span class="info-label">Nama Lengkap</span><span class="info-value">${name}</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span class="info-value">${email}</span></div>
+          <div class="info-row"><span class="info-label">No. Telepon</span><span class="info-value">${phone}</span></div>
           <div class="info-row"><span class="info-label">Tipe Akun</span><span class="info-value">${typeLabel}</span></div>
           ${extraRows}
           <div class="info-row"><span class="info-label">Bergabung</span><span class="info-value">${joinDate}</span></div>
@@ -280,18 +273,10 @@
         </div>
       `;
 
-      // Animate progress bar
       setTimeout(() => {
         const fill = document.getElementById('pFill');
         if (fill) fill.style.width = pct + '%';
       }, 200);
-
-      // Done tips style
-      document.querySelectorAll('.progress-tip.done').forEach(el => {
-        el.style.opacity = '0.5';
-        el.style.textDecoration = 'line-through';
-        el.style.cursor = 'default';
-      });
     });
   </script>
 </body>
