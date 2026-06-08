@@ -2,7 +2,6 @@
 import { ref, get, set, update, push, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { db, auth } from "../Page_Login_Register/firebase-config.js";
-import { ref, get, set, update, push, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 // ==================== PROFIL PERUSAHAAN ====================
 export async function getCompanyProfile(uid) {
