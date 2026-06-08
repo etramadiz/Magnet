@@ -4,6 +4,7 @@
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
+import { syncProfileFromFirebase } from '../Page_Login_Register/auth-firebase.js';
 
 // Hapus import { MagnetDB } from './db.js'; → karena MagnetDB sudah global
 
@@ -323,6 +324,8 @@ async function doSave(strict = true) {
       showToast('Profil tersimpan di lokal, tetapi gagal sinkron ke server.');
     }
   }
+
+  await syncProfileFromFirebase(session.id);// Sinkronkan kembali dari Firebase untuk memastikan data terbaru
 
   showToast('Profil berhasil disimpan ✓');
   isEditMode = false;

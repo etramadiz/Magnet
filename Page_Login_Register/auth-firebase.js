@@ -4,7 +4,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signInWithPopup,
-  signOut 
+  signOut,
+  onAuthStateChanged          // 🔥 IMPORT YANG HILANG
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
@@ -12,7 +13,6 @@ import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 function showToast(msg, type = 'info') {
   let toast = document.getElementById('auth-toast');
   if (!toast) {
-    // Coba cari toast dari dashboard
     toast = document.getElementById('toast');
   }
   if (!toast) {
@@ -27,9 +27,9 @@ function showToast(msg, type = 'info') {
 }
 
 // Ekspor ulang auth agar bisa diimpor di file lain
-export { auth, db, googleProvider };
+export { auth, db, googleProvider, onAuthStateChanged };
 
-// Fungsi login untuk mahasiswa atau perusahaan
+// ========== FUNGSI LOGIN/REGISTER ==========
 export async function firebaseLogin(email, password, expectedRole) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -56,11 +56,9 @@ export async function firebaseLogin(email, password, expectedRole) {
     if (idx !== -1) users[idx] = localUser;
     else users.push(localUser);
     localStorage.setItem('magnet_users', JSON.stringify(users));
-    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
-    // Sinkronkan profil dari Firebase
     await syncProfileFromFirebase(user.uid);
-
     showToast(`Halo, ${localUser.name}!`, 'success');
     return true;
   } catch (err) {
@@ -69,7 +67,6 @@ export async function firebaseLogin(email, password, expectedRole) {
   }
 }
 
-// Fungsi register (mahasiswa/perusahaan)
 export async function firebaseRegister(data, role) {
   const { name, email, phone, password, universitas, semester, jurusan, ipk } = data;
   try {
@@ -88,7 +85,7 @@ export async function firebaseRegister(data, role) {
         jurusan: jurusan || '',
         ipk: ipk || '',
         skills: [],
-        minats: [],
+        minat: [],
         pendidikan: '',
         pengalaman: '',
         prestasi: '',
@@ -107,7 +104,6 @@ export async function firebaseRegister(data, role) {
       });
     }
 
-    // Simpan ke localStorage
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     users.push({
       id: user.uid,
@@ -127,7 +123,6 @@ export async function firebaseRegister(data, role) {
   }
 }
 
-// Login dengan Google
 export async function firebaseGoogleLogin(expectedRole) {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -146,65 +141,73 @@ export async function firebaseGoogleLogin(expectedRole) {
         namaLengkap: user.displayName || '',
         email: user.email,
         tipeAkun: expectedRole,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        profile: {}
       });
     }
-    const localUser = { id: user.uid, name: user.displayName || user.email, email: user.email, type: role };
+    // Sinkronkan profil dari node mahasiswa (Realtime Database) jika ada
+    const mahasiswaSnapshot = await get(ref(db, `mahasiswa/${user.uid}`));
+    let profileData = {};
+    if (mahasiswaSnapshot.exists()) {
+      profileData = mahasiswaSnapshot.val();
+    }
+    const localUser = {
+      id: user.uid,
+      name: user.displayName || user.email,
+      email: user.email,
+      type: role,
+      profile: profileData
+    };
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-    if (!users.find(u => u.id === user.uid)) users.push(localUser);
+    const idx = users.findIndex(u => u.id === user.uid);
+    if (idx !== -1) users[idx] = localUser;
+    else users.push(localUser);
     localStorage.setItem('magnet_users', JSON.stringify(users));
-    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
     showToast(`Halo, ${localUser.name}!`, 'success');
     return true;
   } catch (err) {
-    showToast('Gagal login dengan Google', 'error');
+    showToast('Gagal login dengan Google: ' + err.message, 'error');
     return false;
   }
 }
 
-// Cek session redirect
-export function checkSessionAndRedirect() {
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      const snapshot = await get(ref(db, 'users/' + user.uid));
-      const role = snapshot.exists() ? snapshot.val().tipeAkun : 'mahasiswa';
-      if (!localStorage.getItem('magnet_session')) {
-        localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
-      }
-      const currentPath = window.location.pathname;
-      if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
-        if (role === 'perusahaan') window.location.href = '../Page_Perusahaan/dashboard.html';
-        else window.location.href = '../Page_Mahasiswa/dashboard.html';
-      }
-    }
-  });
-}
-
-// Sinkron profil dari Firebase ke localStorage
+// ========== SINRONISASI PROFIL ==========
 export async function syncProfileFromFirebase(uid) {
   try {
-    const snapshot = await get(ref(db, 'users/' + uid));
+    // Cek dari node users dulu
+    let snapshot = await get(ref(db, 'users/' + uid));
+    let profile = {};
     if (snapshot.exists()) {
-      const userData = snapshot.val();
-      const profile = userData.profile || {};
-      const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-      const idx = users.findIndex(u => u.id === uid);
-      if (idx !== -1) {
-        users[idx].profile = profile;
-        localStorage.setItem('magnet_users', JSON.stringify(users));
-      }
-      return profile;
+      profile = snapshot.val().profile || {};
     }
-    return null;
+    // Tapi kita lebih prioritaskan node mahasiswa (karena data lengkap)
+    const mahasiswaSnap = await get(ref(db, `mahasiswa/${uid}`));
+    if (mahasiswaSnap.exists()) {
+      profile = { ...profile, ...mahasiswaSnap.val() };
+    }
+    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    const idx = users.findIndex(u => u.id === uid);
+    if (idx !== -1) {
+      users[idx].profile = profile;
+      if (profile.name) users[idx].name = profile.name;
+      if (profile.avatar) users[idx].avatar = profile.avatar;
+      localStorage.setItem('magnet_users', JSON.stringify(users));
+      // Update MagnetDB juga
+      if (window.MagnetDB) MagnetDB.saveProfile(profile);
+    }
+    return profile;
   } catch (err) {
     console.error('Gagal sync profil:', err);
     return null;
   }
 }
 
-// Simpan profil ke Firebase
 export async function saveProfileToFirebase(uid, profileData) {
   try {
+    // Simpan ke node mahasiswa (Realtime Database)
+    await set(ref(db, `mahasiswa/${uid}`), profileData);
+    // Juga update ke users/profile untuk kompatibilitas
     await set(ref(db, 'users/' + uid + '/profile'), profileData);
     return true;
   } catch (err) {
@@ -212,6 +215,42 @@ export async function saveProfileToFirebase(uid, profileData) {
     return false;
   }
 }
+
+// ========== SESSION & REDIRECT ==========
+export function checkSessionAndRedirect() {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const snapshot = await get(ref(db, 'users/' + user.uid));
+      const role = snapshot.exists() ? snapshot.val().tipeAkun : 'mahasiswa';
+      if (!localStorage.getItem('magnet_session')) {
+        localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
+      }
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
+        if (role === 'perusahaan') window.location.href = '../Page_Perusahaan/dashboard.html';
+        else window.location.href = '../Page_Mahasiswa/dashboard.html';
+      }
+    } else {
+      // Jika tidak login dan halaman butuh auth, bisa redirect ke index (optional)
+      if (!window.location.pathname.includes('login') && 
+          !window.location.pathname.includes('register') &&
+          !window.location.pathname.includes('index.html')) {
+        // Biarkan saja, tidak force redirect
+      }
+    }
+  });
+}
+
+// ========== FUNGSI GLOBAL UNTUK HTML (GOOGLE AUTH) ==========
+window.googleAuthMahasiswa = async () => {
+  const success = await firebaseGoogleLogin('mahasiswa');
+  if (success) window.location.href = '../Page_Mahasiswa/dashboard.html';
+};
+
+window.googleAuthPerusahaan = async () => {
+  const success = await firebaseGoogleLogin('perusahaan');
+  if (success) window.location.href = '../Page_Perusahaan/dashboard.html';
+};
 
 // Update data perusahaan (opsional)
 export async function updateCompanyProfile(uid, data) {
