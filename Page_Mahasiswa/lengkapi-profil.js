@@ -443,8 +443,8 @@ function loadProfile() {
 ════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   MagnetDB.requireMahasiswaAuth();
-  restoreSidebarState();
-
+  if (window.restoreSidebarState) window.restoreSidebarState();
+  
   // Update badge Status Lamaran
   const apps  = MagnetDB.getUserApplications();
   const badge = document.getElementById('nav-lamaran-badge');

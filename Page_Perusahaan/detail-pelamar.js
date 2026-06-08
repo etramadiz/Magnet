@@ -1,5 +1,8 @@
 // detail-pelamar.js - lamaran dari Firebase, profil dari localStorage
+// detail-pelamar.js - lamaran dari Firebase, profil dari localStorage (DIUBAH KE FIREBASE)
 import { getApplicationById, updateApplicationStatus } from './firebase-company.js';
+import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+import { db } from '../Page_Login_Register/firebase-config.js';
 
 // ========== FUNGSI TOAST GLOBAL ==========
 function showToast(message) {
@@ -33,15 +36,20 @@ async function loadData() {
     return;
   }
 
-  const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-  const user = users.find(u => u.id === userId);
-  const profile = user?.profile || {};
+  // PERBAIKAN: Ambil data mahasiswa langsung dari Firebase
+  const profileSnap = await get(ref(db, `mahasiswa/${userId}`));
+  let profile = {};
+  if (profileSnap.exists()) {
+    profile = profileSnap.val();
+  }
 
-  document.getElementById('detailName').textContent = user?.name || 'Tidak diketahui';
+  // Masukkan data dari Firebase ke HTML
+  document.getElementById('detailName').textContent = profile.name || application.userName || 'Tidak diketahui';
   document.getElementById('universitas').textContent = profile.universitas || '-';
   document.getElementById('jurusan').textContent = profile.jurusan || '-';
-  document.getElementById('statusMhs').textContent = profile.semester || '-';
+  document.getElementById('statusMhs').textContent = profile.semester ? `Semester ${profile.semester}` : '-';
 
+  // --- Bagian dokumen CV dan Portofolio di bawah ini tetap sama ---
   const docs = application.documents || {};
   document.getElementById('cvName').textContent = docs.cv?.name || 'Tidak ada file';
   document.getElementById('suratName').textContent = docs.surat?.name || 'Tidak ada file';
