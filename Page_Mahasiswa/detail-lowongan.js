@@ -32,12 +32,12 @@ function updateBookmarkBtn() {
 function lamarSekarang() {
   if (!currentJob) return;
   if (!MagnetDB.getSession()) {
-    window.showToast('Masuk terlebih dahulu untuk melamar lowongan');
+    showToast('Masuk terlebih dahulu untuk melamar lowongan');
     setTimeout(() => window.location.href = '../../../Page Login Register/index.html', 1500);
     return;
   }
   if (MagnetDB.hasApplied(currentJob.id)) {
-    window.showToast('Kamu sudah melamar lowongan ini');
+    showToast('Kamu sudah melamar lowongan ini');
     setTimeout(() => window.location.href = 'lamaran.html', 1200);
     return;
   }
@@ -52,8 +52,8 @@ function shareJob() {
     navigator.share({ title: currentJob.title, text, url: window.location.href }).catch(() => {});
   } else {
     navigator.clipboard?.writeText(window.location.href)
-      .then(() => window.showToast('Link disalin ✓'))
-      .catch(() => window.showToast('Salin URL dari address bar'));
+      .then(() => showToast('Link disalin ✓'))
+      .catch(() => showToast('Salin URL dari address bar'));
   }
 }
 
@@ -202,8 +202,8 @@ function formatRelativeTime(isoDate) {
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', async () => {
-  window.restoreSidebarState();
-  window.applyGuestMode();
+  restoreSidebarState();
+  applyGuestMode();
 
   const user = MagnetDB.getSession();
   if (user) {
