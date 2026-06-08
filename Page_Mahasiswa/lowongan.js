@@ -104,3 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) { /* ignore */ }
 });
+
+// Tambahkan baris ini di bagian paling bawah file lowongan.js
+window.doSearch = doSearch;
+window.onSearchInput = onSearchInput;
+window.clearField = clearField;
+window.rerunLastSearch = rerunLastSearch;

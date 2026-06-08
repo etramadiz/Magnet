@@ -1,5 +1,6 @@
 // user-perusahaan.js - statistik real dengan Firebase UID
-import { auth } from '../Page_Login_Register/firebase-config.js';
+import { auth, db } from '../Page_Login_Register/firebase-config.js';
+import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getJobsByCompany } from './firebase-company.js';
 
@@ -25,12 +26,29 @@ async function refreshStats(uid) {
 
   let totalPelamar = 0;
   let totalDiterima = 0;
-  const allApps = MagnetDB.getAllApplications();
-  for (const job of jobs) {
-    const jobApps = allApps.filter(app => app.jobId === String(job.id));
-    totalPelamar += jobApps.length;
-    totalDiterima += jobApps.filter(app => app.status === 'Diterima').length;
+
+  try {
+    // 🔥 PERBAIKAN: Ambil data lamaran langsung dari Firebase
+    const appsRef = ref(db, 'applications');
+    const appsSnap = await get(appsRef);
+    let allApps = [];
+    
+    if (appsSnap.exists()) {
+      appsSnap.forEach(child => {
+        allApps.push({ id: child.key, ...child.val() });
+      });
+    }
+
+    // Hitung statistik berdasarkan lowongan milik perusahaan ini
+    for (const job of jobs) {
+      const jobApps = allApps.filter(app => app.jobId === String(job.id));
+      totalPelamar += jobApps.length;
+      totalDiterima += jobApps.filter(app => app.status === 'Diterima').length;
+    }
+  } catch (error) {
+    console.error("Gagal mengambil statistik pelamar:", error);
   }
+
   const lowonganAktif = jobs.filter(job => job.status !== 'Tutup').length;
 
   animateCount(document.getElementById('statLowongan'), jobCount);
@@ -46,7 +64,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Chart (tetap)
+// Chart (tetap menggunakan dummy data untuk sementara)
 const chartData = [
   { label: 'Jan', val: 4 },
   { label: 'Feb', val: 8 },
