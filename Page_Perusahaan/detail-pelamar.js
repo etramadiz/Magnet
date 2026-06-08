@@ -50,16 +50,16 @@ async function loadData() {
   document.getElementById('statusMhs').textContent = profile.semester ? `Semester ${profile.semester}` : '-';
 
 // MENGAMBIL FOTO PROFIL MAHASISWA
-  const avatarContainer = document.getElementById('detailAvatar');
+  const avatarContainer = document.querySelector('.detail-avatar');
   
-  if (profile && profile.fotoUrl) {
-    // Gunakan elemen baru agar tidak menghapus SVG tapi menimpanya dengan benar
-    avatarContainer.innerHTML = `<img src="${profile.fotoUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" alt="Foto Profil" />`;
+  // Kita cek apakah ada avatar dalam format base64 di objek profile
+  if (profile && profile.avatar) {
+    // Gunakan gaya yang sama dengan dashboard agar konsisten
+    avatarContainer.innerHTML = `<div style="width: 100%; height: 100%; border-radius: 50%; background-image: url('${profile.avatar}'); background-size: cover; background-position: center;"></div>`;
   } else {
-    // Jika tidak ada foto, biarkan SVG bawaan (atau tambahkan inisial)
-    console.log("Foto profil tidak ditemukan, menggunakan ikon default.");
+    console.log("Foto profil tidak ditemukan di database, menggunakan ikon default.");
+    // Jika tidak ada foto, biarkan SVG default (jangan diubah)
   }
-
   // --- Bagian dokumen CV dan Portofolio di bawah ini tetap sama ---
 const docs = application.documents || {};
   
