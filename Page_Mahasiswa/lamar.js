@@ -215,7 +215,7 @@ async function submitLamaran() {
 
     submitBtn.innerHTML = 'Menyimpan Lamaran...';
 
-    // 3. Gabungkan link URL dari Supabase ke dalam data dokumen
+// 3. Gabungkan link URL dari Supabase ke dalam data dokumen
     const firebaseApp = {
       userId: session.id,
       userName: session.name,
@@ -229,9 +229,10 @@ async function submitLamaran() {
       status: 'terkirim',
       appliedAt: new Date().toISOString(),
       documents: {
-        cv: docs.cv ? { name: docs.cv.name, size: docs.cv.size, url: cvUrl || docs.cv.url } : null,
-        surat: docs.surat ? { name: docs.surat.name, size: docs.surat.size, url: suratUrl } : null,
-        porto: docs.porto ? { name: docs.porto.name, size: docs.porto.size, url: portoUrl } : null,
+        // 🔥 PERBAIKAN: Tambahkan || null di akhir setiap url agar Firebase tidak marah
+        cv: docs.cv ? { name: docs.cv.name, size: docs.cv.size, url: cvUrl || docs.cv.url || null } : null,
+        surat: docs.surat ? { name: docs.surat.name, size: docs.surat.size, url: suratUrl || null } : null,
+        porto: docs.porto ? { name: docs.porto.name, size: docs.porto.size, url: portoUrl || null } : null,
         portoLink: portoLink || null,
         catatan: catatan || null,
       }
