@@ -266,12 +266,7 @@ function applyEditMode() {
 /* ════════════
    SAVE
 ════════════ */
-/**
- * doSave(strict)
- * strict = true  → validasi ketat, tampilkan error kalau field wajib kosong
- * strict = false → partial save, simpan apa yang sudah diisi
- */
-function doSave(strict = true) {
+async function doSave(strict = true) {
   const nama        = document.getElementById('f-nama')?.value.trim()        || '';
   const email       = document.getElementById('f-email')?.value.trim()       || '';
   const telepon     = document.getElementById('f-telepon')?.value.trim()     || '';
@@ -283,37 +278,58 @@ function doSave(strict = true) {
   const pengalaman  = document.getElementById('f-pengalaman')?.value.trim()  || '';
   const prestasi    = document.getElementById('f-prestasi')?.value.trim()    || '';
 
-  // Validasi hanya nama yang wajib ada
   if (!nama) {
     if (strict) showToast('Nama lengkap wajib diisi');
     hlField('f-nama');
     return false;
   }
 
-  const result = MagnetDB.saveProfile({
+  // Data profil yang akan disimpan
+  const profileData = {
     name: nama, 
     email: email, 
-    telepon: telepon,
+    phone: telepon,
     universitas: universitas, 
     jurusan: jurusan, 
     semester: semester, 
     ipk: ipk,
     skills: [...skillTags],
-    minat:  [...minatTags],
+    minat: [...minatTags],
     pendidikan: pendidikan,
     pengalaman: pengalaman,
     prestasi: prestasi,
     cv: cvData,
     avatar: photoDataURL,
-  });
+  };
 
-  if (!result.ok) { showToast(result.message); return false; }
+  // 1. Simpan ke localStorage (MagnetDB)
+  const result = MagnetDB.saveProfile(profileData);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return false; 
+  }
+
+  // 2. Simpan ke Firebase Realtime Database
+  const session = MagnetDB.getSession();
+  if (session && session.id) {
+    try {
+      await saveMahasiswaProfile(session.id, {
+        ...profileData,
+        updatedAt: new Date().toISOString()
+      });
+      console.log('Profil berhasil disimpan ke Firebase');
+    } catch (err) {
+      console.error('Gagal simpan ke Firebase:', err);
+      showToast('Profil tersimpan di lokal, tetapi gagal sinkron ke server.');
+    }
+  }
 
   showToast('Profil berhasil disimpan ✓');
   isEditMode = false;
   applyEditMode();
   updateProgress();
 
+  // Update avatar di navbar jika ada
   const avatarInitial = document.getElementById('avatarInitial');
   if (avatarInitial && photoDataURL) {
     const avatarDiv = document.querySelector('.avatar-btn');
@@ -329,7 +345,7 @@ function doSave(strict = true) {
 }
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
-function saveProfile() {
+async function saveProfile() {
   doSave(true);
 }
 
