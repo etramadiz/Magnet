@@ -1,5 +1,6 @@
 // detail-pelamar.js - lamaran dari Firebase, profil dari localStorage
 import { getApplicationById } from './firebase-company.js';
+import { getApplicationById, updateApplicationStatus } from './firebase-company.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('userId');
@@ -53,14 +54,16 @@ async function loadData() {
   window.currentAppId = appId;
 }
 
-function updateStatus(newStatus) {
+async function updateStatus(newStatus) { // Tambahkan async
   const catatan = document.getElementById('catatan').value;
-  const result = MagnetDB.updateApplicationStatus(window.currentAppId, newStatus);
-  if (result.ok) {
+  
+  try {
+    // Ganti pemanggilan MagnetDB dengan fungsi Firebase
+    await updateApplicationStatus(window.currentAppId, newStatus, catatan);
     alert(`Pelamar ${newStatus === 'Diterima' ? 'diterima' : 'ditolak'}.${catatan ? '\nCatatan: ' + catatan : ''}`);
     window.location.href = 'lihat-pelamar.html';
-  } else {
-    alert('Gagal mengupdate status.');
+  } catch (error) {
+    alert('Gagal mengupdate status: ' + error.message);
   }
 }
 
