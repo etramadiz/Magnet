@@ -240,7 +240,7 @@ function applyEditMode() {
  * strict = true  → validasi ketat, tampilkan error kalau field wajib kosong
  * strict = false → partial save, simpan apa yang sudah diisi
  */
-async function doSave(strict = true) {
+function doSave(strict = true) {
   const nama        = document.getElementById('f-nama')?.value.trim()        || '';
   const email       = document.getElementById('f-email')?.value.trim()       || '';
   const telepon     = document.getElementById('f-telepon')?.value.trim()     || '';
