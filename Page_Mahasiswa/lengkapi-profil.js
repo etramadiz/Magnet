@@ -304,7 +304,6 @@ async function doSave(strict = true) {
       avatar: photoDataURL,
       updatedAt: new Date().toISOString()
     };
-  }
 
   try {
     await saveMahasiswaProfile(currentUid, profileData);
@@ -336,6 +335,7 @@ async function doSave(strict = true) {
     showToast('Gagal menyimpan profil: ' + err.message);
     return false;
   }
+}
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
 async function saveProfile() {
