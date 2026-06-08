@@ -31,25 +31,20 @@ async function loadData() {
   let user = null;
   let profile = {};
 
-  // Coba dari Firestore dulu
   try {
     const firestoreProfile = await getMahasiswaProfile(userId);
     if (firestoreProfile) {
       user = { name: firestoreProfile.name || firestoreProfile.namaLengkap, id: userId };
       profile = firestoreProfile;
     }
-  } catch (e) {
-    console.warn('Gagal ambil dari Firestore:', e);
-  }
+  } catch (e) {}
 
-  // Fallback ke localStorage
   if (!user) {
     const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     user = users.find(u => u.id === userId);
     profile = user?.profile || {};
   }
 
-  // Tampilkan data di HTML
   document.getElementById('detailName').textContent = user?.name || 'Tidak diketahui';
   document.getElementById('universitas').textContent = profile.universitas || '-';
   document.getElementById('jurusan').textContent = profile.jurusan || '-';
@@ -78,7 +73,6 @@ async function loadData() {
 
 function updateStatus(newStatus) {
   const catatan = document.getElementById('catatan').value;
-  // Update status di localStorage dulu
   const result = MagnetDB.updateApplicationStatus(window.currentAppId, newStatus);
   if (result.ok) {
     alert(`Pelamar ${newStatus === 'Diterima' ? 'diterima' : 'ditolak'}.${catatan ? '\nCatatan: ' + catatan : ''}`);
@@ -86,8 +80,10 @@ function updateStatus(newStatus) {
   } else {
     alert('Gagal mengupdate status.');
   }
-  // TODO: nanti bisa tambahkan update ke Firebase juga
 }
 
-loadData();
+// Ekspos ke global
 window.updateStatus = updateStatus;
+
+// Jalankan
+loadData();
