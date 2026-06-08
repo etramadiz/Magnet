@@ -30,7 +30,6 @@ function showToast(msg, type = 'info') {
 export { auth, db, googleProvider, onAuthStateChanged };
 
 // ========== FUNGSI LOGIN/REGISTER ==========
-// auth-firebase.js (bagian firebaseLogin)
 export async function firebaseLogin(email, password, expectedRole) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -45,19 +44,26 @@ export async function firebaseLogin(email, password, expectedRole) {
       return false;
     }
 
-// Ambil nama dari database (jika ada), atau dari Google
-let userName = user.displayName || user.email;
-if (snapshot.exists() && snapshot.val().namaLengkap) {
-  userName = snapshot.val().namaLengkap;
-}
+    // Ambil nama dari database jika ada
+    let userName = user.displayName || user.email;
+    if (snapshot.exists() && snapshot.val().namaLengkap) {
+      userName = snapshot.val().namaLengkap;
+    }
 
-const localUser = {
-  id: user.uid,
-  name: userName,
-  email: user.email,
-  type: role,
-  profile: profileData
-};
+    // ✅ Ambil profile dari node mahasiswa atau users
+    const mahasiswaSnap = await get(ref(db, `mahasiswa/${user.uid}`));
+    let profileData = mahasiswaSnap.exists() ? mahasiswaSnap.val() : {};
+    if (!profileData || Object.keys(profileData).length === 0) {
+      profileData = userData.profile || {};
+    }
+
+    const localUser = {
+      id: user.uid,
+      name: userName,
+      email: user.email,
+      type: role,
+      profile: profileData
+    };
 
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === user.uid);
@@ -68,8 +74,8 @@ const localUser = {
 
     await syncProfileFromFirebase(user.uid);
     showToast(`Halo, ${localUser.name}!`, 'success');
-    
-    // JANGAN REDIRECT DI SINI! Biarkan onAuthStateChanged yang handle redirect
+
+    // ✅ JANGAN redirect di sini – biarkan onAuthStateChanged yang handle
     return true;
   } catch (err) {
     showToast('Login gagal: ' + err.message, 'error');
@@ -132,6 +138,8 @@ export async function firebaseRegister(data, role) {
     return { success: false };
   }
 }
+
+//google login
 
 export async function firebaseGoogleLogin(expectedRole) {
   try {

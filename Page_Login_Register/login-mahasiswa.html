@@ -92,11 +92,6 @@ window.handleLogin = async () => {
   }
   const success = await firebaseLogin(email, password, 'mahasiswa');
   if (success) {
-    // Redirect akan dilakukan oleh onAuthStateChanged, tidak perlu manual
-    // Tapi jika ingin langsung, beri delay kecil agar state terupdate
-    setTimeout(() => {
-      window.location.href = '../Page_Mahasiswa/dashboard.html';
-    }, 500);
   }
 };
 
