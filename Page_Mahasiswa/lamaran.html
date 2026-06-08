@@ -189,7 +189,7 @@
   <div class="toast" id="toast"></div>
   <script src="db.js"></script>
   <script type="module" src="dashboard.js"></script>
-<script type="module">
+  <script type="module">
   import { getApplicationsForUser } from './firebase-mahasiswa.js';
   import { auth } from '../Page_Login_Register/firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -213,75 +213,105 @@
   }
 
   function formatDate(iso) {
+    if (!iso) return '—';
     const d = new Date(iso);
     const now = new Date();
     const diff = Math.floor((now - d) / 86400000);
     if (diff === 0) return 'Hari ini';
     if (diff === 1) return 'Kemarin';
     if (diff < 7) return diff + ' hari lalu';
-    return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   function docPills(docs) {
+    if (!docs) return '';
     const items = [];
-    if (docs?.cv)    items.push(`<span class="lm-doc-pill">📄 CV</span>`);
-    if (docs?.surat) items.push(`<span class="lm-doc-pill">📑 Surat</span>`);
-    if (docs?.porto || docs?.portoLink) items.push(`<span class="lm-doc-pill">🎨 Portofolio</span>`);
+    if (docs.cv) items.push('<span class="lm-doc-pill">📄 CV</span>');
+    if (docs.surat) items.push('<span class="lm-doc-pill">📑 Surat</span>');
+    if (docs.porto || docs.portoLink) items.push('<span class="lm-doc-pill">🎨 Portofolio</span>');
     return items.join('');
   }
 
   function renderList() {
+    const list = document.getElementById('lamaranList');
+    const sub = document.getElementById('subTitle');
+    if (!list) return;
+
     const filtered = activeTab === 'semua'
       ? allApps
       : allApps.filter(a => a.status === activeTab);
 
-    const sub = document.getElementById('subTitle');
     if (sub) sub.textContent = filtered.length + ' lamaran ditemukan';
 
-    const list = document.getElementById('lamaranList');
-    if (!list) return;
-
-javascript
-if (!filtered.length) {
-  list.innerHTML = `<div class="lm-empty">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    <h3>${activeTab === 'semua' ? 'Belum ada lamaran' : 'Tidak ada di kategori ini'}</h3>
-    <p>${activeTab === 'semua' ? 'Kamu belum melamar lowongan manapun.' : `Tidak ada lamaran dengan status "${STATUS_LABEL[activeTab] || activeTab}".`}</p>
-    ${activeTab === 'semua' ? '<a href="lowongan.html" class="lm-empty-cta">Cari Lowongan Sekarang →</a>' : ''}
-  </div>`;
-  return;
-}
-
-    list.innerHTML = filtered.map((app, i) => `
-      <div class="lm-card" onclick="window.location.href='detail-lowongan.html?id=${app.jobId}'">
-        <div class="lm-card-logo" style="background:${app.logoColor}18;color:${app.logoColor}">${app.companyShort || '?'}</div>
-        <div class="lm-card-body">
-          <p class="lm-card-title">${app.jobTitle}</p>
-          <p class="lm-card-company">${app.companyName}</p>
-          <div class="lm-card-meta">
-            <span class="lm-status ${app.status}">${STATUS_LABEL[app.status] || app.status}</span>
-            <span class="lm-card-date">Dilamar ${formatDate(app.appliedAt)}</span>
-          </div>
-          <div class="lm-docs">${docPills(app.documents)}</div>
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="lm-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <h3>${activeTab === 'semua' ? 'Belum ada lamaran' : 'Tidak ada di kategori ini'}</h3>
+          <p>${activeTab === 'semua' ? 'Kamu belum melamar lowongan manapun.' : `Tidak ada lamaran dengan status "${STATUS_LABEL[activeTab] || activeTab}".`}</p>
+          ${activeTab === 'semua' ? '<a href="lowongan.html" class="lm-empty-cta">Cari Lowongan Sekarang →</a>' : ''}
         </div>
-        <div class="lm-card-arrow">→</div>
-      </div>
-    `).join('');
+      `;
+      return;
+    }
+
+    // Gunakan map dengan aman, pastikan semua properti ada
+    list.innerHTML = filtered.map(app => {
+      const companyShort = app.companyShort || (app.companyName ? app.companyName.charAt(0) : '?');
+      const logoColor = app.logoColor || '#3B2A8E';
+      const statusClass = app.status || 'terkirim';
+      const statusText = STATUS_LABEL[statusClass] || statusClass;
+      const jobId = app.jobId || '';
+
+      return `
+        <div class="lm-card" onclick="window.location.href='detail-lowongan.html?id=${jobId}'">
+          <div class="lm-card-logo" style="background:${logoColor}18;color:${logoColor}">${escapeHtml(companyShort)}</div>
+          <div class="lm-card-body">
+            <p class="lm-card-title">${escapeHtml(app.jobTitle || 'Tidak diketahui')}</p>
+            <p class="lm-card-company">${escapeHtml(app.companyName || 'Perusahaan')}</p>
+            <div class="lm-card-meta">
+              <span class="lm-status ${statusClass}">${statusText}</span>
+              <span class="lm-card-date">Dilamar ${formatDate(app.appliedAt)}</span>
+            </div>
+            <div class="lm-docs">${docPills(app.documents)}</div>
+          </div>
+          <div class="lm-card-arrow">→</div>
+        </div>
+      `;
+    }).join('');
   }
 
-  // Ambil data dari Firebase saat halaman dimuat
+  // Fungsi escape HTML untuk keamanan
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  // Load data dari Firebase
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = '../Page_Login_Register/index.html';
       return;
     }
-    // Sinkronkan sesi ke localStorage (opsional)
-    if (!localStorage.getItem('magnet_session')) {
-      localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+    try {
+      // Pastikan session localStorage ada
+      if (!localStorage.getItem('magnet_session')) {
+        localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid }));
+      }
+      allApps = await getApplicationsForUser(user.uid);
+      renderList();
+    } catch (err) {
+      console.error('Gagal memuat lamaran:', err);
+      document.getElementById('subTitle').textContent = 'Gagal memuat data. Coba refresh.';
     }
-    // Ambil lamaran dari Firebase
-    allApps = await getApplicationsForUser(user.uid);
-    renderList();
   });
 
   // Ekspos fungsi ke global untuk onclick
