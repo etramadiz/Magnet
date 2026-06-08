@@ -214,14 +214,29 @@ export async function syncProfileFromFirebase(uid) {
     // Update localStorage
     const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === uid);
+    
     if (idx !== -1) {
+      // Jika user sudah ada di lokal, perbarui datanya
       users[idx].profile = profile;
       if (profile.name) users[idx].name = profile.name;
-      if (profile.avatar) users[idx].avatar = profile.avatar;
-      localStorage.setItem('magnet_users', JSON.stringify(users));
-      // Update MagnetDB juga
-      if (window.MagnetDB) MagnetDB.saveProfile(profile);
+      if (profile.avatar) users[idx].avatar = profile.avatar; // <-- Memastikan foto ikut terupdate
+    } else {
+      // 🔥 PERBAIKAN: Jika user BELUM ADA di lokal (misal cache habis dibersihkan), buat data baru!
+      const newUser = {
+        id: uid,
+        name: profile.name || 'Pengguna',
+        avatar: profile.avatar || null,
+        type: 'mahasiswa', // tipe default
+        profile: profile
+      };
+      users.push(newUser);
     }
+    
+    localStorage.setItem('magnet_users', JSON.stringify(users));
+    
+    // Update MagnetDB juga jika fungsi tersedia
+    if (window.MagnetDB) MagnetDB.saveProfile(profile);
+    
     return profile;
   } catch (err) {
     console.error('Gagal sync profil:', err);

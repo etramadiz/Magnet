@@ -192,8 +192,8 @@
       // Ambil profil dari Firebase
       const snapshot = await get(ref(db, `mahasiswa/${uid}`));
       const profile = snapshot.exists() ? snapshot.val() : (localSession?.profile || {});
-
-      const name     = localSession?.name || firebaseUser.displayName || firebaseUser.email || 'Pengguna';
+      
+      const name     = profile?.name || localSession?.name || firebaseUser.displayName || firebaseUser.email || 'Pengguna';
       const email    = firebaseUser.email || '';
       const phone    = localSession?.phone || profile?.telepon || profile?.phone || '–';
       const avatar   = profile?.avatar || localSession?.avatar || null;
@@ -215,7 +215,7 @@
         headerAvatar.style.backgroundSize = 'cover';
         headerAvatar.style.backgroundPosition = 'center';
       }
-      
+
       const avInit = document.getElementById('avatarInitial');
       if (avInit) avInit.textContent = initial;
 

@@ -124,22 +124,27 @@
   </main>
 
   <div class="toast" id="toast"></div>
-  <script type ="module" src="dashboard.js"></script>
-  <script type ="module">
+<script src="db.js"></script> <script type="module" src="dashboard.js"></script>
+  <script type="module">
+    import { getAllJobs } from '../Page_Perusahaan/firebase-company.js';
+
     let savedSet = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
+    let allJobs = []; // Akan diisi data dari Firebase
 
     function persistSaved() {
       localStorage.setItem('mg_saved', JSON.stringify([...savedSet]));
     }
 
-    function removeJob(id) {
-      savedSet.delete(id);
+    // WAJIB pakai window. agar bisa dipanggil oleh atribut onclick di HTML
+    window.removeJob = function(id) {
+      // Pastikan ID diubah ke string karena ID dari Firebase biasanya berbentuk string
+      savedSet.delete(String(id)); 
       persistSaved();
       renderSaved();
       showToast('Lowongan dihapus dari simpanan');
     }
 
-    function clearAll() {
+    window.clearAll = function() {
       if (!confirm('Hapus semua lowongan tersimpan?')) return;
       savedSet.clear();
       persistSaved();
@@ -148,8 +153,8 @@
     }
 
     function renderSaved() {
-      const ids  = [...savedSet];
-      const jobs = ids.map(id => MAGNET_JOBS.find(j => j.id === id)).filter(Boolean);
+      // Cari lowongan di allJobs yang ID-nya ada di dalam savedSet
+      const jobs = allJobs.filter(j => savedSet.has(String(j.id)));
 
       const countEl   = document.getElementById('tsCount');
       const clearBtn  = document.getElementById('clearAllBtn');
@@ -164,7 +169,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
             <h3>Belum ada yang disimpan</h3>
             <p>Tekan ikon bookmark di card lowongan untuk menyimpannya di sini.</p>
-            <a href="hasil-pencarian.html" class="ts-empty-cta">Cari Lowongan →</a>
+            <a href="lowongan.html" class="ts-empty-cta">Cari Lowongan →</a>
           </div>`;
         return;
       }
@@ -178,36 +183,69 @@
               <p class="job-company">${job.company}</p>
             </div>
             <div class="job-card-actions">
-              <button class="ts-remove-btn" onclick="event.stopPropagation();removeJob(${job.id})" title="Hapus dari simpanan">
+              <button class="ts-remove-btn" onclick="event.stopPropagation(); window.removeJob('${job.id}')" title="Hapus dari simpanan">
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                 </svg>
               </button>
-              ${job.isNew ? '<span class="new-badge">Baru</span>' : ''}
             </div>
           </div>
           <div class="job-meta">
             <span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${job.location}</span>
-            <span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${job.durasiLabel}</span>
-            <span class="meta-item" style="text-transform:capitalize">${job.remoteKey}</span>
+            <span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${job.type || 'Magang'}</span>
           </div>
           <p class="job-salary">${job.salary}</p>
           <div class="job-card-footer">
-            <span class="job-time">Tutup ${job.deadline}</span>
-            <button class="apply-btn" onclick="event.stopPropagation();window.location.href='detail-lowongan.html?id=${job.id}'">Lihat Detail</button>
+            <button class="apply-btn" style="width:100%" onclick="event.stopPropagation();window.location.href='detail-lowongan.html?id=${job.id}'">Lihat Detail</button>
           </div>
         </div>`).join('');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      MagnetDB.requireAuth('index.html');
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Pengecekan sesi
+      MagnetDB.requireMahasiswaAuth();
       restoreSidebarState();
+      
       const user = MagnetDB.getSession();
       if (user) {
-        const av = document.getElementById('avatarInitial');
-        if (av) av.textContent = user.name.charAt(0).toUpperCase();
+        // Sinkronkan nama
+        const navName = document.getElementById('profileNavName');
+        if (navName) navName.textContent = user.name;
+        
+        // Sinkronkan avatar
+        const avInit = document.getElementById('avatarInitial');
+        const headerAvatar = document.getElementById('headerAvatar') || document.querySelector('.avatar-btn');
+        
+        if (user.avatar && headerAvatar) {
+          headerAvatar.style.backgroundImage = `url('${user.avatar}')`;
+          headerAvatar.style.backgroundSize = 'cover';
+          headerAvatar.style.backgroundPosition = 'center';
+          if (avInit) avInit.style.display = 'none';
+        } else if (avInit) {
+          avInit.textContent = user.name.charAt(0).toUpperCase();
+        }
       }
-      renderSaved();
+
+      // Ambil lowongan dari Firebase
+      try {
+        const firebaseJobs = await getAllJobs();
+        // Format agar sesuai dengan struktur HTML
+        allJobs = firebaseJobs.map(job => ({
+          id: job.id,
+          title: job.title,
+          company: job.companyName || job.company,
+          companyShort: job.companyShort || (job.companyName ? job.companyName.charAt(0) : '?'),
+          logoColor: job.logoColor || '#3B2A8E',
+          location: job.location || '-',
+          type: job.type || 'Magang',
+          salary: job.salary || 'Rp 0'
+        }));
+        
+        renderSaved();
+      } catch (err) {
+        console.error('Gagal memuat data dari Firebase', err);
+        showToast('Gagal memuat lowongan tersimpan');
+      }
     });
   </script>
 </body>
