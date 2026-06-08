@@ -153,7 +153,6 @@ export async function firebaseGoogleLogin(expectedRole) {
         userName = snapshot.val().namaLengkap;
       }
     } else {
-      // User baru, simpan ke database
       await set(ref(db, 'users/' + user.uid), {
         namaLengkap: user.displayName || '',
         email: user.email,
