@@ -49,6 +49,16 @@ async function loadData() {
   document.getElementById('jurusan').textContent = profile.jurusan || '-';
   document.getElementById('statusMhs').textContent = profile.semester ? `Semester ${profile.semester}` : '-';
 
+  // MENGAMBIL FOTO PROFIL MAHASISWA
+  const avatarDiv = document.querySelector('.detail-avatar');
+  if (profile.fotoUrl) {
+    // Jika ada foto, ganti SVG dengan <img>
+    avatarDiv.innerHTML = `<img src="${profile.fotoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    avatarDiv.style.border = 'none'; // hapus border jika perlu
+  } else {
+    // Jika tidak ada foto, biarkan SVG bawaan (atau inisial nama)
+  }
+  
   // --- Bagian dokumen CV dan Portofolio di bawah ini tetap sama ---
 const docs = application.documents || {};
   
