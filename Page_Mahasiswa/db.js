@@ -7,9 +7,9 @@ const MagnetDB = (() => {
   const APPS_KEY    = 'magnet_applications';
   const REVIEWS_KEY = 'magnet_reviews';
 
-  const LOGIN_URL = '../../../Page Login Register/index.html';
+  const LOGIN_URL = '../../../Page_Login_Register/index.html';
   const MHS_DASH  = 'dashboard.html';
-  const PRU_DASH  = '../../../Page Login Register/index.html';
+  const PRU_DASH  = '../../../Page_Login_Register/index.html';
 
   function getUsers() { 
     const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
