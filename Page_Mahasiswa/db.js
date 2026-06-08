@@ -78,6 +78,7 @@ function getSession() {
     if (idx===-1) return { ok:false, message:'User tidak ditemukan.' };
     if (profileData.name)   users[idx].name   = profileData.name;
     if (profileData.avatar) users[idx].avatar = profileData.avatar;
+    if (profileData.telepon) users[idx].phone = profileData.telepon; 
     const prev = users[idx].profile || {};
     users[idx].profile = Object.assign({}, prev, profileData, { updatedAt:new Date().toISOString() });
     try {
