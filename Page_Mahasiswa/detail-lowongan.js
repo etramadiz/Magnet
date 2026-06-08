@@ -1,6 +1,8 @@
 /* detail-lowongan.js - Mengambil data dari Firebase */
 
 import { getJobById } from '../Page_Perusahaan/firebase-company.js';
+import { db } from '../Page_Login_Register/firebase-config.js';
+import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 let currentJob = null;
 let savedSet = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
@@ -33,14 +35,13 @@ function lamarSekarang() {
   if (!currentJob) return;
   if (!MagnetDB.getSession()) {
     showToast('Masuk terlebih dahulu untuk melamar lowongan');
-    setTimeout(() => window.location.href = '../../../Page_Login_Register/index.html', 1500);
+    // Pastikan path-nya benar menuju index/login
+    setTimeout(() => window.location.href = '../Page_Login_Register/index.html', 1500);
     return;
   }
-  if (MagnetDB.hasApplied(currentJob.id)) {
-    showToast('Kamu sudah melamar lowongan ini');
-    setTimeout(() => window.location.href = 'lamaran.html', 1200);
-    return;
-  }
+  
+  // Langsung arahkan ke halaman lamar, karena jika tombol bisa diklik, 
+  // berarti Firebase sudah memastikan user belum melamar.
   window.location.href = 'lamar.html?id=' + currentJob.id;
 }
 
@@ -58,28 +59,55 @@ function shareJob() {
 }
 
 /* ── Render detail dari data Firebase ── */
-function renderDetail(job) {
+async function renderDetail(job) {
   currentJob = job;
 
   // Top bar title
   const topTitle = document.getElementById('dlTopTitle');
   if (topTitle) topTitle.textContent = job.title;
-
-  // CTA bar
-  const ctaBar = document.getElementById('dlCtaBar');
+  const ctaBar  = document.getElementById('dlCtaBar');
   const deadline = document.getElementById('dlDeadline');
-  if (ctaBar) ctaBar.style.display = 'flex';
-  if (deadline) deadline.textContent = job.deadline || 'Tidak ditentukan';
+  if (ctaBar)  ctaBar.style.display = 'flex';
+  if (deadline) deadline.textContent = job.deadline;
 
   // Applied state dari localStorage (db.js)
-  const lamarBtn = document.getElementById('lamarBtn');
+const lamarBtn = document.getElementById('lamarBtn');
   if (lamarBtn) {
-    if (!MagnetDB.getSession()) {
+    const session = MagnetDB.getSession();
+    if (!session) {
       lamarBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:17px;height:17px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Masuk untuk Melamar`;
-    } else if (MagnetDB.hasApplied(job.id)) {
-      lamarBtn.classList.add('applied');
-      lamarBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:17px;height:17px"><polyline points="20 6 9 17 4 12"/></svg> Sudah Dilamar`;
+    } else {
+      lamarBtn.innerHTML = `Memeriksa status...`; // Status loading sementara
       lamarBtn.disabled = true;
+
+      try {
+        const appsRef = ref(db, 'applications');
+        const appsSnap = await get(appsRef);
+        let alreadyApplied = false;
+
+        if (appsSnap.exists()) {
+          appsSnap.forEach(child => {
+            const app = child.val();
+            // Cek apakah user saat ini sudah melamar pekerjaan ID ini
+            if (app.userId === session.id && app.jobId === String(job.id)) {
+              alreadyApplied = true;
+            }
+          });
+        }
+
+        if (alreadyApplied) {
+          lamarBtn.classList.add('applied');
+          lamarBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:17px;height:17px"><polyline points="20 6 9 17 4 12"/></svg> Sudah Dilamar`;
+          lamarBtn.disabled = true;
+        } else {
+          lamarBtn.classList.remove('applied');
+          lamarBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg> Lamar Sekarang`;
+          lamarBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error("Gagal mengecek status:", err);
+        lamarBtn.innerHTML = `Gagal memuat status`;
+      }
     }
   }
 
