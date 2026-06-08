@@ -31,47 +31,33 @@ export { auth, db, googleProvider, onAuthStateChanged };
 
 // ========== FUNGSI LOGIN/REGISTER ==========
 // auth-firebase.js (bagian firebaseLogin)
-export async function firebaseGoogleLogin(expectedRole) {
+export async function firebaseLogin(email, password, expectedRole) {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
     const snapshot = await get(ref(db, 'users/' + user.uid));
-    let role = expectedRole;
-    let userName = user.displayName || user.email; // fallback
+    const userData = snapshot.exists() ? snapshot.val() : {};
+    const role = userData.tipeAkun || 'mahasiswa';
 
-    if (snapshot.exists()) {
-      role = snapshot.val().tipeAkun;
-      if (role !== expectedRole) {
-        showToast(`Akun Google ini sudah terdaftar sebagai ${role}.`, 'error');
-        await signOut(auth);
-        return false;
-      }
-      // Gunakan nama dari database jika ada
-      if (snapshot.val().namaLengkap) {
-        userName = snapshot.val().namaLengkap;
-      }
-    } else {
-      // User baru, simpan ke database
-      await set(ref(db, 'users/' + user.uid), {
-        namaLengkap: user.displayName || '',
-        email: user.email,
-        tipeAkun: expectedRole,
-        createdAt: new Date().toISOString(),
-        profile: {}
-      });
+    if (role !== expectedRole) {
+      showToast(`Akun ini bukan akun ${expectedRole}.`, 'error');
+      await signOut(auth);
+      return false;
     }
 
-    // Sinkronkan profil dari node mahasiswa
-    const mahasiswaSnapshot = await get(ref(db, `mahasiswa/${user.uid}`));
-    let profileData = mahasiswaSnapshot.exists() ? mahasiswaSnapshot.val() : {};
+// Ambil nama dari database (jika ada), atau dari Google
+let userName = user.displayName || user.email;
+if (snapshot.exists() && snapshot.val().namaLengkap) {
+  userName = snapshot.val().namaLengkap;
+}
 
-    const localUser = {
-      id: user.uid,
-      name: userName,
-      email: user.email,
-      type: role,
-      profile: profileData
-    };
+const localUser = {
+  id: user.uid,
+  name: userName,
+  email: user.email,
+  type: role,
+  profile: profileData
+};
 
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === user.uid);
@@ -80,10 +66,13 @@ export async function firebaseGoogleLogin(expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
+    await syncProfileFromFirebase(user.uid);
     showToast(`Halo, ${localUser.name}!`, 'success');
+    
+    // JANGAN REDIRECT DI SINI! Biarkan onAuthStateChanged yang handle redirect
     return true;
   } catch (err) {
-    showToast('Gagal login dengan Google: ' + err.message, 'error');
+    showToast('Login gagal: ' + err.message, 'error');
     return false;
   }
 }
@@ -150,6 +139,8 @@ export async function firebaseGoogleLogin(expectedRole) {
     const user = result.user;
     const snapshot = await get(ref(db, 'users/' + user.uid));
     let role = expectedRole;
+    let userName = user.displayName || user.email; // fallback
+
     if (snapshot.exists()) {
       role = snapshot.val().tipeAkun;
       if (role !== expectedRole) {
@@ -157,7 +148,12 @@ export async function firebaseGoogleLogin(expectedRole) {
         await signOut(auth);
         return false;
       }
+      // Gunakan nama dari database jika ada
+      if (snapshot.val().namaLengkap) {
+        userName = snapshot.val().namaLengkap;
+      }
     } else {
+      // User baru, simpan ke database
       await set(ref(db, 'users/' + user.uid), {
         namaLengkap: user.displayName || '',
         email: user.email,
@@ -166,25 +162,26 @@ export async function firebaseGoogleLogin(expectedRole) {
         profile: {}
       });
     }
-    // Sinkronkan profil dari node mahasiswa (Realtime Database) jika ada
+
+    // Sinkronkan profil dari node mahasiswa
     const mahasiswaSnapshot = await get(ref(db, `mahasiswa/${user.uid}`));
-    let profileData = {};
-    if (mahasiswaSnapshot.exists()) {
-      profileData = mahasiswaSnapshot.val();
-    }
+    let profileData = mahasiswaSnapshot.exists() ? mahasiswaSnapshot.val() : {};
+
     const localUser = {
       id: user.uid,
-      name: user.displayName || user.email,
+      name: userName,
       email: user.email,
       type: role,
       profile: profileData
     };
+
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === user.uid);
     if (idx !== -1) users[idx] = localUser;
     else users.push(localUser);
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
+
     showToast(`Halo, ${localUser.name}!`, 'success');
     return true;
   } catch (err) {
