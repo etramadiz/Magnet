@@ -1,6 +1,5 @@
-// detail-pelamar.js - mengambil data dari Firebase
+// detail-pelamar.js - lamaran dari Firebase, profil dari localStorage
 import { getApplicationById } from './firebase-company.js';
-import { getMahasiswaProfile } from './firebase-mahasiswa.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('userId');
@@ -12,25 +11,21 @@ if (!userId || !appId) {
 }
 
 async function loadData() {
-  // 1. Ambil lamaran dari Firebase
+  // 1. Ambil lamaran dari Firebase Realtime Database
   let application = await getApplicationById(appId);
   if (!application) {
-    alert('Data lamaran tidak ditemukan.');
+    alert('Data lamaran tidak ditemukan di database.');
     window.location.href = 'lihat-pelamar.html';
     return;
   }
 
-  // 2. Ambil profil mahasiswa dari Firestore (Firebase)
-  let profile = {};
-  try {
-    const firestoreProfile = await getMahasiswaProfile(userId);
-    if (firestoreProfile) profile = firestoreProfile;
-  } catch (e) {
-    console.error('Gagal ambil profil mahasiswa dari Firestore:', e);
-  }
+  // 2. Ambil data mahasiswa dari localStorage (sudah disimpan saat login/register)
+  const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+  const user = users.find(u => u.id === userId);
+  const profile = user?.profile || {};
 
   // 3. Tampilkan data
-  document.getElementById('detailName').textContent = profile.namaLengkap || profile.name || 'Tidak diketahui';
+  document.getElementById('detailName').textContent = user?.name || 'Tidak diketahui';
   document.getElementById('universitas').textContent = profile.universitas || '-';
   document.getElementById('jurusan').textContent = profile.jurusan || '-';
   document.getElementById('statusMhs').textContent = profile.semester || '-';
@@ -38,9 +33,13 @@ async function loadData() {
   const docs = application.documents || {};
   document.getElementById('cvName').textContent = docs.cv?.name || 'Tidak ada file';
   document.getElementById('suratName').textContent = docs.surat?.name || 'Tidak ada file';
-  const porto = docs.porto || docs.portoLink || '';
+
+  // Pastikan porto berupa string
+  let porto = docs.porto || docs.portoLink || '';
+  if (typeof porto !== 'string') porto = '';
   document.getElementById('portoName').textContent = porto || '-';
-  if (porto) {
+
+  if (porto && porto !== '-') {
     const btnPorto = document.getElementById('btnPortoAction');
     if (porto.includes('.pdf') || porto.includes('.zip')) {
       btnPorto.textContent = '👁️ Buka File';
@@ -65,7 +64,5 @@ function updateStatus(newStatus) {
   }
 }
 
-// Ekspos ke global untuk tombol dengan onclick
 window.updateStatus = updateStatus;
-
 loadData();
