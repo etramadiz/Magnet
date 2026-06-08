@@ -230,6 +230,5 @@ function getSession() {
     saveReview, getCompanyReviews, getUserReview,
     requireAuth, requireMahasiswaAuth, requirePerusahaanAuth, requireGuest,
   };
-
-  window.MagnetDB = MagnetDB;
 })();
+window.MagnetDB = MagnetDB;
