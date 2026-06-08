@@ -17,7 +17,29 @@ const showToast = window.showToast;
 /* ════════════════════
    PHOTO UPLOAD
 ════════════════════ */
-function handlePhotoUpload(input) {
+function compressImage(dataURL, maxWidth = 400, quality = 0.7) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressed);
+    };
+    img.src = dataURL;
+  });
+}
+
+async function handlePhotoUpload(input) {
   const file = input.files[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) {
@@ -29,11 +51,14 @@ function handlePhotoUpload(input) {
     input.value = ''; return;
   }
   const reader = new FileReader();
-  reader.onload = (e) => {
-    photoDataURL = e.target.result;
+  reader.onload = async (e) => {
+    const original = e.target.result;
+    showToast('Memproses foto...');
+    const compressed = await compressImage(original, 300, 0.7);
+    photoDataURL = compressed;
     applyPhotoPreview(photoDataURL);
     showToast('Foto berhasil dipilih ✓');
-    updateProgress();
+    updateProgress()
   };
   reader.readAsDataURL(file);
 }
@@ -66,13 +91,18 @@ function _getInitial() {
 }
 
 function initPhotoSection() {
-  const initial = document.getElementById('photoInitial');
-  if (initial) initial.textContent = _getInitial();
-  // Restore saved avatar
   const user    = MagnetDB.getSession();
   const profile = MagnetDB.getProfile();
   const saved   = user?.avatar || profile?.avatar || null;
-  if (saved) { photoDataURL = saved; applyPhotoPreview(saved); }
+  if (saved) { 
+    photoDataURL = saved; 
+    applyPhotoPreview(saved); 
+  } else {
+    const initial = document.getElementById('photoInitial');
+    if (initial) {
+      initial.textContent = _getInitial();
+    }
+  }
 }
 
 
@@ -82,16 +112,18 @@ function initPhotoSection() {
 ════════════ */
 function updateProgress() {
   const user = MagnetDB.getSession();
+  const profile = MagnetDB.getProfile();
   const checks = [
     !!user?.name,
     !!user?.email,
     !!user?.phone,
-    !!(document.getElementById('f-universitas')?.value?.trim()),
-    !!(document.getElementById('f-jurusan')?.value?.trim()),
-    !!(document.getElementById('f-semester')?.value),
-    skillTags.length > 0,
-    minatTags.length > 0,
-    !!cvData,
+    !!user?.avatar,
+    !!(profile?.universitas || document.getElementById('f-universitas')?.value?.trim()),
+    !!(profile?.jurusan     || document.getElementById('f-jurusan')?.value?.trim()),
+    !!(profile?.semester    || document.getElementById('f-semester')?.value),
+    (skillTags.length > 0)  || (profile?.skills?.length > 0),
+    (minatTags.length > 0)  || (profile?.minat?.length > 0),
+    !!(cvData || profile?.cv),
   ];
   const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
 
@@ -282,6 +314,18 @@ function doSave(strict = true) {
   isEditMode = false;
   applyEditMode();
   updateProgress();
+
+  const avatarInitial = document.getElementById('avatarInitial');
+  if (avatarInitial && photoDataURL) {
+    const avatarDiv = document.querySelector('.avatar-btn');
+    if (avatarDiv) {
+      avatarDiv.style.backgroundImage = `url(${photoDataURL})`;
+      avatarDiv.style.backgroundSize = 'cover';
+      avatarDiv.style.backgroundPosition = 'center';
+      avatarInitial.style.display = 'none';
+    }
+  }
+
   return true;
 }
 
@@ -309,11 +353,15 @@ function loadProfile() {
   const namaEl = document.getElementById('f-nama');
   if (namaEl) namaEl.value = user?.name || '';
 
+  const emailEl = document.getElementById('f-email');
+  if (emailEl) emailEl.value = user?.email || '';
+
+  const teleponEl = document.getElementById('f-telepon');
+  if (teleponEl) teleponEl.value = user?.phone || '';
+
   if (profile) {
     if (namaEl) namaEl.value = profile.name || user?.name || '';
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-    set('f-email',       profile.email);
-    set('f-telepon',     profile.telepon);
     set('f-universitas', profile.universitas);
     set('f-jurusan',     profile.jurusan);
     set('f-semester',    profile.semester);
@@ -338,6 +386,17 @@ function loadProfile() {
       if (fm) fm.textContent = (profile.cv.size/1024).toFixed(0) + ' KB · PDF · Tersimpan';
     }
   }
+
+      // Jika belum ada profile, kosongkan tags
+    if (!profile) {
+      skillTags = [];
+      minatTags = [];
+      cvData = null;
+    }
+
+    renderTags('skill');
+    renderTags('minat');
+
 
   // URL param ?edit=1 atau belum ada profil → langsung edit mode
   const params = new URLSearchParams(window.location.search);

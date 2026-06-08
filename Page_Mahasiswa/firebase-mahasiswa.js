@@ -7,6 +7,10 @@ export async function saveMahasiswaProfile(uid, data) {
   if (!uid) throw new Error('UID tidak ditemukan');
   const userRef = doc(db, "mahasiswa", uid);
   await setDoc(userRef, data, { merge: true });
+  const session = MagnetDB.getSession?.();
+  if (session && session.id === uid) {
+    MagnetDB.saveProfile?.(data);
+  }
 }
 
 // Ambil profil mahasiswa dari Firestore
