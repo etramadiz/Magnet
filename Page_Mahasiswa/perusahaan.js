@@ -94,8 +94,10 @@ async function renderCompany(companyId, companyData) {
   }
 
   // Deskripsi, budaya, benefit
-  document.getElementById('prDesc')?.textContent = companyData.deskripsi || 'Deskripsi belum tersedia.';
-  document.getElementById('prCulture')?.textContent = companyData.budaya || 'Informasi budaya belum tersedia.';
+  const descEl = document.getElementById('prDesc');
+  if (descEl) descEl.textContent = companyData.deskripsi || 'Deskripsi belum tersedia.';
+  const cultureEl = document.getElementById('prCulture');
+  if (cultureEl) cultureEl.textContent = companyData.budaya || 'Informasi budaya belum tersedia.';
   const benefits = companyData.benefit ? companyData.benefit.split('\n').filter(b => b.trim()) : [];
   document.getElementById('prBenefits').innerHTML = benefits.length ? benefits.map(b => `<span class="pr-benefit-tag">${escapeHtml(b)}</span>`).join('') : '<span class="pr-benefit-tag">Belum ada informasi</span>';
 
