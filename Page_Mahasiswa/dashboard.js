@@ -419,6 +419,7 @@ function applyGuestMode() {
 // Letakkan ini di luar DOMContentLoaded, agar langsung tersedia
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
+window.restoreSidebarState = restoreSidebarState;
 window.setFilter = setFilter;
 window.toggleSave = toggleSave;
 window.applyJob = applyJob;
