@@ -80,25 +80,26 @@
 <script src="db.js"></script>
 <script src="auth.js"></script>
 <script type="module">
-  import { firebaseLogin, firebaseGoogleLogin, checkSessionAndRedirect } from './auth-firebase.js';
-  checkSessionAndRedirect();
+  import { firebaseLogin, firebaseGoogleLogin } from './auth-firebase.js';
 
-window.handleLogin = async () => {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value.trim();
-  if (!email || !password) {
-    alert('Email dan password harus diisi');
-    return;
-  }
-  const success = await firebaseLogin(email, password, 'mahasiswa');
-  if (success) {
-  }
-};
+  window.handleLogin = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!email || !password) {
+      alert('Email dan password harus diisi');
+      return;
+    }
+    const success = await firebaseLogin(email, password, 'mahasiswa');
+    if (success) {
+      // Redirect manual setelah login sukses
+      window.location.href = '../Page_Mahasiswa/dashboard.html';
+    }
+  };
 
   window.googleAuth = async () => {
     const success = await firebaseGoogleLogin('mahasiswa');
     if (success) {
-      setTimeout(() => window.location.href = '../Page_Mahasiswa/dashboard.html', 1000);
+      window.location.href = '../Page_Mahasiswa/dashboard.html';
     }
   };
 </script>
