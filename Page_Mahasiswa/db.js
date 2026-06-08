@@ -48,15 +48,19 @@ const MagnetDB = (() => {
   }
 
 function getSession() {
-  // Baca session yang disimpan oleh firebaseLogin
-  const raw = localStorage.getItem('magnet_session');
+  const raw = localStorage.getItem(SESSION_KEY);
   if (!raw) return null;
   try {
-    const { userId } = JSON.parse(raw);
-    // Cari user di magnet_users (tempat firebaseLogin menyimpan data user)
-    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-    return users.find(u => u.id === userId) || null;
-  } catch(e) { return null; }
+    const { userId, type } = JSON.parse(raw);
+    const user = getUsers().find(u => u.id === userId);
+    if (user) {
+      user.type = type || user.type; // tambahkan type dari session
+      return user;
+    }
+    return null;
+  } catch(e) {
+    return null;
+  }
 }
 
   function logout() { localStorage.removeItem(SESSION_KEY); }
