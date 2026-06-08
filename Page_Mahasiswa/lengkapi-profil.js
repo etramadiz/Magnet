@@ -329,10 +329,16 @@ async function doSave(strict = true) {
   applyEditMode();
   updateProgress();
 
-  // Update avatar di navbar jika ada
+// Update avatar dan nama di navbar jika ada
   const avatarInitial = document.getElementById('avatarInitial');
+  const navName = document.getElementById('profileNavName'); // Tambahan: Ambil elemen nama
+
+  // Langsung ubah teks nama di pojok kanan atas
+  if (navName) navName.textContent = profileData.name; 
+
   if (avatarInitial && photoDataURL) {
-    const avatarDiv = document.querySelector('.avatar-btn');
+    // Cari menggunakan ID headerAvatar yang baru saja kita tambahkan di HTML
+    const avatarDiv = document.getElementById('headerAvatar') || document.querySelector('.avatar-btn'); 
     if (avatarDiv) {
       avatarDiv.style.backgroundImage = `url(${photoDataURL})`;
       avatarDiv.style.backgroundSize = 'cover';

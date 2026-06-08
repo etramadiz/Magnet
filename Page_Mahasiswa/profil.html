@@ -203,6 +203,19 @@
         ? new Date(firebaseUser.metadata.creationTime).toLocaleDateString('id-ID')
         : 'Baru saja';
 
+        // --- TAMBAHKAN KODE INI ---
+      // Tempelkan nama ke header kanan atas
+      const navName = document.getElementById('profileNavName');
+      if (navName) navName.textContent = name;
+
+      // Tempelkan foto profil ke header kanan atas
+      const headerAvatar = document.getElementById('headerAvatar');
+      if (headerAvatar && avatar) {
+        headerAvatar.style.backgroundImage = `url('${avatar}')`;
+        headerAvatar.style.backgroundSize = 'cover';
+        headerAvatar.style.backgroundPosition = 'center';
+      }
+      
       const avInit = document.getElementById('avatarInitial');
       if (avInit) avInit.textContent = initial;
 
