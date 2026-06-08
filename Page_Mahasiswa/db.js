@@ -57,7 +57,9 @@ function getSession() {
       user.type = type || user.type; // tambahkan type dari session
       return user;
     }
-    return null;
+    // 🔥 PERBAIKAN: Jika session ada tapi user hilang dari localstorage,
+    // kembalikan objek sementara agar tidak diusir, dashboard akan otomatis sync nanti.
+    return { id: userId, type: type || 'mahasiswa', name: "Pengguna" };
   } catch(e) {
     return null;
   }

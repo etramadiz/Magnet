@@ -247,9 +247,14 @@ export function checkSessionAndRedirect() {
     if (user) {
       const snapshot = await get(ref(db, 'users/' + user.uid));
       const role = snapshot.exists() ? snapshot.val().tipeAkun : 'mahasiswa';
+      
       if (!localStorage.getItem('magnet_session')) {
         localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
       }
+
+      // 🔥 TAMBAHAN WAJIB: Sinkronkan profil ke array magnet_users sebelum pindah halaman
+      await syncProfileFromFirebase(user.uid);
+
       const currentPath = window.location.pathname;
       // Hanya redirect jika sedang di halaman login/register/index
       if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
