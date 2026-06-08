@@ -97,32 +97,44 @@ const docs = application.documents || {};
   }
 
 // ==========================================
-  // 3. BAGIAN PORTOFOLIO
+  // 3. BAGIAN PORTOFOLIO (FILE & LINK BISA MUNCUL BERSAMAAN)
   // ==========================================
+  const portoFileBox = document.getElementById('portoFileBox');
   const portoNameEl = document.getElementById('portoName');
-  const btnPorto = document.getElementById('btnPortoAction');
+  const portoBuka = document.getElementById('portoBuka');
+  const portoUnduh = document.getElementById('portoUnduh');
 
+  const portoLinkBox = document.getElementById('portoLinkBox');
+  const portoLinkText = document.getElementById('portoLinkText');
+  const portoLinkBtn = document.getElementById('portoLinkBtn');
+
+  // Cek & Atur Kotak FILE Portofolio
   if (docs.porto?.url) {
-    // Jika portofolio berupa file yang diunggah ke Supabase
+    portoFileBox.style.display = 'flex';
     portoNameEl.textContent = docs.porto.name;
-    if (btnPorto) {
-      btnPorto.textContent = '📥 Unduh File';
-      // Tambahkan ?download= agar langsung terunduh
-      btnPorto.href = docs.porto.url + '?download=';
-      btnPorto.style.display = 'inline-block';
-    }
-  } else if (docs.portoLink) {
-    // Jika portofolio berupa link website luar (GitHub, Behance, dsb)
-    portoNameEl.textContent = docs.portoLink;
-    if (btnPorto) {
-      btnPorto.textContent = '🔗 Buka Link';
-      btnPorto.href = docs.portoLink.startsWith('http') ? docs.portoLink : 'https://' + docs.portoLink;
-      btnPorto.style.display = 'inline-block';
+    if (portoBuka) { portoBuka.href = docs.porto.url; portoBuka.style.display = 'inline-block'; }
+    if (portoUnduh) { portoUnduh.href = docs.porto.url + '?download='; portoUnduh.style.display = 'inline-block'; }
+  } else {
+    portoFileBox.style.display = 'none'; // Sembunyikan kalau gak upload file
+  }
+
+  // Cek & Atur Kotak LINK Portofolio
+  if (docs.portoLink) {
+    portoLinkBox.style.display = 'flex';
+    portoLinkText.textContent = docs.portoLink;
+    if (portoLinkBtn) {
+      portoLinkBtn.href = docs.portoLink.startsWith('http') ? docs.portoLink : 'https://' + docs.portoLink;
     }
   } else {
-    // Jika pelamar tidak melampirkan portofolio sama sekali
-    portoNameEl.textContent = '-';
-    if (btnPorto) btnPorto.style.display = 'none';
+    portoLinkBox.style.display = 'none'; // Sembunyikan kalau gak isi link
+  }
+
+  // Tampilkan pesan default jika pelamar benar-benar tidak melampirkan keduanya
+  if (!docs.porto?.url && !docs.portoLink) {
+    portoFileBox.style.display = 'flex';
+    portoNameEl.textContent = 'Tidak melampirkan portofolio';
+    if (portoBuka) portoBuka.style.display = 'none';
+    if (portoUnduh) portoUnduh.style.display = 'none';
   }
 }
 
