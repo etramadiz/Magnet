@@ -163,5 +163,27 @@
 <script src="db.js"></script>
 <script src="sidebar.js"></script>
 <script type="module" src="detail-pelamar.js"></script>
+<script type="module">
+  import { checkSessionAndRedirect } from '../Page_Login_Register/auth-firebase.js';
+  import { auth } from '../Page_Login_Register/firebase-config.js';
+  import { getCompanyProfile } from './firebase-company.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+  checkSessionAndRedirect();
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const data = await getCompanyProfile(user.uid);
+      const userAvatarDiv = document.querySelector('.user-avatar');
+      if (data?.logo && userAvatarDiv) {
+        userAvatarDiv.innerHTML = `<img src="${data.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+        userAvatarDiv.style.background = 'transparent';
+      }
+      const navUserName = document.getElementById('navUserName');
+      if (navUserName && data?.nama) navUserName.textContent = data.nama;
+      else if (navUserName && user.displayName) navUserName.textContent = user.displayName;
+    }
+  });
+</script>
 </body>
 </html>
