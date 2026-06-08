@@ -83,18 +83,22 @@
   import { firebaseLogin, firebaseGoogleLogin, checkSessionAndRedirect } from './auth-firebase.js';
   checkSessionAndRedirect();
 
-  window.handleLogin = async () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    if (!email || !password) {
-      alert('Email dan password harus diisi');
-      return;
-    }
-    const success = await firebaseLogin(email, password, 'mahasiswa');
-    if (success) {
-      setTimeout(() => window.location.href = '../Page_Mahasiswa/dashboard.html', 1000);
-    }
-  };
+window.handleLogin = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+  if (!email || !password) {
+    alert('Email dan password harus diisi');
+    return;
+  }
+  const success = await firebaseLogin(email, password, 'mahasiswa');
+  if (success) {
+    // Redirect akan dilakukan oleh onAuthStateChanged, tidak perlu manual
+    // Tapi jika ingin langsung, beri delay kecil agar state terupdate
+    setTimeout(() => {
+      window.location.href = '../Page_Mahasiswa/dashboard.html';
+    }, 500);
+  }
+};
 
   window.googleAuth = async () => {
     const success = await firebaseGoogleLogin('mahasiswa');

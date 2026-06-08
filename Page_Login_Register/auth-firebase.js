@@ -30,6 +30,7 @@ function showToast(msg, type = 'info') {
 export { auth, db, googleProvider, onAuthStateChanged };
 
 // ========== FUNGSI LOGIN/REGISTER ==========
+// auth-firebase.js (bagian firebaseLogin)
 export async function firebaseLogin(email, password, expectedRole) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -60,6 +61,8 @@ export async function firebaseLogin(email, password, expectedRole) {
 
     await syncProfileFromFirebase(user.uid);
     showToast(`Halo, ${localUser.name}!`, 'success');
+    
+    // JANGAN REDIRECT DI SINI! Biarkan onAuthStateChanged yang handle redirect
     return true;
   } catch (err) {
     showToast('Login gagal: ' + err.message, 'error');
@@ -185,12 +188,6 @@ export async function syncProfileFromFirebase(uid) {
         profile = userSnap.val().profile || {};
       }
     }
-
-        // Jika tidak ada di users, coba ambil dari mahasiswa/
-    if (Object.keys(profile).length === 0) {
-      const mhsSnap = await get(ref(db, `mahasiswa/${uid}`));
-      if (mhsSnap.exists()) profile = mhsSnap.val();
-    }
     
     // Update localStorage
     const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
@@ -223,7 +220,6 @@ export async function saveProfileToFirebase(uid, profileData) {
   }
 }
 
-// ========== SESSION & REDIRECT ==========
 export function checkSessionAndRedirect() {
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -233,16 +229,17 @@ export function checkSessionAndRedirect() {
         localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
       }
       const currentPath = window.location.pathname;
+      // Hanya redirect jika sedang di halaman login/register/index
       if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
-        if (role === 'perusahaan') window.location.href = '../Page_Perusahaan/dashboard.html';
-        else window.location.href = '../Page_Mahasiswa/dashboard.html';
-      }
-    } else {
-      // Jika tidak login dan halaman butuh auth, bisa redirect ke index (optional)
-      if (!window.location.pathname.includes('login') && 
-          !window.location.pathname.includes('register') &&
-          !window.location.pathname.includes('index.html')) {
-        // Biarkan saja, tidak force redirect
+        if (role === 'perusahaan') {
+          if (!currentPath.includes('Page_Perusahaan')) {
+            window.location.href = '../Page_Perusahaan/dashboard.html';
+          }
+        } else {
+          if (!currentPath.includes('Page_Mahasiswa')) {
+            window.location.href = '../Page_Mahasiswa/dashboard.html';
+          }
+        }
       }
     }
   });
