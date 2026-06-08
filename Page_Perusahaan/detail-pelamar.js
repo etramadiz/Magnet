@@ -1,5 +1,5 @@
 // detail-pelamar.js - mengambil data dari Firebase
-import { getApplicationById } from './firebase-company.js';
+import { getApplicationById } from '../Page_Perusahaan/firebase-company.js';
 import { getMahasiswaProfile } from './firebase-mahasiswa.js';
 
 const urlParams = new URLSearchParams(window.location.search);
