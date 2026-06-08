@@ -1,4 +1,4 @@
-/* perusahaan.js - Mengambil data dari Firebase */
+/* perusahaan.js - Mengambil data dari Firebase (tanpa sample review) */
 import { getCompanyProfile, getJobsByCompany } from '../Page_Perusahaan/firebase-company.js';
 
 let activePrTab = 'tentang';
@@ -46,9 +46,8 @@ async function renderCompany(companyId, companyData) {
   currentCompanyId = companyId;
   currentCompanyData = companyData;
 
-  // Hero section
   const companyName = companyData.nama || companyData.name || 'Perusahaan';
-  const logoColor = '#3B2A8E'; // default, bisa pakai warna dari data jika ada
+  const logoColor = '#3B2A8E';
   const companyShort = companyName.charAt(0).toUpperCase();
 
   const logoEl = document.getElementById('prLogo');
@@ -59,7 +58,7 @@ async function renderCompany(companyId, companyData) {
   document.getElementById('prName').textContent = companyName;
   document.getElementById('prHeroBg').style.background = `linear-gradient(135deg,${logoColor}DD 0%,${logoColor}99 100%)`;
 
-  // Ambil review dari localStorage? Bisa gunakan fungsi dari db.js
+  // ========== AMBIL REVIEW DARI DB.JS (TIDAK PAKAI SAMPLE) ==========
   const allReviews = MagnetDB.getCompanyReviews(companyId);
   const totalCount = allReviews.length;
   const avgRating = totalCount ? (allReviews.reduce((s, r) => s + r.rating, 0) / totalCount).toFixed(1) : '—';
@@ -74,7 +73,7 @@ async function renderCompany(companyId, companyData) {
     ${hasApplied ? `<a href="review.html?id=${companyId}" class="pr-write-review-btn">${userReview ? '✏️ Edit Review' : '✍️ Tulis Review'}</a>` : ''}
   `;
 
-  // Info grid
+  // Info grid (sama seperti sebelumnya)
   const infoGrid = document.getElementById('prInfoGrid');
   if (infoGrid) {
     infoGrid.innerHTML = `
@@ -93,20 +92,46 @@ async function renderCompany(companyId, companyData) {
     `;
   }
 
-  // Deskripsi, budaya, benefit
+  // Deskripsi, budaya, benefit (perbaiki optional chaining)
   const descEl = document.getElementById('prDesc');
   if (descEl) descEl.textContent = companyData.deskripsi || 'Deskripsi belum tersedia.';
   const cultureEl = document.getElementById('prCulture');
   if (cultureEl) cultureEl.textContent = companyData.budaya || 'Informasi budaya belum tersedia.';
   const benefits = companyData.benefit ? companyData.benefit.split('\n').filter(b => b.trim()) : [];
-  document.getElementById('prBenefits').innerHTML = benefits.length ? benefits.map(b => `<span class="pr-benefit-tag">${escapeHtml(b)}</span>`).join('') : '<span class="pr-benefit-tag">Belum ada informasi</span>';
+  const benefitsEl = document.getElementById('prBenefits');
+  if (benefitsEl) {
+    benefitsEl.innerHTML = benefits.length ? benefits.map(b => `<span class="pr-benefit-tag">${escapeHtml(b)}</span>`).join('') : '<span class="pr-benefit-tag">Belum ada informasi</span>';
+  }
 
-  // Lowongan perusahaan
+  // ========== STATISTIK REKRUTMEN ==========
   const jobs = await getJobsByCompany(companyId);
   const jobCount = jobs.length;
+  
+  // Hitung total pelamar dan yang diterima dari semua lowongan perusahaan ini
+  let totalPelamar = 0;
+  let totalDiterima = 0;
+  const allApps = MagnetDB.getAllApplications();
+  for (const job of jobs) {
+    const jobApps = allApps.filter(app => app.jobId === String(job.id));
+    totalPelamar += jobApps.length;
+    totalDiterima += jobApps.filter(app => app.status === 'Diterima').length;
+  }
+  const lowonganAktif = jobs.filter(job => job.status !== 'Tutup').length;
+
+  // Update elemen statistik
+  const statLowongan = document.getElementById('statLowongan');
+  const statPelamar = document.getElementById('statPelamar');
+  const statDiterima = document.getElementById('statDiterima');
+  const statBuka = document.getElementById('statBuka');
+  if (statLowongan) statLowongan.textContent = jobCount;
+  if (statPelamar) statPelamar.textContent = totalPelamar;
+  if (statDiterima) statDiterima.textContent = totalDiterima;
+  if (statBuka) statBuka.textContent = lowonganAktif;
+
   document.getElementById('prJobCount').textContent = jobCount;
   document.getElementById('prReviewCount').textContent = totalCount;
 
+  // Render daftar lowongan
   const jobsList = document.getElementById('prJobsList');
   if (jobsList) {
     if (jobCount) {
@@ -133,7 +158,7 @@ async function renderCompany(companyId, companyData) {
     }
   }
 
-  // Reviews tab (menggunakan data dari db.js)
+  // Render reviews (hanya dari MagnetDB, tanpa sample)
   renderReviews(allReviews, companyName, hasApplied, userReview, companyId);
 }
 
