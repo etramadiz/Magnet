@@ -1,13 +1,13 @@
 // firebase-mahasiswa.js - Realtime Database version
 import { db, auth } from '../Page_Login_Register/firebase-config.js';
-// Perbaiki menjadi
-import { ref, get, set, update, push, query, orderByChild, equalTo, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+import { ref, get, set, update, push, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 // Simpan profil mahasiswa ke Realtime Database
 export async function saveMahasiswaProfile(uid, data) {
   if (!uid) throw new Error('UID tidak ditemukan');
   const userRef = ref(db, `mahasiswa/${uid}`);
-  await set(userRef, data);
+  await set(userRef, data, { merge: true });
+  // Sinkronkan ke localStorage juga
   const session = MagnetDB.getSession?.();
   if (session && session.id === uid) {
     MagnetDB.saveProfile?.(data);
@@ -18,15 +18,8 @@ export async function saveMahasiswaProfile(uid, data) {
 export async function getMahasiswaProfile(uid) {
   if (!uid) return null;
   const userRef = ref(db, `mahasiswa/${uid}`);
-  const snapshot = await get(userRef);
-  return snapshot.exists() ? snapshot.val() : null;
-}
-
-// Update sebagian data (opsional)
-export async function updateMahasiswaProfile(uid, updates) {
-  if (!uid) throw new Error('UID tidak ditemukan');
-  const userRef = ref(db, `mahasiswa/${uid}`);
-  await update(userRef, updates);
+  const snap = await get(userRef);
+  return snap.exists() ? snap.val() : null;
 }
 
 // Simpan lamaran ke Firebase Realtime Database
