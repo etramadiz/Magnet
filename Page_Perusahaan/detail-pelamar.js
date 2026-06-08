@@ -1,5 +1,5 @@
 // detail-pelamar.js - mengambil data dari Firebase
-import { getApplicationById } from '../Page_Perusahaan/firebase-company.js';
+import { getApplicationById } from './firebase-company.js';
 import { getMahasiswaProfile } from './firebase-mahasiswa.js';
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -7,45 +7,30 @@ const userId = urlParams.get('userId');
 const appId = urlParams.get('appId');
 
 if (!userId || !appId) {
-  alert('Parameter tidak lengkap. Kembali ke daftar pelamar.');
+  alert('Parameter tidak lengkap.');
   window.location.href = 'lihat-pelamar.html';
 }
 
 async function loadData() {
-  // Ambil data lamaran dari Firebase
+  // 1. Ambil lamaran dari Firebase
   let application = await getApplicationById(appId);
-
-  // Fallback ke localStorage jika tidak ada di Firebase
-  if (!application) {
-    const localApps = MagnetDB.getAllApplications();
-    application = localApps.find(app => app.id === appId && app.userId === userId);
-  }
-
   if (!application) {
     alert('Data lamaran tidak ditemukan.');
     window.location.href = 'lihat-pelamar.html';
     return;
   }
 
-  // Ambil data user (mahasiswa) - dari Firestore atau localStorage
-  let user = null;
+  // 2. Ambil profil mahasiswa dari Firestore (Firebase)
   let profile = {};
-
   try {
     const firestoreProfile = await getMahasiswaProfile(userId);
-    if (firestoreProfile) {
-      user = { name: firestoreProfile.name || firestoreProfile.namaLengkap, id: userId };
-      profile = firestoreProfile;
-    }
-  } catch (e) {}
-
-  if (!user) {
-    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-    user = users.find(u => u.id === userId);
-    profile = user?.profile || {};
+    if (firestoreProfile) profile = firestoreProfile;
+  } catch (e) {
+    console.error('Gagal ambil profil mahasiswa dari Firestore:', e);
   }
 
-  document.getElementById('detailName').textContent = user?.name || 'Tidak diketahui';
+  // 3. Tampilkan data
+  document.getElementById('detailName').textContent = profile.namaLengkap || profile.name || 'Tidak diketahui';
   document.getElementById('universitas').textContent = profile.universitas || '-';
   document.getElementById('jurusan').textContent = profile.jurusan || '-';
   document.getElementById('statusMhs').textContent = profile.semester || '-';
@@ -53,18 +38,16 @@ async function loadData() {
   const docs = application.documents || {};
   document.getElementById('cvName').textContent = docs.cv?.name || 'Tidak ada file';
   document.getElementById('suratName').textContent = docs.surat?.name || 'Tidak ada file';
-
   const porto = docs.porto || docs.portoLink || '';
   document.getElementById('portoName').textContent = porto || '-';
   if (porto) {
     const btnPorto = document.getElementById('btnPortoAction');
-    if (porto.toLowerCase().includes('.pdf') || porto.toLowerCase().includes('.zip')) {
+    if (porto.includes('.pdf') || porto.includes('.zip')) {
       btnPorto.textContent = '👁️ Buka File';
       btnPorto.href = 'uploads/' + porto;
     } else {
       btnPorto.textContent = '🔗 Buka Link';
-      if (!porto.startsWith('http')) btnPorto.href = 'https://' + porto;
-      else btnPorto.href = porto;
+      btnPorto.href = porto.startsWith('http') ? porto : 'https://' + porto;
     }
   }
 
@@ -82,8 +65,7 @@ function updateStatus(newStatus) {
   }
 }
 
-// Ekspos ke global
+// Ekspos ke global untuk tombol dengan onclick
 window.updateStatus = updateStatus;
 
-// Jalankan
 loadData();
