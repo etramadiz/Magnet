@@ -31,27 +31,48 @@ export { auth, db, googleProvider, onAuthStateChanged };
 
 // ========== FUNGSI LOGIN/REGISTER ==========
 // auth-firebase.js (bagian firebaseLogin)
-export async function firebaseLogin(email, password, expectedRole) {
+export async function firebaseGoogleLogin(expectedRole) {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
     const snapshot = await get(ref(db, 'users/' + user.uid));
-    const userData = snapshot.exists() ? snapshot.val() : {};
-    const role = userData.tipeAkun || 'mahasiswa';
+    let role = expectedRole;
+    let userName = user.displayName || user.email; // fallback
 
-    if (role !== expectedRole) {
-      showToast(`Akun ini bukan akun ${expectedRole}.`, 'error');
-      await signOut(auth);
-      return false;
+    if (snapshot.exists()) {
+      role = snapshot.val().tipeAkun;
+      if (role !== expectedRole) {
+        showToast(`Akun Google ini sudah terdaftar sebagai ${role}.`, 'error');
+        await signOut(auth);
+        return false;
+      }
+      // Gunakan nama dari database jika ada
+      if (snapshot.val().namaLengkap) {
+        userName = snapshot.val().namaLengkap;
+      }
+    } else {
+      // User baru, simpan ke database
+      await set(ref(db, 'users/' + user.uid), {
+        namaLengkap: user.displayName || '',
+        email: user.email,
+        tipeAkun: expectedRole,
+        createdAt: new Date().toISOString(),
+        profile: {}
+      });
     }
+
+    // Sinkronkan profil dari node mahasiswa
+    const mahasiswaSnapshot = await get(ref(db, `mahasiswa/${user.uid}`));
+    let profileData = mahasiswaSnapshot.exists() ? mahasiswaSnapshot.val() : {};
 
     const localUser = {
       id: user.uid,
-      name: userData.namaLengkap || user.email,
+      name: userName,
       email: user.email,
       type: role,
-      profile: userData.profile || {}
+      profile: profileData
     };
+
     let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
     const idx = users.findIndex(u => u.id === user.uid);
     if (idx !== -1) users[idx] = localUser;
@@ -59,13 +80,10 @@ export async function firebaseLogin(email, password, expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
-    await syncProfileFromFirebase(user.uid);
     showToast(`Halo, ${localUser.name}!`, 'success');
-    
-    // JANGAN REDIRECT DI SINI! Biarkan onAuthStateChanged yang handle redirect
     return true;
   } catch (err) {
-    showToast('Login gagal: ' + err.message, 'error');
+    showToast('Gagal login dengan Google: ' + err.message, 'error');
     return false;
   }
 }
