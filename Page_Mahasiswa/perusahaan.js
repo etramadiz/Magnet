@@ -1,5 +1,7 @@
 /* perusahaan.js - Mengambil data dari Firebase (tanpa sample review) */
 import { getCompanyProfile, getJobsByCompany } from '../Page_Perusahaan/firebase-company.js';
+import { ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+import { db } from '../Page_Login_Register/firebase-config.js';
 
 let activePrTab = 'tentang';
 let currentCompanyId = null;
@@ -58,13 +60,32 @@ async function renderCompany(companyId, companyData) {
   document.getElementById('prName').textContent = companyName;
   document.getElementById('prHeroBg').style.background = `linear-gradient(135deg,${logoColor}DD 0%,${logoColor}99 100%)`;
 
-  // ========== AMBIL REVIEW DARI DB.JS (TIDAK PAKAI SAMPLE) ==========
-  const allReviews = MagnetDB.getCompanyReviews(companyId);
+// ========== AMBIL REVIEW DARI FIREBASE ==========
+  const allReviews = await getReviewsByCompany(companyId);
   const totalCount = allReviews.length;
   const avgRating = totalCount ? (allReviews.reduce((s, r) => s + r.rating, 0) / totalCount).toFixed(1) : '—';
 
-  const hasApplied = MagnetDB.hasAppliedToCompany(companyName);
-  const userReview = MagnetDB.getUserReview(companyId);
+  // Cek apakah user sudah pernah melamar dan apakah user sudah mereview
+  const session = MagnetDB.getSession();
+  let hasApplied = false;
+  let userReview = null;
+
+  if (session) {
+    // Cek apakah ada review miliknya di daftar review Firebase
+    userReview = allReviews.find(r => r.userId === session.id);
+    
+    // Cek lamaran langsung dari node applications Firebase
+    const appsRef = ref(db, 'applications');
+    const appsSnap = await get(appsRef);
+    if (appsSnap.exists()) {
+      appsSnap.forEach(child => {
+        const app = child.val();
+        if (app.userId === session.id && (app.companyId === companyId || app.company === companyName)) {
+          hasApplied = true;
+        }
+      });
+    }
+  }
 
   document.getElementById('prRating').innerHTML = `
     <svg width="14" height="14" viewBox="0 0 24 24" style="fill:#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>

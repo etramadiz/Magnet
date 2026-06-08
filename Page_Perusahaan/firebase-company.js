@@ -125,3 +125,31 @@ export async function updateApplicationStatus(appId, status, catatan = '') {
   });
   return { ok: true };
 }
+
+// ==================== REVIEWS (ULASAN) ====================
+export async function saveReviewToFirebase(reviewData) {
+  // Gunakan kombinasi userId dan companyId agar 1 user hanya bisa memberi 1 review per perusahaan
+  const reviewId = `${reviewData.userId}_${reviewData.companyId}`;
+  await set(ref(db, `reviews/${reviewId}`), {
+    ...reviewData,
+    updatedAt: new Date().toISOString()
+  });
+  return { ok: true };
+}
+
+export async function getReviewsByCompany(companyId) {
+  const reviewsRef = ref(db, 'reviews');
+  const snapshot = await get(reviewsRef);
+  const reviews = [];
+  if (snapshot.exists()) {
+    snapshot.forEach(child => {
+      const r = child.val();
+      if (r.companyId === companyId) {
+        reviews.push({ id: child.key, ...r });
+      }
+    });
+  }
+  // Urutkan dari yang terbaru
+  reviews.sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  return reviews;
+}
