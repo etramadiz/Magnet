@@ -96,22 +96,34 @@ const docs = application.documents || {};
     if (suratUnduh) suratUnduh.style.display = 'none';
   }
 
-  let porto = docs.porto || docs.portoLink || '';
-  if (typeof porto !== 'string') porto = '';
-  document.getElementById('portoName').textContent = porto || '-';
+// ==========================================
+  // 3. BAGIAN PORTOFOLIO
+  // ==========================================
+  const portoNameEl = document.getElementById('portoName');
+  const btnPorto = document.getElementById('btnPortoAction');
 
-  if (porto && porto !== '-') {
-    const btnPorto = document.getElementById('btnPortoAction');
-    if (porto.includes('.pdf') || porto.includes('.zip')) {
-      btnPorto.textContent = '👁️ Buka File';
-      btnPorto.href = 'uploads/' + porto;
-    } else {
-      btnPorto.textContent = '🔗 Buka Link';
-      btnPorto.href = porto.startsWith('http') ? porto : 'https://' + porto;
+  if (docs.porto?.url) {
+    // Jika portofolio berupa file yang diunggah ke Supabase
+    portoNameEl.textContent = docs.porto.name;
+    if (btnPorto) {
+      btnPorto.textContent = '📥 Unduh File';
+      // Tambahkan ?download= agar langsung terunduh
+      btnPorto.href = docs.porto.url + '?download=';
+      btnPorto.style.display = 'inline-block';
     }
+  } else if (docs.portoLink) {
+    // Jika portofolio berupa link website luar (GitHub, Behance, dsb)
+    portoNameEl.textContent = docs.portoLink;
+    if (btnPorto) {
+      btnPorto.textContent = '🔗 Buka Link';
+      btnPorto.href = docs.portoLink.startsWith('http') ? docs.portoLink : 'https://' + docs.portoLink;
+      btnPorto.style.display = 'inline-block';
+    }
+  } else {
+    // Jika pelamar tidak melampirkan portofolio sama sekali
+    portoNameEl.textContent = '-';
+    if (btnPorto) btnPorto.style.display = 'none';
   }
-
-  window.currentAppId = appId;
 }
 
 async function updateStatus(newStatus) {

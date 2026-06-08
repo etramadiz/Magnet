@@ -321,9 +321,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Tampilkan form lamaran
   document.getElementById('pageStep1').style.display = 'block';
 
+// Cek apakah profil punya CV DAN CV tersebut sudah versi Supabase (punya url)
   const profile = MagnetDB.getProfile();
-  if (profile?.cv) {
+  if (profile?.cv && profile.cv.url) {
     document.getElementById('cvTip').style.display = 'flex';
+  } else {
+    // Sembunyikan tombol "Gunakan CV tersimpan" agar user terpaksa upload file baru
+    const cvTip = document.getElementById('cvTip');
+    if (cvTip) cvTip.style.display = 'none';
   }
 
   updateChecklist();
