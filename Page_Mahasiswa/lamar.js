@@ -4,6 +4,12 @@
 
 import { getJobById } from '../Page_Perusahaan/firebase-company.js';
 import { saveApplicationToFirebase } from './firebase-mahasiswa.js';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+// KONEKSI SUPABASE
+const supabaseUrl = 'https://nwmlmcgxkfhwurpztycz.supabase.co';
+const supabaseKey = 'sb_publishable_HixUc0iM1zAymTOsVLtEyg_VzIOkxBB';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 let currentJob = null;
 const docs = { cv: null, surat: null, porto: null };
@@ -142,6 +148,28 @@ function updateChecklist() {
   btn.disabled = !hasCv;
 }
 
+// Fungsi rahasia untuk menerbangkan PDF ke Supabase
+async function uploadToSupabase(file, folderName) {
+  // Buat nama file unik agar tidak bentrok
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+  const filePath = `${folderName}/${fileName}`;
+
+  // Upload ke bucket 'lamaran.pdf'
+  const { data, error } = await supabase.storage
+    .from('lamaran.pdf') 
+    .upload(filePath, file);
+
+  if (error) throw error;
+
+  // Dapatkan URL publik yang bisa didownload
+  const { data: urlData } = supabase.storage
+    .from('lamaran.pdf')
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
+}
+
 async function submitLamaran() {
   if (!docs.cv) {
     showToast('Upload CV terlebih dahulu (wajib)');
@@ -159,39 +187,65 @@ async function submitLamaran() {
     return;
   }
 
-  // Siapkan data untuk dikirim ke Firebase
-  const firebaseApp = {
-    userId: session.id,
-    userName: session.name,
-    userEmail: session.email,
-    jobId: currentJob.id,
-    jobTitle: currentJob.title,
-    companyId: currentJob.companyId,
-    companyName: currentJob.companyName || currentJob.company || 'Perusahaan',
-    companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
-    logoColor: currentJob.logoColor || '#3B2A8E',
-    status: 'terkirim',
-    appliedAt: new Date().toISOString(),
-    documents: {
-      cv: docs.cv || null,
-      surat: docs.surat || null,
-      porto: docs.porto || null,
-      portoLink: portoLink || null,
-      catatan: catatan || null,
-    }
-  };
+  // Ubah tombol jadi loading
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.innerHTML = 'Mengunggah File...';
+  submitBtn.disabled = true;
 
   try {
-    // 1. Langsung simpan ke Firebase (Hapus pengecekan MagnetDB yang menyebabkan error)
-    await saveApplicationToFirebase(firebaseApp);
-    console.log('Lamaran berhasil disimpan ke Firebase');
+    // 1. Ambil file fisik dari input HTML
+    const cvFile = document.getElementById('cvFile').files[0];
+    const suratFile = document.getElementById('suratFile').files[0];
+    const portoFile = document.getElementById('portoFile').files[0];
 
-    // 2. Tampilkan halaman sukses
+    let cvUrl = null, suratUrl = null, portoUrl = null;
+
+    // 2. Upload file satu per satu ke Supabase (jika ada file fisiknya)
+    if (cvFile) {
+      cvUrl = await uploadToSupabase(cvFile, 'cv');
+    }
+    if (suratFile) {
+      submitBtn.innerHTML = 'Mengunggah Surat...';
+      suratUrl = await uploadToSupabase(suratFile, 'surat');
+    }
+    if (portoFile) {
+      submitBtn.innerHTML = 'Mengunggah Portofolio...';
+      portoUrl = await uploadToSupabase(portoFile, 'porto');
+    }
+
+    submitBtn.innerHTML = 'Menyimpan Lamaran...';
+
+    // 3. Gabungkan link URL dari Supabase ke dalam data dokumen
+    const firebaseApp = {
+      userId: session.id,
+      userName: session.name,
+      userEmail: session.email,
+      jobId: currentJob.id,
+      jobTitle: currentJob.title,
+      companyId: currentJob.companyId,
+      companyName: currentJob.companyName || currentJob.company || 'Perusahaan',
+      companyShort: currentJob.companyShort || (currentJob.companyName ? currentJob.companyName.charAt(0) : '?'),
+      logoColor: currentJob.logoColor || '#3B2A8E',
+      status: 'terkirim',
+      appliedAt: new Date().toISOString(),
+      documents: {
+        cv: docs.cv ? { name: docs.cv.name, size: docs.cv.size, url: cvUrl || docs.cv.url } : null,
+        surat: docs.surat ? { name: docs.surat.name, size: docs.surat.size, url: suratUrl } : null,
+        porto: docs.porto ? { name: docs.porto.name, size: docs.porto.size, url: portoUrl } : null,
+        portoLink: portoLink || null,
+        catatan: catatan || null,
+      }
+    };
+
+    // 4. Simpan ke Firebase Realtime Database
+    await saveApplicationToFirebase(firebaseApp);
+    console.log('Lamaran dan file PDF berhasil dikirim!');
+
+    // 5. Tampilkan halaman sukses
     document.getElementById('pageStep1').style.display   = 'none';
     document.getElementById('pageSuccess').style.display = 'block';
     document.getElementById('successCompany').textContent = currentJob.companyName || currentJob.company;
 
-    // 3. Update step indicator
     document.getElementById('step1').classList.add('done');
     document.getElementById('step2').classList.add('done');
     document.getElementById('step3').classList.add('active', 'done');
@@ -199,8 +253,13 @@ async function submitLamaran() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (err) {
-    console.error('Gagal simpan ke Firebase:', err);
+    console.error('Gagal upload atau simpan:', err);
     showToast('Lamaran gagal dikirim: ' + err.message);
+    submitBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+      Kirim Lamaran
+    `;
+    submitBtn.disabled = false;
   }
 }
 

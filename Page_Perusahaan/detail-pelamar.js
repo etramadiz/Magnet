@@ -50,9 +50,23 @@ async function loadData() {
   document.getElementById('statusMhs').textContent = profile.semester ? `Semester ${profile.semester}` : '-';
 
   // --- Bagian dokumen CV dan Portofolio di bawah ini tetap sama ---
-  const docs = application.documents || {};
-  document.getElementById('cvName').textContent = docs.cv?.name || 'Tidak ada file';
-  document.getElementById('suratName').textContent = docs.surat?.name || 'Tidak ada file';
+const docs = application.documents || {};
+  
+  // Ubah CV menjadi link jika URL-nya ada
+  const cvEl = document.getElementById('cvName');
+  if (docs.cv?.url) {
+    cvEl.innerHTML = `<a href="${docs.cv.url}" target="_blank" style="color:var(--blue-primary);text-decoration:underline">${docs.cv.name}</a>`;
+  } else {
+    cvEl.textContent = docs.cv?.name || 'Tidak ada file';
+  }
+
+  // Ubah Surat menjadi link jika URL-nya ada
+  const suratEl = document.getElementById('suratName');
+  if (docs.surat?.url) {
+    suratEl.innerHTML = `<a href="${docs.surat.url}" target="_blank" style="color:var(--blue-primary);text-decoration:underline">${docs.surat.name}</a>`;
+  } else {
+    suratEl.textContent = docs.surat?.name || 'Tidak ada file';
+  }
 
   let porto = docs.porto || docs.portoLink || '';
   if (typeof porto !== 'string') porto = '';
