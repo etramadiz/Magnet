@@ -435,6 +435,13 @@ window.triggerSearch = triggerSearch;
    INIT
 ═══════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
+    const session = MagnetDB.getSession();
+  if (!session) {
+    // Jika tidak ada session, biarkan requireMahasiswaAuth yang handle redirect
+    MagnetDB.requireMahasiswaAuth();
+    return;
+  }
+  // Jika session ada, lanjutkan
   await syncProfile();
   if (!window.GUEST_ALLOWED) {
     MagnetDB.requireMahasiswaAuth();
