@@ -1,8 +1,9 @@
-// firebase-mahasiswa.js
+// firebase-mahasiswa.js - Realtime Database version
 import { db, auth } from '../Page_Login_Register/firebase-config.js';
+import { ref, get, set, update, push, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 import { ref, push, set, get, update, query, onValue, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-// Simpan atau perbarui profil mahasiswa ke Firestore
+// Simpan profil mahasiswa ke Realtime Database
 export async function saveMahasiswaProfile(uid, data) {
   if (!uid) throw new Error('UID tidak ditemukan');
   const userRef = ref(db, `mahasiswa/${uid}`);
@@ -13,7 +14,7 @@ export async function saveMahasiswaProfile(uid, data) {
   }
 }
 
-// Ambil profil mahasiswa dari Firestore
+// Ambil profil mahasiswa dari Realtime Database
 export async function getMahasiswaProfile(uid) {
   if (!uid) return null;
   const userRef = ref(db, `mahasiswa/${uid}`);
@@ -41,14 +42,12 @@ export async function saveApplicationToFirebase(application) {
   return newAppRef.key;
 }
 
-// Ambil lamaran berdasarkan ID
 export async function getApplicationById(appId) {
   const appRef = ref(db, `applications/${appId}`);
   const snapshot = await get(appRef);
   return snapshot.exists() ? { id: snapshot.key, ...snapshot.val() } : null;
 }
 
-// Ambil semua lamaran untuk user tertentu
 export async function getApplicationsForUser(userId) {
   const appsRef = ref(db, 'applications');
   const q = query(appsRef, orderByChild('userId'), equalTo(userId));

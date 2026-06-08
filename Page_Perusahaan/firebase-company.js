@@ -114,3 +114,14 @@ export async function getApplicationById(appId) {
   const snapshot = await get(appRef);
   return snapshot.exists() ? { id: snapshot.key, ...snapshot.val() } : null;
 }
+
+// Update status lamaran
+export async function updateApplicationStatus(appId, status, catatan = '') {
+  const appRef = ref(db, `applications/${appId}`);
+  await update(appRef, {
+    status: status,
+    catatan: catatan,
+    updatedAt: new Date().toISOString()
+  });
+  return { ok: true };
+}

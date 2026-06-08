@@ -4,6 +4,7 @@
 import { db, auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { saveMahasiswaProfile, getMahasiswaProfile } from './firebase-mahasiswa.js';
+import { syncProfileFromFirebase } from '../Page_Login_Register/auth-firebase.js';
 
 // Hapus import { MagnetDB } from './db.js'; → karena MagnetDB sudah global
 
@@ -280,7 +281,6 @@ async function doSave(strict = true) {
   const pengalaman  = document.getElementById('f-pengalaman')?.value.trim()  || '';
   const prestasi    = document.getElementById('f-prestasi')?.value.trim()    || '';
 
-  // Validasi hanya nama yang wajib ada
   if (!nama) {
     if (strict) showToast('Nama lengkap wajib diisi');
     hlField('f-nama');
@@ -338,7 +338,7 @@ async function doSave(strict = true) {
   }
 
 // Tombol "Simpan Profil" tetap ada sebagai cadangan
-function saveProfile() {
+async function saveProfile() {
   doSave(true);
 }
 

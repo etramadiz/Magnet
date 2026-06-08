@@ -2,6 +2,9 @@
    MAGNET – DASHBOARD.JS (dengan Firebase)
 ════════════════════════════════════════════════════════════ */
 
+import { auth } from '../Page_Login_Register/firebase-config.js';
+import { syncProfileFromFirebase } from '../Page_Login_Register/auth-firebase.js';
+
 // Hapus array JOBS statis, kita akan ambil dari Firebase
 let jobs = []; // akan diisi dari Firebase
 let savedJobs = new Set(JSON.parse(localStorage.getItem('mg_saved') || '[]'));
@@ -298,6 +301,13 @@ function showToast(msg, dur = 3000) {
   _toastTimer = setTimeout(() => { t.classList.remove('show'); _toastTimer = null; }, dur);
 }
 
+async function syncProfile() {
+  const user = auth.currentUser;
+  if (user) {
+    await syncProfileFromFirebase(user.uid);
+  }
+}
+
 /* ═══════════════════════════
    GREETING (sama persis seperti asli)
 ═══════════════════════════ */
@@ -409,6 +419,7 @@ function applyGuestMode() {
 // Letakkan ini di luar DOMContentLoaded, agar langsung tersedia
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
+window.restoreSidebarState = restoreSidebarState;
 window.setFilter = setFilter;
 window.toggleSave = toggleSave;
 window.applyJob = applyJob;
@@ -423,7 +434,8 @@ window.triggerSearch = triggerSearch;
 /* ═══════════════════════════
    INIT
 ═══════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await syncProfile();
   if (!window.GUEST_ALLOWED) {
     MagnetDB.requireMahasiswaAuth();
   }

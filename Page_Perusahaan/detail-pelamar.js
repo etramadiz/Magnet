@@ -1,55 +1,31 @@
-// detail-pelamar.js - mengambil data dari Firebase
+// detail-pelamar.js - lamaran dari Firebase, profil dari localStorage
 import { getApplicationById } from './firebase-company.js';
-import { getMahasiswaProfile } from './firebase-mahasiswa.js';
+import { getApplicationById, updateApplicationStatus } from './firebase-company.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('userId');
 const appId = urlParams.get('appId');
 
 if (!userId || !appId) {
-  alert('Parameter tidak lengkap. Kembali ke daftar pelamar.');
+  alert('Parameter tidak lengkap.');
   window.location.href = 'lihat-pelamar.html';
 }
 
 async function loadData() {
-  // Ambil data lamaran dari Firebase
+  // 1. Ambil lamaran dari Firebase Realtime Database
   let application = await getApplicationById(appId);
-
-  // Fallback ke localStorage jika tidak ada di Firebase
   if (!application) {
-    const localApps = MagnetDB.getAllApplications();
-    application = localApps.find(app => app.id === appId && app.userId === userId);
-  }
-
-  if (!application) {
-    alert('Data lamaran tidak ditemukan.');
+    alert('Data lamaran tidak ditemukan di database.');
     window.location.href = 'lihat-pelamar.html';
     return;
   }
 
-  // Ambil data user (mahasiswa) - dari Firestore atau localStorage
-  let user = null;
-  let profile = {};
+  // 2. Ambil data mahasiswa dari localStorage (sudah disimpan saat login/register)
+  const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+  const user = users.find(u => u.id === userId);
+  const profile = user?.profile || {};
 
-  // Coba dari Firestore dulu
-  try {
-    const firestoreProfile = await getMahasiswaProfile(userId);
-    if (firestoreProfile) {
-      user = { name: firestoreProfile.name || firestoreProfile.namaLengkap, id: userId };
-      profile = firestoreProfile;
-    }
-  } catch (e) {
-    console.warn('Gagal ambil dari Firestore:', e);
-  }
-
-  // Fallback ke localStorage
-  if (!user) {
-    const users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
-    user = users.find(u => u.id === userId);
-    profile = user?.profile || {};
-  }
-
-  // Tampilkan data di HTML
+  // 3. Tampilkan data
   document.getElementById('detailName').textContent = user?.name || 'Tidak diketahui';
   document.getElementById('universitas').textContent = profile.universitas || '-';
   document.getElementById('jurusan').textContent = profile.jurusan || '-';
@@ -59,35 +35,37 @@ async function loadData() {
   document.getElementById('cvName').textContent = docs.cv?.name || 'Tidak ada file';
   document.getElementById('suratName').textContent = docs.surat?.name || 'Tidak ada file';
 
-  const porto = docs.porto || docs.portoLink || '';
+  // Pastikan porto berupa string
+  let porto = docs.porto || docs.portoLink || '';
+  if (typeof porto !== 'string') porto = '';
   document.getElementById('portoName').textContent = porto || '-';
-  if (porto) {
+
+  if (porto && porto !== '-') {
     const btnPorto = document.getElementById('btnPortoAction');
-    if (porto.toLowerCase().includes('.pdf') || porto.toLowerCase().includes('.zip')) {
+    if (porto.includes('.pdf') || porto.includes('.zip')) {
       btnPorto.textContent = '👁️ Buka File';
       btnPorto.href = 'uploads/' + porto;
     } else {
       btnPorto.textContent = '🔗 Buka Link';
-      if (!porto.startsWith('http')) btnPorto.href = 'https://' + porto;
-      else btnPorto.href = porto;
+      btnPorto.href = porto.startsWith('http') ? porto : 'https://' + porto;
     }
   }
 
   window.currentAppId = appId;
 }
 
-function updateStatus(newStatus) {
+async function updateStatus(newStatus) { // Tambahkan async
   const catatan = document.getElementById('catatan').value;
-  // Update status di localStorage dulu
-  const result = MagnetDB.updateApplicationStatus(window.currentAppId, newStatus);
-  if (result.ok) {
+  
+  try {
+    // Ganti pemanggilan MagnetDB dengan fungsi Firebase
+    await updateApplicationStatus(window.currentAppId, newStatus, catatan);
     alert(`Pelamar ${newStatus === 'Diterima' ? 'diterima' : 'ditolak'}.${catatan ? '\nCatatan: ' + catatan : ''}`);
     window.location.href = 'lihat-pelamar.html';
-  } else {
-    alert('Gagal mengupdate status.');
+  } catch (error) {
+    alert('Gagal mengupdate status: ' + error.message);
   }
-  // TODO: nanti bisa tambahkan update ke Firebase juga
 }
 
-loadData();
 window.updateStatus = updateStatus;
+loadData();

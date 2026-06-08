@@ -1,7 +1,7 @@
 // lihat-pelamar.js - versi Firebase (ambil lowongan dari Firebase)
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getJobsByCompany, getApplicationsForCompany } from './firebase-company.js';
+import { getJobsByCompany, getApplicationsForCompany } from '../Page_Perusahaan/firebase-company.js';
 
 let companyId = null;
 
