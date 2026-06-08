@@ -217,3 +217,22 @@ export async function saveProfileToFirebase(uid, profileData) {
 export async function updateCompanyProfile(uid, data) {
   await set(ref(db, `companies/${uid}`), data, { merge: true });
 }
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    let users = JSON.parse(localStorage.getItem('magnet_users') || '[]');
+    let existing = users.find(u => u.id === user.uid);
+    if (!existing) {
+      users.push({
+        id: user.uid,
+        name: user.displayName || 'Mahasiswa',
+        email: user.email,
+        type: 'mahasiswa',
+        createdAt: new Date().toISOString(),
+        profile: {}
+      });
+      localStorage.setItem('magnet_users', JSON.stringify(users));
+    }
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: 'mahasiswa' }));
+  }
+});
