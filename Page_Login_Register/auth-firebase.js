@@ -61,6 +61,7 @@ export async function firebaseLogin(email, password, expectedRole) {
       id: user.uid,
       name: userName,
       email: user.email,
+      phone: userData.nomorTelepon || '',
       type: role,
       profile: profileData
     };
@@ -130,6 +131,7 @@ export async function firebaseRegister(data, role) {
       id: user.uid,
       name: name,
       email: email,
+      phone: phone || '',
       type: role,
       profile: userData.profile
     });
@@ -191,6 +193,7 @@ export async function firebaseGoogleLogin(expectedRole) {
       id: user.uid,
       name: userName, 
       email: user.email,
+      phone: '',  
       type: role,
       profile: profileData
     };
@@ -237,7 +240,8 @@ export async function syncProfileFromFirebase(uid) {
       // Jika user sudah ada di lokal, perbarui datanya
       users[idx].profile = profile;
       if (profile.name) users[idx].name = profile.name;
-      if (profile.avatar) users[idx].avatar = profile.avatar; // <-- Memastikan foto ikut terupdate
+      if (profile.avatar) users[idx].avatar = profile.avatar;
+      if (profile.phone) users[idx].phone = profile.phone; // <-- Memastikan foto ikut terupdate
     } else {
       // Jika user BELUM ADA di lokal (misal cache habis dibersihkan), buat data baru!
       const newUser = {
