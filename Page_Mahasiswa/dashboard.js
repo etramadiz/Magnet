@@ -442,12 +442,24 @@ window.triggerSearch = triggerSearch;
    INIT
 ═══════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
-    const session = MagnetDB.getSession();
-  if (!session) {
-    // Jika tidak ada session, biarkan requireMahasiswaAuth yang handle redirect
-    MagnetDB.requireMahasiswaAuth();
-    return;
-  }
+    let session = MagnetDB.getSession();
+    if (!session) {
+        // Tunggu Firebase Auth dulu
+        const user = await new Promise(resolve => {
+            onAuthStateChanged(auth, resolve);
+        });
+        if (user) {
+            // Sinkronisasi session lokal dari data Firebase
+            const { syncProfileFromFirebase } = await import('../Page_Login_Register/auth-firebase.js');
+            await syncProfileFromFirebase(user.uid);
+            session = MagnetDB.getSession();
+        }
+        if (!session) {
+            // Benar-benar tidak ada session, baru redirect
+            MagnetDB.requireMahasiswaAuth();
+            return;
+        }
+    }
   // Jika session ada, lanjutkan
   syncProfile();
   if (!window.GUEST_ALLOWED) {

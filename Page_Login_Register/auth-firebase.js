@@ -137,9 +137,9 @@ export async function firebaseRegister(data, role) {
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
     // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
-    if (window.MagnetDB) {
-      window.MagnetDB.login({ id: user.uid, name: name, email: email, type: role });
-    }
+if (window.MagnetDB) {
+    window.MagnetDB.login({ id: user.uid, name, email, type: role });
+}
 
     // Jangan gunakan await signOut(auth) agar user tetap login
     showToast('Pendaftaran berhasil!', 'success');
