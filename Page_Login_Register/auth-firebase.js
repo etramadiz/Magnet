@@ -289,7 +289,7 @@ export function checkSessionAndRedirect() {
       if (window.MagnetDB && !window.MagnetDB.getSession()) {
          const userName = user.displayName || user.email;
          // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
-         window.MagnetDB.login({ id: user.uid, name: userName, email: user.email, type: role });
+         window.MagnetDB.login({ id: user.uid, name: localUser.name || userName || name, email: user.email || email, type: role, role: role });
       }
 
       // Sinkronkan profil ke array magnet_users sebelum pindah halaman

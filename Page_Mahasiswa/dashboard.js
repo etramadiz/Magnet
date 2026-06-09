@@ -4,6 +4,7 @@
 
 import { auth } from '../Page_Login_Register/firebase-config.js';
 import { syncProfileFromFirebase } from '../Page_Login_Register/auth-firebase.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 // Hapus array JOBS statis, kita akan ambil dari Firebase
 let jobs = []; // akan diisi dari Firebase
@@ -302,11 +303,15 @@ function showToast(msg, dur = 3000) {
   _toastTimer = setTimeout(() => { t.classList.remove('show'); _toastTimer = null; }, dur);
 }
 
-async function syncProfile() {
-  // Ambil ID dari localStorage yang sudah pasti langsung ada tanpa loading
+function syncProfile() {
   const session = MagnetDB.getSession();
   if (session && session.id) {
-    await syncProfileFromFirebase(session.id);
+    // Gunakan onAuthStateChanged agar sistem menunggu Firebase siap
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await syncProfileFromFirebase(user.uid);
+      }
+    });
   }
 }
 
@@ -444,7 +449,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   // Jika session ada, lanjutkan
-  await syncProfile();
+  syncProfile();
   if (!window.GUEST_ALLOWED) {
     MagnetDB.requireMahasiswaAuth();
   }
