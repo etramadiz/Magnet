@@ -72,9 +72,9 @@ export async function firebaseLogin(email, password, expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
-    // Daftarkan sesi ke MagnetDB
+    // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
     if (window.MagnetDB) {
-      window.MagnetDB.login({ id: user.uid, name: localUser.name, email: user.email, role: role });
+      window.MagnetDB.login({ id: user.uid, name: localUser.name, email: user.email, type: role });
     }
 
     await syncProfileFromFirebase(user.uid);
@@ -136,9 +136,9 @@ export async function firebaseRegister(data, role) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
-    // Daftarkan sesi ke MagnetDB
+    // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
     if (window.MagnetDB) {
-      window.MagnetDB.login({ id: user.uid, name: name, email: email, role: role });
+      window.MagnetDB.login({ id: user.uid, name: name, email: email, type: role });
     }
 
     // Jangan gunakan await signOut(auth) agar user tetap login
@@ -181,7 +181,6 @@ export async function firebaseGoogleLogin(expectedRole) {
     const mahasiswaSnapshot = await get(ref(db, `mahasiswa/${user.uid}`));
     let profileData = mahasiswaSnapshot.exists() ? mahasiswaSnapshot.val() : {};
 
-    // 🔥 KUNCI PERBAIKAN: Paksa timpa userName Google dengan nama dari database jika sudah pernah diisi!
     if (profileData && profileData.name) {
       userName = profileData.name;
     } else if (snapshot.exists() && snapshot.val().namaLengkap) {
@@ -190,7 +189,7 @@ export async function firebaseGoogleLogin(expectedRole) {
 
     const localUser = {
       id: user.uid,
-      name: userName, // Sekarang pasti memakai "Rahma Pratiwi" jika ada
+      name: userName, 
       email: user.email,
       type: role,
       profile: profileData
@@ -203,9 +202,9 @@ export async function firebaseGoogleLogin(expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
-    // Daftarkan sesi ke MagnetDB
+    // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
     if (window.MagnetDB) {
-      window.MagnetDB.login({ id: user.uid, name: localUser.name, email: user.email, role: role });
+      window.MagnetDB.login({ id: user.uid, name: localUser.name, email: user.email, type: role });
     }
 
     showToast(`Halo, ${localUser.name}!`, 'success');
@@ -240,7 +239,7 @@ export async function syncProfileFromFirebase(uid) {
       if (profile.name) users[idx].name = profile.name;
       if (profile.avatar) users[idx].avatar = profile.avatar; // <-- Memastikan foto ikut terupdate
     } else {
-      // 🔥 PERBAIKAN: Jika user BELUM ADA di lokal (misal cache habis dibersihkan), buat data baru!
+      // Jika user BELUM ADA di lokal (misal cache habis dibersihkan), buat data baru!
       const newUser = {
         id: uid,
         name: profile.name || 'Pengguna',
@@ -289,10 +288,11 @@ export function checkSessionAndRedirect() {
       // Pastikan MagnetDB tidak kosong saat Firebase me-reload halaman
       if (window.MagnetDB && !window.MagnetDB.getSession()) {
          const userName = user.displayName || user.email;
-         window.MagnetDB.login({ id: user.uid, name: userName, email: user.email, role: role });
+         // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
+         window.MagnetDB.login({ id: user.uid, name: userName, email: user.email, type: role });
       }
 
-      // 🔥 TAMBAHAN WAJIB: Sinkronkan profil ke array magnet_users sebelum pindah halaman
+      // Sinkronkan profil ke array magnet_users sebelum pindah halaman
       await syncProfileFromFirebase(user.uid);
 
       const currentPath = window.location.pathname;
