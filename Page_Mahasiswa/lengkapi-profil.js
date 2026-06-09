@@ -383,6 +383,8 @@ function loadProfile() {
   if (profile) {
     if (namaEl) namaEl.value = profile.name || user?.name || '';
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('f-email', profile.email || user?.email);
+    set('f-telepon', profile.phone || user?.phone);
     set('f-universitas', profile.universitas);
     set('f-jurusan',     profile.jurusan);
     set('f-semester',    profile.semester);
@@ -444,7 +446,7 @@ function loadProfile() {
 document.addEventListener('DOMContentLoaded', () => {
   MagnetDB.requireMahasiswaAuth();
   if (window.restoreSidebarState) window.restoreSidebarState();
-  
+
   // Update badge Status Lamaran
   const apps  = MagnetDB.getUserApplications();
   const badge = document.getElementById('nav-lamaran-badge');
