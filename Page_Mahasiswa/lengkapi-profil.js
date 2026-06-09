@@ -112,18 +112,21 @@ function initPhotoSection() {
 function updateProgress() {
   const user = MagnetDB.getSession();
   const profile = MagnetDB.getProfile();
+  
+  // 🔥 PERBAIKAN: Cek nilai dari input form ATAU dari database
   const checks = [
-    !!user?.name,
-    !!user?.email,
-    !!user?.phone,
-    !!user?.avatar,
-    !!(profile?.universitas || document.getElementById('f-universitas')?.value?.trim()),
-    !!(profile?.jurusan     || document.getElementById('f-jurusan')?.value?.trim()),
-    !!(profile?.semester    || document.getElementById('f-semester')?.value),
+    !!(document.getElementById('f-nama')?.value?.trim() || user?.name),
+    !!(document.getElementById('f-email')?.value?.trim() || user?.email),
+    !!(document.getElementById('f-telepon')?.value?.trim() || user?.phone),
+    !!(photoDataURL || profile?.avatar || user?.avatar), // Membaca foto yang baru diunggah
+    !!(document.getElementById('f-universitas')?.value?.trim() || profile?.universitas),
+    !!(document.getElementById('f-jurusan')?.value?.trim() || profile?.jurusan),
+    !!(document.getElementById('f-semester')?.value || profile?.semester),
     (skillTags.length > 0)  || (profile?.skills?.length > 0),
     (minatTags.length > 0)  || (profile?.minat?.length > 0),
     !!(cvData || profile?.cv),
   ];
+  
   const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
 
   const pctEl  = document.getElementById('progressPct');
