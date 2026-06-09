@@ -5,7 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  onAuthStateChanged          // 🔥 IMPORT YANG HILANG
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
@@ -72,6 +72,11 @@ export async function firebaseLogin(email, password, expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
+    // Daftarkan sesi ke MagnetDB
+    if (window.MagnetDB) {
+      window.MagnetDB.login({ id: user.uid, name: localUser.name, email: user.email, role: role });
+    }
+
     await syncProfileFromFirebase(user.uid);
     showToast(`Halo, ${localUser.name}!`, 'success');
 
@@ -129,18 +134,23 @@ export async function firebaseRegister(data, role) {
       profile: userData.profile
     });
     localStorage.setItem('magnet_users', JSON.stringify(users));
+    localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
-    await signOut(auth);
-    showToast('Pendaftaran berhasil! Silakan masuk.', 'success');
+    // Daftarkan sesi ke MagnetDB
+    if (window.MagnetDB) {
+      window.MagnetDB.login({ id: user.uid, name: name, email: email, role: role });
+    }
+
+    // Jangan gunakan await signOut(auth) agar user tetap login
+    showToast('Pendaftaran berhasil!', 'success');
     return { success: true, uid: user.uid };
   } catch (err) {
     showToast('Gagal daftar: ' + err.message, 'error');
-    return { success: false };
+    return false;
   }
 }
 
 //google login
-
 export async function firebaseGoogleLogin(expectedRole) {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -193,6 +203,11 @@ export async function firebaseGoogleLogin(expectedRole) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
+    // Daftarkan sesi ke MagnetDB
+    if (window.MagnetDB) {
+      window.MagnetDB.login({ id: user.uid, name: localUser.name, email: user.email, role: role });
+    }
+
     showToast(`Halo, ${localUser.name}!`, 'success');
     return true;
   } catch (err) {
@@ -239,7 +254,7 @@ export async function syncProfileFromFirebase(uid) {
     localStorage.setItem('magnet_users', JSON.stringify(users));
     
     // Update MagnetDB juga jika fungsi tersedia
-    if (window.MagnetDB) MagnetDB.saveProfile(profile);
+    if (window.MagnetDB) window.MagnetDB.saveProfile(profile);
     
     return profile;
   } catch (err) {
@@ -269,6 +284,12 @@ export function checkSessionAndRedirect() {
       
       if (!localStorage.getItem('magnet_session')) {
         localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
+      }
+
+      // Pastikan MagnetDB tidak kosong saat Firebase me-reload halaman
+      if (window.MagnetDB && !window.MagnetDB.getSession()) {
+         const userName = user.displayName || user.email;
+         window.MagnetDB.login({ id: user.uid, name: userName, email: user.email, role: role });
       }
 
       // 🔥 TAMBAHAN WAJIB: Sinkronkan profil ke array magnet_users sebelum pindah halaman
