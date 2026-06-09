@@ -137,9 +137,9 @@ export async function firebaseRegister(data, role) {
     localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
 
     // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
-if (window.MagnetDB) {
-    window.MagnetDB.login({ id: user.uid, name, email, type: role });
-}
+    if (window.MagnetDB) {
+      window.MagnetDB.login({ id: user.uid, name: name, email: email, type: role });
+    }
 
     // Jangan gunakan await signOut(auth) agar user tetap login
     showToast('Pendaftaran berhasil!', 'success');
@@ -275,26 +275,38 @@ export async function saveProfileToFirebase(uid, profileData) {
   }
 }
 
-// Contoh perbaikan di auth-firebase.js
 export function checkSessionAndRedirect() {
   onAuthStateChanged(auth, async (user) => {
-    const currentPath = window.location.pathname;
-    
     if (user) {
-      // Jika user sudah login tapi masih di halaman login/register
-      if (currentPath.includes('login') || currentPath.includes('register')) {
-        // Cek role dari localStorage atau database untuk menentukan tujuan
-        const session = JSON.parse(localStorage.getItem('magnet_session'));
-        if (session?.role === 'perusahaan') {
-          window.location.href = '../Page_Perusahaan/dashboard.html';
-        } else {
-          window.location.href = '../Page_Mahasiswa/dashboard.html';
-        }
+      const snapshot = await get(ref(db, 'users/' + user.uid));
+      const role = snapshot.exists() ? snapshot.val().tipeAkun : 'mahasiswa';
+      
+      if (!localStorage.getItem('magnet_session')) {
+        localStorage.setItem('magnet_session', JSON.stringify({ userId: user.uid, type: role }));
       }
-    } else {
-      // Jika user TIDAK login dan mencoba masuk ke halaman dashboard (bukan halaman publik)
-      if (!currentPath.includes('login') && !currentPath.includes('register') && !currentPath.includes('index')) {
-        window.location.href = '../Page_Login_Register/login-mahasiswa.html';
+
+      // Pastikan MagnetDB tidak kosong saat Firebase me-reload halaman
+      if (window.MagnetDB && !window.MagnetDB.getSession()) {
+         const userName = user.displayName || user.email;
+         // 🔥 PERBAIKAN: Gunakan 'type' bukan 'role'
+         window.MagnetDB.login({ id: user.uid, name: userName, email: user.email, type: role });
+      }
+
+      // Sinkronkan profil ke array magnet_users sebelum pindah halaman
+      await syncProfileFromFirebase(user.uid);
+
+      const currentPath = window.location.pathname;
+      // Hanya redirect jika sedang di halaman login/register/index
+      if (currentPath.includes('login') || currentPath.includes('register') || currentPath.endsWith('index.html')) {
+        if (role === 'perusahaan') {
+          if (!currentPath.includes('Page_Perusahaan')) {
+            window.location.href = '../Page_Perusahaan/dashboard.html';
+          }
+        } else {
+          if (!currentPath.includes('Page_Mahasiswa')) {
+            window.location.href = '../Page_Mahasiswa/dashboard.html';
+          }
+        }
       }
     }
   });
